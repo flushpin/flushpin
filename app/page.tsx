@@ -27,11 +27,11 @@ export default function Home() {
           Now in Orange County, CA
         </div>
         <h1 style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"56px",fontWeight:"700",color:"#0A2E1F",lineHeight:"1.15",marginBottom:"22px",letterSpacing:"-2px"}}>
-          Find the code.<br/>
+          Get the PIN.<br/>
           <span style={{color:"#1D9E75"}}>Use a clean restroom.</span>
         </h1>
         <p style={{fontSize:"18px",color:"#666",maxWidth:"500px",margin:"0 auto 44px",lineHeight:"1.7",fontWeight:"400"}}>
-          Unlock restroom PIN codes at nearby businesses. See real cleanliness scores. Help your community.
+          Find restroom PIN codes at nearby businesses. See real cleanliness scores. Help your community.
         </p>
         <div style={{display:"flex",gap:"14px",justifyContent:"center",flexWrap:"wrap"}}>
           <a href="/map" style={{background:"#1D9E75",color:"white",padding:"15px 36px",borderRadius:"11px",textDecoration:"none",fontSize:"16px",fontWeight:"700",letterSpacing:"-0.3px"}}>Find a Restroom</a>
@@ -44,9 +44,9 @@ export default function Home() {
           <p style={{fontSize:"13px",color:"#0F6E56",fontWeight:"600",marginBottom:"18px"}}>Restrooms near you — Irvine, CA</p>
           <div style={{display:"flex",gap:"14px",flexWrap:"wrap"}}>
             {[
-              {name:"Philz Coffee",area:"Irvine Spectrum · 0.1 mi",code:"2580",stars:"★★★★★",score:"5.0",dot:"#1D9E75",blur:false},
-              {name:"Panera Bread",area:"Culver Dr · 0.4 mi",code:"1379",stars:"★★★☆☆",score:"3.1",dot:"#D97706",blur:false},
-              {name:"Barnes & Noble",area:"Alton Pkwy · 0.7 mi",code:"????",stars:"",score:"",dot:"#DC2626",blur:true},
+              {name:"Philz Coffee",area:"Irvine Spectrum · 0.1 mi",pin:"2580",stars:"★★★★★",score:"5.0",dot:"#1D9E75",blur:false},
+              {name:"Panera Bread",area:"Culver Dr · 0.4 mi",pin:"1379",stars:"★★★☆☆",score:"3.1",dot:"#D97706",blur:false},
+              {name:"Barnes & Noble",area:"Alton Pkwy · 0.7 mi",pin:"????",stars:"",score:"",dot:"#DC2626",blur:true},
             ].map((r,i)=>(
               <div key={i} style={{background:"white",borderRadius:"13px",padding:"16px 18px",flex:"1",minWidth:"165px",boxShadow:"0 2px 10px rgba(0,0,0,0.06)"}}>
                 <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"7px"}}>
@@ -54,8 +54,8 @@ export default function Home() {
                   <span style={{fontSize:"13px",fontWeight:"700",color:"#0A2E1F",fontFamily:"'Space Grotesk','Inter',sans-serif"}}>{r.name}</span>
                 </div>
                 <div style={{fontSize:"11px",color:"#999",marginBottom:"11px"}}>{r.area}</div>
-                <div style={{background:r.blur?"#f5f5f5":"#E1F5EE",color:r.blur?"#bbb":"#085041",fontSize:"15px",fontWeight:"700",padding:"6px 13px",borderRadius:"8px",display:"inline-block",letterSpacing:"2.5px",filter:r.blur?"blur(4px)":"none"}}>{r.code}</div>
-                {r.blur && <div style={{fontSize:"11px",color:"#DC2626",marginTop:"7px",fontWeight:"500"}}>Code unknown. Tap to report.</div>}
+                <div style={{background:r.blur?"#f5f5f5":"#E1F5EE",color:r.blur?"#bbb":"#085041",fontSize:"15px",fontWeight:"700",padding:"6px 13px",borderRadius:"8px",display:"inline-block",letterSpacing:"2.5px",filter:r.blur?"blur(4px)":"none"}}>{r.pin}</div>
+                {r.blur && <div style={{fontSize:"11px",color:"#DC2626",marginTop:"7px",fontWeight:"500"}}>PIN unknown. Tap to report.</div>}
                 {r.stars && <div style={{color:"#D97706",fontSize:"12px",marginTop:"7px",fontWeight:"500"}}>{r.stars} {r.score}</div>}
               </div>
             ))}
@@ -68,7 +68,7 @@ export default function Home() {
         <p style={{textAlign:"center",color:"#999",marginBottom:"40px",fontSize:"15px"}}>Find it. Rate it. Flush it.</p>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))",gap:"16px"}}>
           {[
-            {icon:"🔑",title:"Get the code",desc:"See the PIN for any nearby restroom instantly."},
+            {icon:"🔑",title:"Get the PIN",desc:"See the restroom PIN for any nearby business instantly."},
             {icon:"⭐",title:"Cleanliness score",desc:"Real ratings from real people who were just there."},
             {icon:"📍",title:"Map view",desc:"Filter by distance, rating, and accessibility."},
             {icon:"🚨",title:"Emergency mode",desc:"Need one now? Get the nearest clean restroom fast."},
