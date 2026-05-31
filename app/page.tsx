@@ -1,129 +1,373 @@
+'use client'
+import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
+import CounterSection from '../components/CounterSection'
+import { useLang } from '../lib/LanguageContext'
+
+const COLOR_OPTIONS = [
+  '#E74C3C','#E67E22','#F1C40F','#2ECC71','#1ABC9C',
+  '#3498DB','#9B59B6','#E91E63','#FF5722','#00BCD4',
+  '#8BC34A','#FF9800','#795548','#607D8B','#0A2E1F',
+]
+
 export default function Home() {
+  const { lang, setLang, t } = useLang()
+  const [user, setUser] = useState<any>(null)
+  const [showAuth, setShowAuth] = useState(false)
+  const [authMode, setAuthMode] = useState<'signin'|'signup'>('signup')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [fullName, setFullName] = useState('')
+  const [selectedColor, setSelectedColor] = useState('#1D9E75')
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null))
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const handleGoogleSignIn = async () => {
+    await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: 'https://www.flushpin.com' } })
+  }
+
+  const handleSignUp = async () => {
+    if (!fullName.trim()) { setMessage('Please enter your full name.'); return }
+    setLoading(true); setMessage('')
+    const { error } = await supabase.auth.signUp({
+      email, password,
+      options: { data: { full_name: fullName.trim(), profile_color: selectedColor } }
+    })
+    if (error) setMessage(error.message.includes('already registered') ? '⚠️ This email is already registered. Please sign in.' : error.message)
+    else setMessage('✅ Check your email to confirm your account!')
+    setLoading(false)
+  }
+
+  const handleSignIn = async () => {
+    setLoading(true); setMessage('')
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) setMessage(error.message)
+    else { setShowAuth(false); setMessage('') }
+    setLoading(false)
+  }
+
+  const handleSignOut = async () => { await supabase.auth.signOut(); setUser(null) }
+
+  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || ''
+  const profileColor = user?.user_metadata?.profile_color || '#1D9E75'
+
+  const inputStyle = { width:'100%', padding:'11px 14px', borderRadius:'9px', border:'1px solid #e0e0e0', fontSize:'14px', fontFamily:"'Inter',system-ui,sans-serif", outline:'none', boxSizing:'border-box' as const, color:'#1a1a1a', background:'white' }
+  const labelStyle = { fontSize:'12px', fontWeight:'600' as const, color:'#444', marginBottom:'6px', display:'block' as const }
+
   return (
     <main style={{margin:0,padding:0,fontFamily:"'Inter',system-ui,sans-serif",background:"#fff",minHeight:"100vh"}}>
 
-      <nav style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"20px 40px",borderBottom:"1px solid #f0f0f0"}}>
-        <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
-          <div style={{width:"42px",height:"42px",background:"#1D9E75",borderRadius:"11px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"4px"}}>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"3px",width:"24px"}}>
-              {[1,1,1,1,1,1,0,1,0].map((v,i)=>(
-                <div key={i} style={{width:"6px",height:"6px",borderRadius:"50%",background:v?"rgba(255,255,255,0.95)":"rgba(255,255,255,0.15)"}}/>
-              ))}
+      <style>{`
+        @media (max-width: 640px) {
+          .desktop-nav { display: none !important; }
+          .mobile-menu-btn { display: block !important; }
+        }
+      `}</style>
+
+      {/* NAV */}
+      <nav style={{background:"white",borderBottom:"1px solid #f0f0f0",padding:"14px 20px",position:"sticky",top:0,zIndex:20}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <a href="/" style={{textDecoration:"none",display:"flex",alignItems:"center",gap:"10px"}}>
+            <div style={{width:"38px",height:"38px",background:"#1D9E75",borderRadius:"10px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"3px",flexShrink:0}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"2px",width:"20px"}}>
+                {[1,1,1,1,1,1,0,1,0].map((v,i)=>(<div key={i} style={{width:"5px",height:"5px",borderRadius:"50%",background:v?"rgba(255,255,255,0.95)":"rgba(255,255,255,0.15)"}}/>))}
+              </div>
+              <div style={{width:0,height:0,borderLeft:"4px solid transparent",borderRight:"4px solid transparent",borderTop:"6px solid #1D9E75",marginTop:"-1px"}}/>
             </div>
-            <div style={{width:0,height:0,borderLeft:"5px solid transparent",borderRight:"5px solid transparent",borderTop:"8px solid #1D9E75",marginTop:"-1px"}}/>
+            <span style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"20px",fontWeight:"700",color:"#0A2E1F",letterSpacing:"-0.5px"}}>Flush<span style={{color:"#1D9E75"}}>Pin</span></span>
+          </a>
+
+          <div style={{display:"flex",gap:"10px",alignItems:"center"}} className="desktop-nav">
+            {/* Language switcher */}
+            <div style={{display:"flex",background:"#f5f5f5",borderRadius:"8px",padding:"3px"}}>
+              <button onClick={()=>setLang('en')} style={{padding:"5px 10px",borderRadius:"6px",border:"none",fontSize:"12px",fontWeight:"700",cursor:"pointer",background:lang==='en'?"white":"transparent",color:lang==='en'?"#0A2E1F":"#999"}}>🇺🇸</button>
+              <button onClick={()=>setLang('es')} style={{padding:"5px 10px",borderRadius:"6px",border:"none",fontSize:"12px",fontWeight:"700",cursor:"pointer",background:lang==='es'?"white":"transparent",color:lang==='es'?"#0A2E1F":"#999"}}>🇲🇽</button>
+            </div>
+            <a href="/business" style={{color:"#555",textDecoration:"none",fontSize:"14px",fontWeight:"500"}}>{t.forBusinesses}</a>
+            {user ? (
+              <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
+                <div style={{width:"26px",height:"26px",borderRadius:"50%",background:profileColor,flexShrink:0}}/>
+                <span style={{fontSize:"14px",color:"#0A2E1F",fontWeight:"600"}}>{displayName}</span>
+                <button onClick={handleSignOut} style={{background:"#f5f5f5",border:"none",padding:"8px 14px",borderRadius:"8px",fontSize:"13px",fontWeight:"600",cursor:"pointer",color:"#555"}}>{t.signOut}</button>
+              </div>
+            ) : (
+              <div style={{display:"flex",gap:"8px"}}>
+                <button onClick={()=>{setShowAuth(true);setAuthMode('signin');setMessage('')}} style={{background:"white",color:"#0A2E1F",padding:"9px 18px",borderRadius:"9px",border:"1.5px solid #e0e0e0",fontSize:"14px",fontWeight:"600",cursor:"pointer"}}>{t.signIn}</button>
+                <button onClick={()=>{setShowAuth(true);setAuthMode('signup');setMessage('')}} style={{background:"#1D9E75",color:"white",padding:"9px 18px",borderRadius:"9px",border:"none",fontSize:"14px",fontWeight:"600",cursor:"pointer"}}>{t.signUp}</button>
+              </div>
+            )}
+            <a href="/map" style={{background:"#0A2E1F",color:"white",padding:"9px 18px",borderRadius:"9px",textDecoration:"none",fontSize:"14px",fontWeight:"600"}}>{t.findRestroom}</a>
           </div>
-          <span style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"22px",fontWeight:"700",color:"#0A2E1F",letterSpacing:"-0.5px"}}>
-            Flush<span style={{color:"#1D9E75"}}>Pin</span>
-          </span>
+
+          <button onClick={()=>setMenuOpen(!menuOpen)} style={{background:"none",border:"none",cursor:"pointer",padding:"6px",display:"none"}} className="mobile-menu-btn">
+            <div style={{width:"22px",height:"2px",background:"#0A2E1F",marginBottom:"5px",borderRadius:"2px"}}/>
+            <div style={{width:"22px",height:"2px",background:"#0A2E1F",marginBottom:"5px",borderRadius:"2px"}}/>
+            <div style={{width:"22px",height:"2px",background:"#0A2E1F",borderRadius:"2px"}}/>
+          </button>
         </div>
-        <div style={{display:"flex",gap:"16px",alignItems:"center"}}>
-          <a href="/business" style={{color:"#555",textDecoration:"none",fontSize:"14px",fontWeight:"500"}}>For Businesses</a>
-          <a href="/map" style={{background:"#1D9E75",color:"white",padding:"10px 22px",borderRadius:"9px",textDecoration:"none",fontSize:"14px",fontWeight:"600"}}>Find a Restroom</a>
-        </div>
+
+        {menuOpen && (
+          <div style={{borderTop:"1px solid #f0f0f0",paddingTop:"14px",marginTop:"14px",display:"flex",flexDirection:"column",gap:"10px"}}>
+            <div style={{display:"flex",gap:"8px",alignItems:"center"}}>
+              <span style={{fontSize:"13px",color:"#555",fontWeight:"500"}}>Language:</span>
+              <div style={{display:"flex",background:"#f5f5f5",borderRadius:"8px",padding:"3px"}}>
+                <button onClick={()=>setLang('en')} style={{padding:"5px 12px",borderRadius:"6px",border:"none",fontSize:"12px",fontWeight:"700",cursor:"pointer",background:lang==='en'?"white":"transparent",color:lang==='en'?"#0A2E1F":"#999"}}>🇺🇸</button>
+                <button onClick={()=>setLang('es')} style={{padding:"5px 12px",borderRadius:"6px",border:"none",fontSize:"12px",fontWeight:"700",cursor:"pointer",background:lang==='es'?"white":"transparent",color:lang==='es'?"#0A2E1F":"#999"}}>🇲🇽</button>
+              </div>
+            </div>
+            {user ? (
+              <>
+                <div style={{display:"flex",alignItems:"center",gap:"10px",padding:"4px 0"}}>
+                  <div style={{width:"26px",height:"26px",borderRadius:"50%",background:profileColor}}/>
+                  <span style={{fontSize:"14px",color:"#0A2E1F",fontWeight:"600"}}>{displayName}</span>
+                </div>
+                <button onClick={handleSignOut} style={{background:"#f5f5f5",border:"none",padding:"11px",borderRadius:"9px",fontSize:"14px",fontWeight:"600",cursor:"pointer",color:"#555",textAlign:"left"}}>{t.signOut}</button>
+              </>
+            ) : (
+              <>
+                <button onClick={()=>{setShowAuth(true);setAuthMode('signin');setMessage('');setMenuOpen(false)}} style={{background:"white",color:"#0A2E1F",padding:"11px",borderRadius:"9px",border:"1.5px solid #e0e0e0",fontSize:"14px",fontWeight:"600",cursor:"pointer"}}>{t.signIn}</button>
+                <button onClick={()=>{setShowAuth(true);setAuthMode('signup');setMessage('');setMenuOpen(false)}} style={{background:"#1D9E75",color:"white",padding:"11px",borderRadius:"9px",border:"none",fontSize:"14px",fontWeight:"600",cursor:"pointer"}}>{t.signUp}</button>
+              </>
+            )}
+            <a href="/business" onClick={()=>setMenuOpen(false)} style={{color:"#555",textDecoration:"none",fontSize:"14px",fontWeight:"500",padding:"4px 0"}}>{t.forBusinesses}</a>
+            <a href="/map" onClick={()=>setMenuOpen(false)} style={{background:"#0A2E1F",color:"white",padding:"11px",borderRadius:"9px",textDecoration:"none",fontSize:"14px",fontWeight:"600",textAlign:"center"}}>{t.findRestroom}</a>
+          </div>
+        )}
       </nav>
 
-      <section style={{textAlign:"center",padding:"90px 20px 70px",background:"linear-gradient(180deg,#f0faf6 0%,#fff 100%)"}}>
-        <div style={{display:"inline-block",background:"#E1F5EE",color:"#0F6E56",fontSize:"13px",padding:"6px 18px",borderRadius:"20px",marginBottom:"28px",fontWeight:"600",letterSpacing:"0.3px"}}>
-          Now in Orange County, CA
+      {!user && (
+        <div style={{background:"#E1F5EE",borderBottom:"1px solid #9FE1CB",padding:"12px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"10px"}}>
+          <p style={{margin:0,fontSize:"13px",color:"#0F6E56",fontWeight:"500"}}>🚽 {t.bannerText}</p>
+          <button onClick={()=>{setShowAuth(true);setAuthMode('signup')}} style={{background:"#1D9E75",color:"white",border:"none",padding:"8px 18px",borderRadius:"8px",fontSize:"13px",fontWeight:"700",cursor:"pointer",whiteSpace:"nowrap"}}>{t.joinFree}</button>
         </div>
-        <h1 style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"56px",fontWeight:"700",color:"#0A2E1F",lineHeight:"1.15",marginBottom:"22px",letterSpacing:"-2px"}}>
-          Get the PIN.<br/>
-          <span style={{color:"#1D9E75"}}>Use a clean restroom.</span>
+      )}
+
+      {user && (
+        <div style={{background:"#E1F5EE",borderBottom:"1px solid #9FE1CB",padding:"12px 20px",display:"flex",alignItems:"center",gap:"10px"}}>
+          <div style={{width:"10px",height:"10px",borderRadius:"50%",background:profileColor}}/>
+          <p style={{margin:0,fontSize:"13px",color:"#0F6E56",fontWeight:"600"}}>{t.welcomeBack}, {displayName}! {t.thankYou}</p>
+        </div>
+      )}
+
+      <section style={{textAlign:"center",padding:"70px 20px 60px",background:"linear-gradient(180deg,#f0faf6 0%,#fff 100%)"}}>
+        <div style={{display:"inline-block",background:"#E1F5EE",color:"#0F6E56",fontSize:"13px",padding:"6px 18px",borderRadius:"20px",marginBottom:"24px",fontWeight:"600"}}>{t.badge}</div>
+        <h1 style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"clamp(32px,7vw,56px)",fontWeight:"700",color:"#0A2E1F",lineHeight:"1.15",marginBottom:"20px",letterSpacing:"-1.5px"}}>
+          {t.heroTitle1}<br/><span style={{color:"#1D9E75"}}>{t.heroTitle2}</span>
         </h1>
-        <p style={{fontSize:"18px",color:"#666",maxWidth:"500px",margin:"0 auto 44px",lineHeight:"1.7",fontWeight:"400"}}>
-          Find restroom PIN codes at nearby businesses. See real cleanliness scores. Help your community.
-        </p>
-        <div style={{display:"flex",gap:"14px",justifyContent:"center",flexWrap:"wrap"}}>
-          <a href="/map" style={{background:"#1D9E75",color:"white",padding:"15px 36px",borderRadius:"11px",textDecoration:"none",fontSize:"16px",fontWeight:"700",letterSpacing:"-0.3px"}}>Find a Restroom</a>
-          <a href="/business" style={{background:"white",color:"#0A2E1F",padding:"15px 36px",borderRadius:"11px",textDecoration:"none",fontSize:"16px",border:"1.5px solid #e0e0e0",fontWeight:"600"}}>For Businesses</a>
+        <p style={{fontSize:"clamp(15px,3vw,18px)",color:"#666",maxWidth:"500px",margin:"0 auto 40px",lineHeight:"1.7"}}>{t.heroDesc}</p>
+        <div style={{display:"flex",gap:"12px",justifyContent:"center",flexWrap:"wrap"}}>
+          <a href="/map" style={{background:"#1D9E75",color:"white",padding:"14px 32px",borderRadius:"11px",textDecoration:"none",fontSize:"16px",fontWeight:"700"}}>{t.findBtn}</a>
+          <a href="/business" style={{background:"white",color:"#0A2E1F",padding:"14px 32px",borderRadius:"11px",textDecoration:"none",fontSize:"16px",border:"1.5px solid #e0e0e0",fontWeight:"600"}}>{t.businessBtn}</a>
         </div>
       </section>
 
-      <section style={{padding:"0 40px 70px",maxWidth:"920px",margin:"0 auto"}}>
-        <div style={{background:"#E1F5EE",borderRadius:"18px",padding:"28px",border:"1px solid #9FE1CB"}}>
-          <p style={{fontSize:"13px",color:"#0F6E56",fontWeight:"600",marginBottom:"18px"}}>Restrooms near you — Irvine, CA</p>
-          <div style={{display:"flex",gap:"14px",flexWrap:"wrap"}}>
+      <CounterSection/>
+
+      <section style={{padding:"0 20px 60px",maxWidth:"920px",margin:"0 auto"}}>
+        <div style={{background:"#E1F5EE",borderRadius:"18px",padding:"24px",border:"1px solid #9FE1CB"}}>
+          <p style={{fontSize:"13px",color:"#0F6E56",fontWeight:"600",marginBottom:"16px"}}>
+            {lang==='es'?'Baños cerca de ti — Irvine, CA':'Restrooms near you — Irvine, CA'}
+          </p>
+          <div style={{display:"flex",gap:"12px",flexWrap:"wrap"}}>
             {[
               {name:"Philz Coffee",area:"Irvine Spectrum · 0.1 mi",pin:"2580",stars:"★★★★★",score:"5.0",dot:"#1D9E75",blur:false},
               {name:"Panera Bread",area:"Culver Dr · 0.4 mi",pin:"1379",stars:"★★★☆☆",score:"3.1",dot:"#D97706",blur:false},
               {name:"Barnes & Noble",area:"Alton Pkwy · 0.7 mi",pin:"????",stars:"",score:"",dot:"#DC2626",blur:true},
             ].map((r,i)=>(
-              <div key={i} style={{background:"white",borderRadius:"13px",padding:"16px 18px",flex:"1",minWidth:"165px",boxShadow:"0 2px 10px rgba(0,0,0,0.06)"}}>
+              <div key={i} style={{background:"white",borderRadius:"13px",padding:"16px",flex:"1",minWidth:"150px",boxShadow:"0 2px 10px rgba(0,0,0,0.06)"}}>
                 <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"7px"}}>
                   <div style={{width:"10px",height:"10px",borderRadius:"50%",background:r.dot,flexShrink:0}}/>
-                  <span style={{fontSize:"13px",fontWeight:"700",color:"#0A2E1F",fontFamily:"'Space Grotesk','Inter',sans-serif"}}>{r.name}</span>
+                  <span style={{fontSize:"13px",fontWeight:"700",color:"#0A2E1F"}}>{r.name}</span>
                 </div>
-                <div style={{fontSize:"11px",color:"#999",marginBottom:"11px"}}>{r.area}</div>
-                <div style={{background:r.blur?"#f5f5f5":"#E1F5EE",color:r.blur?"#bbb":"#085041",fontSize:"15px",fontWeight:"700",padding:"6px 13px",borderRadius:"8px",display:"inline-block",letterSpacing:"2.5px",filter:r.blur?"blur(4px)":"none"}}>{r.pin}</div>
-                {r.blur && <div style={{fontSize:"11px",color:"#DC2626",marginTop:"7px",fontWeight:"500"}}>PIN unknown. Tap to report.</div>}
-                {r.stars && <div style={{color:"#D97706",fontSize:"12px",marginTop:"7px",fontWeight:"500"}}>{r.stars} {r.score}</div>}
+                <div style={{fontSize:"11px",color:"#999",marginBottom:"10px"}}>{r.area}</div>
+                <div style={{background:r.blur?"#f5f5f5":"#E1F5EE",color:r.blur?"#bbb":"#085041",fontSize:"15px",fontWeight:"700",padding:"6px 12px",borderRadius:"8px",display:"inline-block",letterSpacing:"2px",filter:r.blur?"blur(4px)":"none"}}>{r.pin}</div>
+                {r.blur&&<div style={{fontSize:"11px",color:"#DC2626",marginTop:"7px",fontWeight:"500"}}>{lang==='es'?'Código desconocido. Toca para reportar.':'PIN unknown. Tap to report.'}</div>}
+                {r.stars&&<div style={{color:"#D97706",fontSize:"12px",marginTop:"7px"}}>{r.stars} {r.score}</div>}
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section style={{padding:"20px 40px 70px",maxWidth:"920px",margin:"0 auto"}}>
-        <h2 style={{textAlign:"center",fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"32px",fontWeight:"700",color:"#0A2E1F",marginBottom:"10px",letterSpacing:"-1px"}}>Everything you need on the map.</h2>
-        <p style={{textAlign:"center",color:"#999",marginBottom:"40px",fontSize:"15px"}}>Find it. Rate it. Flush it.</p>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))",gap:"16px"}}>
+      <section style={{padding:"0 20px 60px",maxWidth:"920px",margin:"0 auto"}}>
+        <h2 style={{textAlign:"center",fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"clamp(24px,5vw,32px)",fontWeight:"700",color:"#0A2E1F",marginBottom:"10px",letterSpacing:"-1px"}}>
+          {lang==='es'?'Todo lo que necesitas en el mapa.':'Everything you need on the map.'}
+        </h2>
+        <p style={{textAlign:"center",color:"#999",marginBottom:"36px",fontSize:"15px"}}>{t.footerSlogan}</p>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:"14px"}}>
           {[
-            {icon:"🔑",title:"Get the PIN",desc:"See the restroom PIN for any nearby business instantly."},
-            {icon:"⭐",title:"Cleanliness score",desc:"Real ratings from real people who were just there."},
-            {icon:"📍",title:"Map view",desc:"Filter by distance, rating, and accessibility."},
-            {icon:"🚨",title:"Emergency mode",desc:"Need one now? Get the nearest clean restroom fast."},
+            {icon:"🔑",title:lang==='es'?'Encuentra acceso':'Find access',desc:lang==='es'?'Información de acceso al baño de negocios cercanos.':'Restroom access information for nearby businesses.'},
+            {icon:"⭐",title:lang==='es'?'Puntuación de limpieza':'Cleanliness score',desc:lang==='es'?'Calificaciones reales de personas que estuvieron ahí.':'Real ratings from real people who were just there.'},
+            {icon:"📍",title:lang==='es'?'Vista de mapa':'Map view',desc:lang==='es'?'Filtra por distancia, calificación y accesibilidad.':'Filter by distance, rating, and accessibility.'},
+            {icon:"🚨",title:lang==='es'?'Modo urgente':'Urgent mode',desc:lang==='es'?'¿Lo necesitas ya? Encuentra el baño verificado más cercano.':'Need one now? Get the nearest verified restroom fast.'},
           ].map((f,i)=>(
-            <div key={i} style={{background:"#f8f8f8",borderRadius:"14px",padding:"24px",border:"1px solid #eee"}}>
-              <div style={{fontSize:"30px",marginBottom:"14px"}}>{f.icon}</div>
-              <div style={{fontSize:"14px",fontWeight:"700",color:"#0A2E1F",marginBottom:"7px",fontFamily:"'Space Grotesk','Inter',sans-serif"}}>{f.title}</div>
-              <div style={{fontSize:"13px",color:"#888",lineHeight:"1.65"}}>{f.desc}</div>
+            <div key={i} style={{background:"#f8f8f8",borderRadius:"14px",padding:"22px",border:"1px solid #eee"}}>
+              <div style={{fontSize:"28px",marginBottom:"12px"}}>{f.icon}</div>
+              <div style={{fontSize:"14px",fontWeight:"700",color:"#0A2E1F",marginBottom:"6px"}}>{f.title}</div>
+              <div style={{fontSize:"13px",color:"#888",lineHeight:"1.6"}}>{f.desc}</div>
             </div>
           ))}
         </div>
       </section>
 
-      <section style={{padding:"0 40px 70px",maxWidth:"920px",margin:"0 auto"}}>
-        <div style={{background:"#0A2E1F",borderRadius:"18px",padding:"32px 36px",display:"flex",alignItems:"center",gap:"24px",flexWrap:"wrap"}}>
-          <div style={{width:"64px",height:"64px",background:"#1D9E75",borderRadius:"16px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"4px",flexShrink:0}}>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"3px",width:"30px"}}>
-              {[1,1,1,1,1,1,0,1,0].map((v,i)=>(
-                <div key={i} style={{width:"7px",height:"7px",borderRadius:"50%",background:v?"rgba(255,255,255,0.95)":"rgba(255,255,255,0.15)"}}/>
-              ))}
+      <section style={{padding:"0 20px 60px",maxWidth:"920px",margin:"0 auto"}}>
+        <div style={{background:"#0A2E1F",borderRadius:"18px",padding:"32px 28px"}}>
+          <div style={{display:"flex",alignItems:"flex-start",gap:"16px",marginBottom:"20px",flexWrap:"wrap"}}>
+            <div style={{fontSize:"36px",flexShrink:0}}>⚖️</div>
+            <div style={{flex:1,minWidth:"200px"}}>
+              <div style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"20px",fontWeight:"700",color:"white",marginBottom:"10px"}}>
+                {lang==='es'?'¿Eres dueño de un negocio?':'Are you a business owner?'}
+              </div>
+              <div style={{fontSize:"14px",color:"#9FE1CB",lineHeight:"1.8",marginBottom:"8px"}}>
+                {lang==='es'
+                  ?'FlushPin es una plataforma comunitaria. Si prefieres que tu negocio no aparezca en nuestra lista, respetamos tu decisión al instante.'
+                  :'FlushPin is a community platform that helps people find nearby restroom access. If you prefer your business not to be listed, we fully respect that decision.'
+                }
+              </div>
+              <div style={{fontSize:"14px",color:"#9FE1CB",lineHeight:"1.8",marginBottom:"16px"}}>
+                {lang==='es'
+                  ?'Al completar el formulario, tu negocio aparecerá marcado como "Baño no disponible al público" — documentado con tu nombre como representante autorizado.'
+                  :'By completing our opt-out form, your business will be marked as "Restroom not available to the public" — documented with your name and title as authorized representative.'
+                }
+              </div>
+              <div style={{background:"rgba(255,255,255,0.07)",borderRadius:"10px",padding:"14px 16px",marginBottom:"20px",border:"1px solid rgba(255,255,255,0.1)"}}>
+                <p style={{fontSize:"13px",color:"#9FE1CB",margin:0,lineHeight:"1.7"}}>
+                  {lang==='es'
+                    ?'📋 Su solicitud queda registrada oficialmente como evidencia de su decisión voluntaria.'
+                    :'📋 Your request is officially logged as evidence of your voluntary decision — protecting both you and FlushPin legally.'
+                  }
+                </p>
+              </div>
+              <a href="/optout" style={{display:"inline-flex",alignItems:"center",gap:"8px",background:"#1D9E75",color:"white",padding:"12px 24px",borderRadius:"10px",textDecoration:"none",fontSize:"14px",fontWeight:"700"}}>
+                {lang==='es'?'Solicitar exclusión →':'Request opt-out →'}
+              </a>
             </div>
-            <div style={{width:0,height:0,borderLeft:"6px solid transparent",borderRight:"6px solid transparent",borderTop:"10px solid #1D9E75",marginTop:"-1px"}}/>
           </div>
-          <div style={{flex:1,minWidth:"200px"}}>
-            <div style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"20px",fontWeight:"700",color:"white",marginBottom:"8px"}}>The FlushPin Award</div>
-            <div style={{fontSize:"14px",color:"#9FE1CB",lineHeight:"1.7",marginBottom:"14px"}}>Businesses with a FlushScore of 4.8 or above earn our Certified Clean badge. Displayed on their profile and as a door sticker customers can trust.</div>
-            <div style={{display:"inline-flex",alignItems:"center",gap:"6px",background:"#1D9E75",color:"white",fontSize:"12px",padding:"7px 16px",borderRadius:"20px",fontWeight:"600"}}>FlushScore 4.8 or above</div>
+        </div>
+      </section>
+      <section style={{padding:"0 20px 60px",maxWidth:"920px",margin:"0 auto",display:"none"}}>
+        <div style={{background:"#0A2E1F",borderRadius:"18px",padding:"28px 24px",display:"flex",alignItems:"center",gap:"20px",flexWrap:"wrap"}}>
+          <div style={{width:"56px",height:"56px",background:"#1D9E75",borderRadius:"14px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"3px",flexShrink:0}}>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"3px",width:"26px"}}>
+              {[1,1,1,1,1,1,0,1,0].map((v,i)=>(<div key={i} style={{width:"6px",height:"6px",borderRadius:"50%",background:v?"rgba(255,255,255,0.95)":"rgba(255,255,255,0.15)"}}/>))}
+            </div>
+            <div style={{width:0,height:0,borderLeft:"5px solid transparent",borderRight:"5px solid transparent",borderTop:"8px solid #1D9E75",marginTop:"-1px"}}/>
+          </div>
+          <div style={{flex:1,minWidth:"180px"}}>
+            <div style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"18px",fontWeight:"700",color:"white",marginBottom:"8px"}}>
+              {lang==='es'?'El Premio FlushPin':'The FlushPin Award'}
+            </div>
+            <div style={{fontSize:"14px",color:"#9FE1CB",lineHeight:"1.7",marginBottom:"12px"}}>
+              {lang==='es'?'Los negocios con un FlushScore de 4.8 o más reciben nuestra insignia de baño certificado — mostrada en su perfil y como sticker en la puerta.':'Businesses with a FlushScore of 4.8 or above earn our Certified Clean badge — displayed on their profile and as a door sticker.'}
+            </div>
+            <div style={{display:"inline-flex",alignItems:"center",gap:"6px",background:"#1D9E75",color:"white",fontSize:"12px",padding:"6px 14px",borderRadius:"20px",fontWeight:"600"}}>FlushScore 4.8+</div>
           </div>
         </div>
       </section>
 
-      <section style={{padding:"0 40px 70px",maxWidth:"920px",margin:"0 auto",textAlign:"center"}}>
-        <p style={{fontSize:"12px",fontWeight:"600",color:"#bbb",marginBottom:"14px",letterSpacing:"1px"}}>STARTING IN ORANGE COUNTY</p>
+      <section style={{padding:"0 20px 60px",maxWidth:"920px",margin:"0 auto",textAlign:"center"}}>
+        <p style={{fontSize:"12px",fontWeight:"600",color:"#bbb",marginBottom:"12px",letterSpacing:"1px"}}>
+          {lang==='es'?'COMENZANDO EN CALIFORNIA':'STARTING IN CALIFORNIA'}
+        </p>
         <div style={{display:"flex",gap:"8px",flexWrap:"wrap",justifyContent:"center"}}>
-          {["Irvine","Newport Beach","Anaheim","Santa Ana","Huntington Beach","Costa Mesa","More coming"].map((c,i)=>(
-            <span key={i} style={{background:i<2?"#E1F5EE":"#f5f5f5",color:i<2?"#0F6E56":"#aaa",border:i<2?"1px solid #9FE1CB":"1px solid #eee",borderRadius:"20px",fontSize:"13px",padding:"7px 18px",fontWeight:i<2?"600":"400"}}>{c}</span>
+          {["Beverly Hills","Newport Beach","Malibu","Palo Alto","Santa Barbara","La Jolla","Bel Air","Laguna Beach","Carmel","Rancho Santa Fe"].map((c,i)=>(
+            <span key={i} style={{background:"#E1F5EE",color:"#0F6E56",border:"1px solid #9FE1CB",borderRadius:"20px",fontSize:"13px",padding:"6px 16px",fontWeight:i<3?"600":"400"}}>{c}</span>
           ))}
         </div>
       </section>
 
-      <footer style={{background:"#0A2E1F",padding:"36px 40px",textAlign:"center"}}>
+      <footer style={{background:"#0A2E1F",padding:"32px 20px",textAlign:"center"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:"10px",marginBottom:"10px"}}>
-          <div style={{width:"32px",height:"32px",background:"#1D9E75",borderRadius:"8px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"3px"}}>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"2px",width:"18px"}}>
-              {[1,1,1,1,1,1,0,1,0].map((v,i)=>(
-                <div key={i} style={{width:"4px",height:"4px",borderRadius:"50%",background:v?"rgba(255,255,255,0.95)":"rgba(255,255,255,0.15)"}}/>
-              ))}
+          <div style={{width:"30px",height:"30px",background:"#1D9E75",borderRadius:"8px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"2px"}}>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"2px",width:"16px"}}>
+              {[1,1,1,1,1,1,0,1,0].map((v,i)=>(<div key={i} style={{width:"4px",height:"4px",borderRadius:"50%",background:v?"rgba(255,255,255,0.95)":"rgba(255,255,255,0.15)"}}/>))}
             </div>
-            <div style={{width:0,height:0,borderLeft:"4px solid transparent",borderRight:"4px solid transparent",borderTop:"6px solid #1D9E75",marginTop:"-1px"}}/>
+            <div style={{width:0,height:0,borderLeft:"3px solid transparent",borderRight:"3px solid transparent",borderTop:"5px solid #1D9E75",marginTop:"-1px"}}/>
           </div>
-          <span style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"20px",fontWeight:"700",color:"white",letterSpacing:"-0.5px"}}>FlushPin</span>
+          <span style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"18px",fontWeight:"700",color:"white",letterSpacing:"-0.5px"}}>FlushPin</span>
         </div>
-        <div style={{fontSize:"12px",color:"#5DCAA5",letterSpacing:"0.5px",marginBottom:"6px"}}>flushpin.com — Orange County, California</div>
-        <div style={{fontSize:"11px",color:"#2D6A4F"}}>Find it. Rate it. Flush it.</div>
+        <div style={{fontSize:"12px",color:"#5DCAA5",marginBottom:"6px"}}>flushpin.com — California</div>
+        <div style={{fontSize:"11px",color:"#2D6A4F",marginBottom:"14px"}}>{t.footerSlogan}</div>
+        <div style={{display:"flex",gap:"16px",justifyContent:"center",flexWrap:"wrap"}}>
+          <a href="/privacy" style={{color:"#5DCAA5",fontSize:"12px",textDecoration:"none"}}>{t.privacy}</a>
+          <a href="/terms" style={{color:"#5DCAA5",fontSize:"12px",textDecoration:"none"}}>{t.terms}</a>
+          <a href="/contact" style={{color:"#5DCAA5",fontSize:"12px",textDecoration:"none"}}>{t.contact}</a>
+        </div>
+        <p style={{color:"#2D6A4F",fontSize:"11px",marginTop:"12px"}}>© 2025 FlushPin. All rights reserved.</p>
       </footer>
+
+      {showAuth && (
+        <div onClick={()=>{setShowAuth(false);setMessage('')}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:100,display:"flex",alignItems:"center",justifyContent:"center",padding:"16px"}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"white",borderRadius:"20px",padding:"28px 24px",width:"100%",maxWidth:"400px",maxHeight:"90vh",overflowY:"auto"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"22px"}}>
+              <h2 style={{margin:0,fontSize:"20px",fontWeight:"700",color:"#0A2E1F"}}>{authMode==='signup'?t.joinFlushPin:t.welcomeBack}</h2>
+              <button onClick={()=>{setShowAuth(false);setMessage('')}} style={{background:"none",border:"none",fontSize:"24px",cursor:"pointer",color:"#999"}}>✕</button>
+            </div>
+
+            <div style={{display:"flex",background:"#f5f5f5",borderRadius:"10px",padding:"4px",marginBottom:"20px"}}>
+              <button onClick={()=>{setAuthMode('signup');setMessage('')}} style={{flex:1,padding:"8px",borderRadius:"8px",border:"none",fontSize:"13px",fontWeight:"600",cursor:"pointer",background:authMode==='signup'?"white":"transparent",color:authMode==='signup'?"#0A2E1F":"#666",boxShadow:authMode==='signup'?"0 1px 4px rgba(0,0,0,0.1)":"none"}}>{t.signUp}</button>
+              <button onClick={()=>{setAuthMode('signin');setMessage('')}} style={{flex:1,padding:"8px",borderRadius:"8px",border:"none",fontSize:"13px",fontWeight:"600",cursor:"pointer",background:authMode==='signin'?"white":"transparent",color:authMode==='signin'?"#0A2E1F":"#666",boxShadow:authMode==='signin'?"0 1px 4px rgba(0,0,0,0.1)":"none"}}>{t.signIn}</button>
+            </div>
+
+            <button onClick={handleGoogleSignIn} style={{width:"100%",background:"white",color:"#333",border:"1.5px solid #e0e0e0",padding:"12px",borderRadius:"10px",fontSize:"14px",fontWeight:"600",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:"10px",marginBottom:"16px"}}>
+              <svg width="18" height="18" viewBox="0 0 18 18">
+                <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+                <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
+                <path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/>
+                <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+              </svg>
+              {t.continueGoogle}
+            </button>
+
+            <div style={{display:"flex",alignItems:"center",gap:"12px",marginBottom:"16px"}}>
+              <div style={{flex:1,height:"1px",background:"#f0f0f0"}}/>
+              <span style={{fontSize:"12px",color:"#bbb"}}>or</span>
+              <div style={{flex:1,height:"1px",background:"#f0f0f0"}}/>
+            </div>
+
+            <div style={{display:"flex",flexDirection:"column",gap:"14px"}}>
+              {authMode==='signup' && (
+                <>
+                  <div>
+                    <label style={labelStyle}>{t.fullName}</label>
+                    <input style={inputStyle} placeholder="Jane Smith" value={fullName} onChange={e=>setFullName(e.target.value)}/>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>{t.profileColor}</label>
+                    <p style={{fontSize:"11px",color:"#999",margin:"0 0 8px"}}>{t.colorDesc}</p>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:"8px"}}>
+                      {COLOR_OPTIONS.map(color=>(
+                        <div key={color} onClick={()=>setSelectedColor(color)} style={{width:"28px",height:"28px",borderRadius:"50%",background:color,cursor:"pointer",border:selectedColor===color?"3px solid #0A2E1F":"3px solid transparent",boxSizing:"border-box",transform:selectedColor===color?"scale(1.15)":"scale(1)"}}/>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+              <div>
+                <label style={labelStyle}>{t.email}</label>
+                <input style={inputStyle} type="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)}/>
+              </div>
+              <div>
+                <label style={labelStyle}>{t.password}</label>
+                <input style={inputStyle} type="password" placeholder={t.passwordPlaceholder} value={password} onChange={e=>setPassword(e.target.value)}/>
+              </div>
+              {message && <p style={{fontSize:"13px",color:message.startsWith('✅')?'#1D9E75':message.startsWith('⚠️')?'#D97706':'#DC2626',margin:0,fontWeight:"500"}}>{message}</p>}
+              <button onClick={authMode==='signup'?handleSignUp:handleSignIn} disabled={loading} style={{background:"#1D9E75",color:"white",border:"none",padding:"14px",borderRadius:"10px",fontSize:"15px",fontWeight:"700",cursor:"pointer",opacity:loading?0.7:1}}>
+                {loading?'...':(authMode==='signup'?t.createAccount:t.signIn)}
+              </button>
+              {authMode==='signin' && <button onClick={()=>setAuthMode('signup')} style={{background:"none",border:"none",color:"#1D9E75",fontSize:"13px",fontWeight:"600",cursor:"pointer",padding:0}}>{t.forgotAccount}</button>}
+              {authMode==='signup' && <p style={{fontSize:"11px",color:"#888",margin:0,textAlign:"center",lineHeight:"1.6"}}>{t.disclaimer}</p>}
+            </div>
+          </div>
+        </div>
+      )}
 
     </main>
   )

@@ -1,0 +1,99 @@
+'use client'
+import { useState, useEffect, useRef } from 'react'
+
+function useCountUp(target: number, duration: number = 2000) {
+  const [count, setCount] = useState(0)
+  const ref = useRef<HTMLDivElement>(null)
+  const started = useRef(false)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !started.current) {
+        started.current = true
+        const start = Date.now()
+        const tick = () => {
+          const elapsed = Date.now() - start
+          const progress = Math.min(elapsed / duration, 1)
+          const eased = 1 - Math.pow(1 - progress, 3)
+          setCount(Math.floor(eased * target))
+          if (progress < 1) requestAnimationFrame(tick)
+          else setCount(target)
+        }
+        requestAnimationFrame(tick)
+      }
+    }, { threshold: 0.3 })
+    if (ref.current) observer.observe(ref.current)
+    return () => observer.disconnect()
+  }, [target, duration])
+
+  return { count, ref }
+}
+
+export default function CounterSection() {
+  const { count: pins, ref } = useCountUp(38)
+  const { count: venues, ref: ref2 } = useCountUp(38)
+  const { count: cities, ref: ref3 } = useCountUp(4)
+  const [pulse, setPulse] = useState(true)
+
+  useEffect(() => {
+    const interval = setInterval(() => setPulse(p => !p), 1400)
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <section style={{padding:'0 40px 70px',maxWidth:'920px',margin:'0 auto'}}>
+      <div style={{background:'linear-gradient(135deg,#0A2E1F 0%,#1a4a32 100%)',borderRadius:'20px',padding:'40px 32px',position:'relative',overflow:'hidden'}}>
+
+        <div style={{position:'absolute',inset:0,opacity:0.06}}>
+          {[...Array(24)].map((_,i)=>(
+            <div key={i} style={{position:'absolute',width:'6px',height:'6px',borderRadius:'50%',background:'white',left:`${(i%6)*20+5}%`,top:`${Math.floor(i/6)*28+10}%`}}/>
+          ))}
+        </div>
+
+        <div style={{display:'flex',justifyContent:'center',marginBottom:'28px'}}>
+          <div style={{display:'inline-flex',alignItems:'center',gap:'8px',background:'rgba(29,158,117,0.2)',border:'1px solid rgba(29,158,117,0.4)',borderRadius:'20px',padding:'6px 16px'}}>
+            <div style={{width:'8px',height:'8px',borderRadius:'50%',background:'#1D9E75',boxShadow:pulse?'0 0 0 4px rgba(29,158,117,0.3)':'0 0 0 0px rgba(29,158,117,0)',transition:'box-shadow 0.7s ease'}}/>
+            <span style={{fontSize:'12px',fontWeight:'700',color:'#5DCAA5',letterSpacing:'0.5px'}}>LIVE · CALIFORNIA</span>
+          </div>
+        </div>
+
+        <div style={{display:'flex',gap:'16px',flexWrap:'wrap',justifyContent:'center',marginBottom:'32px'}}>
+          <div ref={ref} style={{textAlign:'center',flex:'1',minWidth:'160px'}}>
+            <div style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:'48px',fontWeight:'700',color:'white',letterSpacing:'-2px',lineHeight:1}}>
+              {pins.toLocaleString()}<span style={{color:'#1D9E75',fontSize:'36px'}}>+</span>
+            </div>
+            <div style={{fontSize:'14px',fontWeight:'700',color:'#9FE1CB',marginTop:'8px'}}>PIN codes unlocked</div>
+            <div style={{fontSize:'12px',color:'#5DCAA5',marginTop:'4px'}}>and growing daily</div>
+          </div>
+
+          <div style={{width:'1px',background:'rgba(255,255,255,0.1)',alignSelf:'stretch',margin:'0 8px'}}/>
+
+          <div ref={ref2} style={{textAlign:'center',flex:'1',minWidth:'160px'}}>
+            <div style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:'48px',fontWeight:'700',color:'white',letterSpacing:'-2px',lineHeight:1}}>
+              {venues.toLocaleString()}<span style={{color:'#1D9E75',fontSize:'36px'}}>+</span>
+            </div>
+            <div style={{fontSize:'14px',fontWeight:'700',color:'#9FE1CB',marginTop:'8px'}}>venues mapped</div>
+            <div style={{fontSize:'12px',color:'#5DCAA5',marginTop:'4px'}}>cafes, restaurants & more</div>
+          </div>
+
+          <div style={{width:'1px',background:'rgba(255,255,255,0.1)',alignSelf:'stretch',margin:'0 8px'}}/>
+
+          <div ref={ref3} style={{textAlign:'center',flex:'1',minWidth:'160px'}}>
+            <div style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:'48px',fontWeight:'700',color:'white',letterSpacing:'-2px',lineHeight:1}}>
+              {cities.toLocaleString()}<span style={{color:'#1D9E75',fontSize:'36px'}}>+</span>
+            </div>
+            <div style={{fontSize:'14px',fontWeight:'700',color:'#9FE1CB',marginTop:'8px'}}>cities covered</div>
+            <div style={{fontSize:'12px',color:'#5DCAA5',marginTop:'4px'}}>across California</div>
+          </div>
+        </div>
+
+        <div style={{textAlign:'center'}}>
+          <p style={{fontSize:'13px',color:'#5DCAA5',margin:0,fontStyle:'italic'}}>
+            "Finally, I don't have to ask the barista anymore." — FlushPin user, California
+          </p>
+        </div>
+
+      </div>
+    </section>
+  )
+}
