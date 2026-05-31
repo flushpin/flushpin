@@ -32,6 +32,7 @@ export default function AdminDashboard() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<TabType>('overview')
   const [loading, setLoading] = useState(true)
+  const [authed, setAuthed] = useState(false)
   const [stats, setStats] = useState({
     totalToday: 0, pending: 0, approved: 0, rejected: 0,
     optoutRequests: 0, flaggedCount: 0, totalRestrooms: 0,
@@ -45,10 +46,11 @@ export default function AdminDashboard() {
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession()
-      if (false) {
-        router.push('/')
+      if (!session || session.user.email !== ADMIN_EMAIL) {
+        setLoading(false)
         return
       }
+      setAuthed(true)
       await loadAllData()
       setLoading(false)
     }
@@ -139,6 +141,18 @@ export default function AdminDashboard() {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0f172a' }}>
         <div style={{ color: '#60a5fa', fontSize: '18px' }}>Loading Admin Panel...</div>
+      </div>
+    )
+  }
+
+  if (!authed) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0f172a' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🚫</div>
+          <div style={{ color: '#ef4444', fontSize: '20px', fontWeight: 700 }}>Access Denied</div>
+          <div style={{ color: '#64748b', marginTop: '8px' }}>Admins only.</div>
+        </div>
       </div>
     )
   }
