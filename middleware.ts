@@ -5,9 +5,15 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   if (pathname.startsWith('/admin')) {
-    const token = request.cookies.getAll().find(c => c.name.includes('auth-token') || c.name.includes('access-token'))
+    const cookies = request.cookies.getAll()
+    const hasAuth = cookies.some(c => 
+      c.name.includes('auth') || 
+      c.name.includes('token') || 
+      c.name.includes('session') ||
+      c.name.includes('sb-')
+    )
 
-    if (!token) {
+    if (!hasAuth) {
       return NextResponse.redirect(new URL('/?signin=true', request.url))
     }
   }
