@@ -13,6 +13,17 @@ function getDistance(lat1:number, lng1:number, lat2:number, lng2:number) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
 }
 
+function getDistanceMeters(lat1:number, lng1:number, lat2:number, lng2:number) {
+  return getDistance(lat1, lng1, lat2, lng2) * 1609.34
+}
+
+function nameSimilar(a:string, b:string) {
+  const clean = (s:string) => s.toLowerCase().replace(/[^a-z0-9]/g,'').trim()
+  const ca = clean(a)
+  const cb = clean(b)
+  return ca.includes(cb) || cb.includes(ca) || ca === cb
+}
+
 const Logo = () => (
   <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
     <div style={{width:'44px',height:'44px',background:'linear-gradient(135deg,#1D9E75,#0A5C42)',borderRadius:'12px',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'4px',boxShadow:'0 2px 8px rgba(29,158,117,0.4)'}}>
@@ -69,8 +80,16 @@ export default function FindPage() {
     const {data, error} = await supabase.from('restroom').select('*')
     const supabaseData = (!error && data) ? data : []
     const googlePlaces = await fetchGooglePlaces(lat, lng, keyword)
-    const supabaseIds = new Set(supabaseData.map((r:any) => r.name.toLowerCase()))
-    const newPlaces = googlePlaces.filter((p:any) => !supabaseIds.has(p.name.toLowerCase()))
+
+    // Duplicate kontrolü: isim benzerliği VEYA 100 metre mesafe
+    const newPlaces = googlePlaces.filter((gp:any) => {
+      return !supabaseData.some((sp:any) => {
+        const sameish = nameSimilar(sp.name, gp.name)
+        const tooClose = getDistanceMeters(sp.lat, sp.lng, gp.lat, gp.lng) < 100
+        return sameish || tooClose
+      })
+    })
+
     setRestrooms([...supabaseData, ...newPlaces])
     setLoading(false)
   }
@@ -142,10 +161,8 @@ export default function FindPage() {
   const handleEditSave = async () => {
     if (!editTarget.source) {
       await supabase.from('restroom').update({
-        pin:editEntry.pin.trim(),
-        accessible:editEntry.accessible,
-        status:editEntry.pin.trim()?'green':'red',
-        verified:'Just updated',
+        pin:editEntry.pin.trim(), accessible:editEntry.accessible,
+        status:editEntry.pin.trim()?'green':'red', verified:'Just updated',
       }).eq('id',editTarget.id)
     } else {
       await supabase.from('restroom').insert({
