@@ -1,0 +1,3 @@
+cd flushpin && npm run dev
+ls ~/Desktop/flushpin/src/app
+code ~/flushpin

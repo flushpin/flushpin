@@ -3,8 +3,9 @@ import SwRegister from './sw-register'
 import { LanguageProvider } from '../lib/LanguageContext'
 
 export const metadata: Metadata = {
-  title: 'FlushPin — Restroom access, made simple.',
-  description: 'Community-shared restroom access information for travelers, parents, and anyone in need.',
+  title: 'FlushPin — Find Restroom PIN Codes Near You',
+  description: 'Find restroom PIN codes and access codes at Starbucks, Panera, Target, and thousands of businesses near you. Free, community-powered restroom finder.',
+  keywords: 'restroom PIN code, bathroom code, restroom access, find bathroom near me, toilet code, restroom finder',
   manifest: '/manifest.json',
   themeColor: '#1D9E75',
   appleWebApp: {
@@ -13,6 +14,21 @@ export const metadata: Metadata = {
     title: 'FlushPin',
   },
   viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
+  openGraph: {
+    title: 'FlushPin — Find Restroom PIN Codes Near You',
+    description: 'Community-powered restroom PIN code finder. Starting in California, coming to New York, Chicago, Istanbul and beyond.',
+    url: 'https://www.flushpin.com',
+    siteName: 'FlushPin',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'FlushPin — Find Restroom PIN Codes Near You',
+    description: 'Find restroom PIN codes near you. Free, fast, community-powered.',
+  },
+  alternates: {
+    canonical: 'https://www.flushpin.com',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
