@@ -33,13 +33,15 @@ const businessFeatures = [
 ]
 
 const proFeatures = [
-  'Everything in Business',
-  'Multi-location dashboard',
-  'Regional comparison',
-  'Chain analytics',
-  'Benchmarking across locations',
-  'Corporate reporting exports',
-  'Dedicated account support',
+  'Everything in Business — plus:',
+  'See every location. Fix problems before customers do.',
+  'Know which locations are killing it — and which aren\'t.',
+  'Real-time alerts when a location gets flagged',
+  'SMS to your managers when restroom needs attention',
+  'Your restroom data, city by city — regional heat map',
+  'One report. Every location. Ready Monday morning.',
+  'Custom branded reports with your logo',
+  'A real human who knows your account',
 ]
 
 const insightRows = [
@@ -64,7 +66,7 @@ const faqs = [
   },
   {
     q: 'Can I manage multiple locations?',
-    a: 'Yes. Business Pro includes a multi-location dashboard with regional comparison, chain analytics, benchmarking, and corporate reporting.',
+    a: 'Yes. Business Pro includes a multi-location dashboard with regional comparison, chain analytics, real-time alerts, and SMS notifications to your field managers.',
   },
   {
     q: 'What if my restroom information is wrong on the map?',
@@ -98,7 +100,7 @@ export default function BusinessPage() {
     if (!form.name || !form.email || !form.business) return
     setSending(true)
     try {
-      await fetch(`https://formspree.io/f/${FORMSPREE_ID}`, {
+      const res = await fetch(`https://formspree.io/f/${FORMSPREE_ID}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -112,6 +114,7 @@ export default function BusinessPage() {
           message: form.message || '—',
         }),
       })
+      if (!res.ok) throw new Error('Form submit failed')
       setSent(true)
     } catch {
       alert('Something went wrong. Please try again.')
@@ -191,7 +194,7 @@ export default function BusinessPage() {
       {/* Insights preview */}
       <section id="insights-section" style={{ padding: '0 24px 72px', maxWidth: '1000px', margin: '0 auto' }}>
         <h2 style={sectionTitle}>Restroom intelligence, not guesswork</h2>
-        <p style={{ textAlign: 'center', color: '#999', marginBottom: '36px', fontSize: '15px', maxWidth: '520px', margin: '0 auto 36px', lineHeight: '1.6' }}>
+        <p style={{ textAlign: 'center', color: '#999', fontSize: '15px', maxWidth: '520px', margin: '0 auto 36px', lineHeight: '1.6' }}>
           Monthly reports built on restroom demand signals and access interest — responsibly worded, actionable for your team.
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: '24px', alignItems: 'start' }}>
@@ -225,55 +228,111 @@ export default function BusinessPage() {
       </section>
 
       {/* Pricing */}
-      <section style={{ padding: '0 24px 72px', maxWidth: '900px', margin: '0 auto' }}>
+      <section style={{ padding: '0 24px 72px', maxWidth: '960px', margin: '0 auto' }}>
         <h2 style={sectionTitle}>Plans built for business owners</h2>
         <p style={{ textAlign: 'center', color: '#999', marginBottom: '36px', fontSize: '15px' }}>Per location · No long-term contracts · Cancel anytime</p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: '20px', alignItems: 'start' }}>
-          <div style={{ background: '#E1F5EE', borderRadius: '20px', padding: '32px 28px', border: '2px solid #1D9E75', position: 'relative' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: '24px', alignItems: 'start' }}>
+
+          {/* Business Card */}
+          <div style={{ background: '#E1F5EE', borderRadius: '20px', padding: '36px 28px', border: '2px solid #1D9E75', position: 'relative' }}>
             <div style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', background: '#1D9E75', color: 'white', fontSize: '11px', fontWeight: '700', padding: '4px 14px', borderRadius: '20px', whiteSpace: 'nowrap' }}>
               Sweet spot
             </div>
-            <div style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: '22px', fontWeight: '700', color: '#0A2E1F', marginBottom: '8px' }}>Business</div>
+            <div style={{ fontSize: '12px', fontWeight: '700', color: '#1D9E75', letterSpacing: '1px', marginBottom: '8px', textTransform: 'uppercase' }}>For single locations</div>
+            <div style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: '24px', fontWeight: '800', color: '#0A2E1F', marginBottom: '8px' }}>Business</div>
             <div style={{ marginBottom: '8px' }}>
-              <span style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: '40px', fontWeight: '700', color: '#0A2E1F' }}>$49</span>
+              <span style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: '44px', fontWeight: '800', color: '#0A2E1F' }}>$49</span>
               <span style={{ fontSize: '15px', color: '#0F6E56' }}>/location/mo</span>
             </div>
-            <p style={{ fontSize: '14px', color: '#555', lineHeight: '1.6', marginBottom: '24px' }}>
+            <p style={{ fontSize: '14px', color: '#555', lineHeight: '1.6', marginBottom: '28px' }}>
               For single-location owners who want restroom intelligence and customer recovery tools.
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '28px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
               {businessFeatures.map((f, j) => (
-                <div key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                  <span style={{ color: '#1D9E75', fontWeight: '700', flexShrink: 0 }}>✓</span>
+                <div key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                  <span style={{ color: '#1D9E75', fontWeight: '700', flexShrink: 0, fontSize: '16px' }}>✓</span>
                   <span style={{ fontSize: '14px', color: '#444', lineHeight: '1.5' }}>{f}</span>
                 </div>
               ))}
             </div>
-            <button onClick={() => { setForm(p => ({ ...p, plan: 'Business' })); setShowDemo(true) }} style={{ width: '100%', background: '#1D9E75', color: 'white', border: 'none', padding: '14px', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: 'pointer' }}>
+            <button onClick={() => { setForm(p => ({ ...p, plan: 'Business' })); setShowDemo(true) }}
+              style={{ width: '100%', background: '#1D9E75', color: 'white', border: 'none', padding: '15px', borderRadius: '11px', fontSize: '15px', fontWeight: '700', cursor: 'pointer' }}>
               Book a Demo
             </button>
           </div>
 
-          <div style={{ background: '#0A2E1F', borderRadius: '20px', padding: '32px 28px', border: '2px solid transparent' }}>
-            <div style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: '22px', fontWeight: '700', color: 'white', marginBottom: '8px' }}>Business Pro</div>
-            <div style={{ marginBottom: '8px' }}>
-              <span style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: '40px', fontWeight: '700', color: 'white' }}>$149</span>
-              <span style={{ fontSize: '15px', color: '#9FE1CB' }}>/location/mo</span>
+          {/* Pro Card */}
+          <div style={{
+            background: 'linear-gradient(145deg, #0f1628 0%, #1a2340 50%, #0f1628 100%)',
+            borderRadius: '20px',
+            padding: '36px 28px',
+            border: '1.5px solid #c9a84c',
+            position: 'relative',
+            boxShadow: '0 8px 32px rgba(201,168,76,0.15), 0 2px 8px rgba(0,0,0,0.4)',
+          }}>
+            <div style={{
+              position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)',
+              background: 'linear-gradient(90deg, #b8962e, #e8c84a, #b8962e)',
+              color: '#0f1628', fontSize: '11px', fontWeight: '800', padding: '5px 18px',
+              borderRadius: '20px', whiteSpace: 'nowrap', letterSpacing: '1px',
+            }}>
+              ✦ ENTERPRISE
             </div>
-            <p style={{ fontSize: '14px', color: '#9FE1CB', lineHeight: '1.6', marginBottom: '24px' }}>
-              For chains and multi-location operators who need regional and corporate-level analytics.
+
+            <div style={{ fontSize: '12px', fontWeight: '700', color: '#c9a84c', letterSpacing: '1px', marginBottom: '8px', textTransform: 'uppercase' }}>For chains & multi-location</div>
+            <div style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: '24px', fontWeight: '800', color: '#ffffff', marginBottom: '8px' }}>Business Pro</div>
+            <div style={{ marginBottom: '8px' }}>
+              <span style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: '44px', fontWeight: '800', color: '#c9a84c' }}>$149</span>
+              <span style={{ fontSize: '15px', color: '#8a9bb8' }}>/location/mo</span>
+            </div>
+            <p style={{ fontSize: '14px', color: '#8a9bb8', lineHeight: '1.6', marginBottom: '28px' }}>
+              For operators who need to know what&apos;s happening across every location — before their customers do.
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '28px' }}>
+
+            <div style={{ height: '1px', background: 'linear-gradient(90deg, transparent, #c9a84c44, transparent)', marginBottom: '20px' }} />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
               {proFeatures.map((f, j) => (
-                <div key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                  <span style={{ color: '#5DCAA5', fontWeight: '700', flexShrink: 0 }}>✓</span>
-                  <span style={{ fontSize: '14px', color: '#9FE1CB', lineHeight: '1.5' }}>{f}</span>
+                <div key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                  <span style={{
+                    color: j === 0 ? '#8a9bb8' : '#c9a84c',
+                    fontWeight: '700', flexShrink: 0, fontSize: j === 0 ? '14px' : '16px',
+                    fontStyle: j === 0 ? 'italic' : 'normal',
+                  }}>
+                    {j === 0 ? '' : '✦'}
+                  </span>
+                  <span style={{
+                    fontSize: '14px',
+                    color: j === 0 ? '#8a9bb8' : '#e8e8e8',
+                    lineHeight: '1.5',
+                    fontStyle: j === 0 ? 'italic' : 'normal',
+                    fontWeight: j === 0 ? '400' : '500',
+                  }}>{f}</span>
                 </div>
               ))}
             </div>
-            <button onClick={() => { setForm(p => ({ ...p, plan: 'Business Pro' })); setShowDemo(true) }} style={{ width: '100%', background: '#1D9E75', color: 'white', border: 'none', padding: '14px', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: 'pointer' }}>
-              Talk to Sales
+
+            <div style={{ height: '1px', background: 'linear-gradient(90deg, transparent, #c9a84c44, transparent)', marginBottom: '20px' }} />
+
+            <button
+              onClick={() => { setForm(p => ({ ...p, plan: 'Business Pro' })); setShowDemo(true) }}
+              style={{
+                width: '100%',
+                background: 'linear-gradient(90deg, #b8962e, #e8c84a, #b8962e)',
+                color: '#0f1628',
+                border: 'none',
+                padding: '15px',
+                borderRadius: '11px',
+                fontSize: '15px',
+                fontWeight: '800',
+                cursor: 'pointer',
+                letterSpacing: '0.3px',
+              }}>
+              Talk to Sales →
             </button>
+            <p style={{ fontSize: '12px', color: '#8a9bb8', textAlign: 'center', marginTop: '10px' }}>
+              First 90 days free for qualifying chains
+            </p>
           </div>
         </div>
       </section>
