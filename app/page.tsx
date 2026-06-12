@@ -280,9 +280,9 @@ export default function Home() {
       </section>
 
       <footer style={{background:"#0A2E1F",padding:"36px 20px",textAlign:"center"}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"center",marginBottom:"10px"}}>
-          <Logo height={30} href="/" />
-        </div>
+        <a href="/" style={{textDecoration:"none",display:"block",marginBottom:"10px"}}>
+          <span style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"22px",fontWeight:"700",color:"#ffffff",letterSpacing:"-0.5px"}}>flushpin</span>
+        </a>
         <div style={{fontSize:"13px",color:"#5DCAA5",marginBottom:"6px"}}>flushpin.com — California</div>
         <div style={{fontSize:"13px",color:"#2D6A4F",marginBottom:"14px"}}>{t.footerSlogan}</div>
         <div style={{display:"flex",gap:"16px",justifyContent:"center",flexWrap:"wrap"}}>
