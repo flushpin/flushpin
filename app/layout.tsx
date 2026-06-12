@@ -1,57 +1,18 @@
-import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import type { Metadata } from 'next'
+import './globals.css'
+import { LanguageProvider } from '../lib/LanguageContext'
 
-const TEAL = '#0EB5AB';
-const GRAY = '#8E8E93';
+export const metadata: Metadata = {
+  title: 'FlushPin',
+  description: 'Find restroom access codes',
+}
 
-export default function TabLayout() {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: TEAL,
-        tabBarInactiveTintColor: GRAY,
-        tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopColor: '#E5E5E5',
-          borderTopWidth: 1,
-          height: 85,
-          paddingBottom: 28,
-          paddingTop: 8,
-        },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="nearby"
-        options={{
-          title: 'Nearby',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="location" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="account"
-        options={{
-          title: 'Account',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-circle" size={size} color={color} />
-          ),
-        }}
-      />
-    </Tabs>
-  );
+    <html lang="en">
+      <body>
+        <LanguageProvider>{children}</LanguageProvider>
+      </body>
+    </html>
+  )
 }
