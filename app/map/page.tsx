@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import RatingModal from '../../components/RatingModal'
+import Logo from '../../components/Logo'
 import PromoModal from '../../components/PromoModal'
 import { useLang } from '../../lib/LanguageContext'
 
@@ -45,22 +46,6 @@ function bboxDeltas(lat: number, miles: number) {
   const lngDelta = miles / (69 * Math.cos(lat * Math.PI / 180))
   return { latDelta, lngDelta }
 }
-
-const Logo = () => (
-  <a href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
-    <div style={{ width: '34px', height: '34px', background: '#1D9E75', borderRadius: '9px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px', flexShrink: 0 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '2px', width: '18px' }}>
-        {[1, 1, 1, 1, 1, 1, 0, 1, 0].map((v, i) => (
-          <div key={i} style={{ width: '4px', height: '4px', borderRadius: '50%', background: v ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.15)' }} />
-        ))}
-      </div>
-      <div style={{ width: 0, height: 0, borderLeft: '3px solid transparent', borderRight: '3px solid transparent', borderTop: '5px solid #1D9E75', marginTop: '-1px' }} />
-    </div>
-    <span style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: '18px', fontWeight: '700', color: '#0A2E1F' }}>
-      Flush<span style={{ color: '#1D9E75' }}>Pin</span>
-    </span>
-  </a>
-)
 
 export default function FindPage() {
   const { lang, setLang, t } = useLang()
@@ -253,7 +238,7 @@ export default function FindPage() {
   return (
     <div style={{minHeight:'100vh',background:'#f8f9fa',fontFamily:"'Inter',system-ui,sans-serif"}}>
       <nav style={{background:'white',borderBottom:'1px solid #f0f0f0',padding:'12px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',position:'sticky',top:0,zIndex:10}}>
-        <Logo/>
+        <Logo height={32} />
         <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
           <div style={{display:'flex',background:'#f5f5f5',borderRadius:'8px',padding:'3px'}}>
             <button onClick={()=>setLang('en')} style={{padding:'5px 12px',borderRadius:'6px',border:'none',fontSize:'14px',cursor:'pointer',background:lang==='en'?'white':'transparent'}}>🇺🇸</button>

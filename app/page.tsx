@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import CounterSection from '../components/CounterSection'
+import Logo from '../components/Logo'
 import { useLang } from '../lib/LanguageContext'
 
 const COLOR_OPTIONS = [
@@ -82,15 +83,7 @@ export default function Home() {
 
       <nav style={{background:"white",borderBottom:"1px solid #f0f0f0",padding:"16px 20px",position:"sticky",top:0,zIndex:20}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <a href="/" style={{textDecoration:"none",display:"flex",alignItems:"center",gap:"10px"}}>
-            <div style={{width:"40px",height:"40px",background:"#1D9E75",borderRadius:"10px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"3px",flexShrink:0}}>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"2px",width:"20px"}}>
-                {[1,1,1,1,1,1,0,1,0].map((v,i)=>(<div key={i} style={{width:"5px",height:"5px",borderRadius:"50%",background:v?"rgba(255,255,255,0.95)":"rgba(255,255,255,0.15)"}}/>))}
-              </div>
-              <div style={{width:0,height:0,borderLeft:"4px solid transparent",borderRight:"4px solid transparent",borderTop:"6px solid #1D9E75",marginTop:"-1px"}}/>
-            </div>
-            <span style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"22px",fontWeight:"700",color:"#0A2E1F",letterSpacing:"-0.5px"}}>Flush<span style={{color:"#1D9E75"}}>Pin</span></span>
-          </a>
+          <Logo height={36} />
 
           <div style={{display:"flex",gap:"10px",alignItems:"center"}} className="desktop-nav">
             <div style={{display:"flex",background:"#f5f5f5",borderRadius:"8px",padding:"3px"}}>
@@ -287,14 +280,8 @@ export default function Home() {
       </section>
 
       <footer style={{background:"#0A2E1F",padding:"36px 20px",textAlign:"center"}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:"10px",marginBottom:"10px"}}>
-          <div style={{width:"32px",height:"32px",background:"#1D9E75",borderRadius:"8px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"2px"}}>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"2px",width:"16px"}}>
-              {[1,1,1,1,1,1,0,1,0].map((v,i)=>(<div key={i} style={{width:"4px",height:"4px",borderRadius:"50%",background:v?"rgba(255,255,255,0.95)":"rgba(255,255,255,0.15)"}}/>))}
-            </div>
-            <div style={{width:0,height:0,borderLeft:"3px solid transparent",borderRight:"3px solid transparent",borderTop:"5px solid #1D9E75",marginTop:"-1px"}}/>
-          </div>
-          <span style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"20px",fontWeight:"700",color:"white",letterSpacing:"-0.5px"}}>FlushPin</span>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"center",marginBottom:"10px"}}>
+          <Logo height={30} href="/" />
         </div>
         <div style={{fontSize:"13px",color:"#5DCAA5",marginBottom:"6px"}}>flushpin.com — California</div>
         <div style={{fontSize:"13px",color:"#2D6A4F",marginBottom:"14px"}}>{t.footerSlogan}</div>

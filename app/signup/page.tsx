@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Logo from '../../components/Logo'
 const COLORS = [
   {id:'emerald',hex:'#10B981',label:'Emerald'},
   {id:'sky',hex:'#0EA5E9',label:'Sky'},
@@ -16,15 +17,9 @@ export default function SignUp() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
-  const Logo = () => (
-    <div style={{display:'flex',alignItems:'center',gap:'10px',justifyContent:'center',marginBottom:'32px'}}>
-      <div style={{width:'40px',height:'40px',background:'#1D9E75',borderRadius:'10px',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'3px'}}>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'2.5px',width:'22px'}}>
-          {[1,1,1,1,1,1,0,1,0].map((v,i)=>(<div key={i} style={{width:'5.5px',height:'5.5px',borderRadius:'50%',background:v?'rgba(255,255,255,0.95)':'rgba(255,255,255,0.15)'}}/>))}
-        </div>
-        <div style={{width:0,height:0,borderLeft:'4.5px solid transparent',borderRight:'4.5px solid transparent',borderTop:'7px solid #1D9E75',marginTop:'-1px'}}/>
-      </div>
-      <span style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:'20px',fontWeight:'700',color:'#0A2E1F',letterSpacing:'-0.5px'}}>Flush<span style={{color:'#1D9E75'}}>Pin</span></span>
+  const SignupLogo = () => (
+    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
+      <Logo height={36} />
     </div>
   )
   const card = {background:'white',borderRadius:'20px',padding:'40px',width:'100%',maxWidth:'400px',boxShadow:'0 4px 24px rgba(0,0,0,0.08)'}
@@ -35,7 +30,7 @@ export default function SignUp() {
   if (screen==='forgot') return (
     <main style={wrap}>
       <div style={card}>
-        <Logo/>
+        <SignupLogo/>
         <h2 style={h2style}>Reset your password</h2>
         <p style={{color:'#888',fontSize:'14px',textAlign:'center',marginBottom:'28px',lineHeight:'1.6'}}>Enter your email and we will send you a reset link.</p>
         <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="Your email address" style={input}/>
@@ -47,7 +42,7 @@ export default function SignUp() {
   if (screen==='email') return (
     <main style={wrap}>
       <div style={card}>
-        <Logo/>
+        <SignupLogo/>
         <h2 style={h2style}>Create your account</h2>
         <p style={{color:'#888',fontSize:'14px',textAlign:'center',marginBottom:'24px'}}>Join FlushPin. It is free.</p>
         <p style={{fontSize:'11px',fontWeight:'600',color:'#bbb',letterSpacing:'1px',marginBottom:'12px'}}>PICK YOUR COLOR</p>
@@ -65,7 +60,7 @@ export default function SignUp() {
   return (
     <main style={wrap}>
       <div style={card}>
-        <Logo/>
+        <SignupLogo/>
         <h2 style={{...h2style,fontSize:'26px'}}>Welcome to FlushPin</h2>
         <p style={{color:'#888',fontSize:'14px',textAlign:'center',marginBottom:'32px',lineHeight:'1.6'}}>Find restroom PINs and cleanliness scores near you.</p>
         <div style={{display:'flex',flexDirection:'column',gap:'12px',marginBottom:'24px'}}>

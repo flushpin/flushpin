@@ -1,23 +1,8 @@
 'use client'
 import { useState } from 'react'
+import Logo from '../../components/Logo'
 
 const FORMSPREE_ID = 'maqkrnep'
-
-const Logo = () => (
-  <a href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
-    <div style={{ width: '34px', height: '34px', background: '#1D9E75', borderRadius: '9px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px', flexShrink: 0 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '2px', width: '18px' }}>
-        {[1, 1, 1, 1, 1, 1, 0, 1, 0].map((v, i) => (
-          <div key={i} style={{ width: '4px', height: '4px', borderRadius: '50%', background: v ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.15)' }} />
-        ))}
-      </div>
-      <div style={{ width: 0, height: 0, borderLeft: '3px solid transparent', borderRight: '3px solid transparent', borderTop: '5px solid #1D9E75', marginTop: '-1px' }} />
-    </div>
-    <span style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: '18px', fontWeight: '700', color: '#0A2E1F' }}>
-      Flush<span style={{ color: '#1D9E75' }}>Pin</span>
-    </span>
-  </a>
-)
 
 const valueProps = [
   {
@@ -147,7 +132,7 @@ export default function BusinessPage() {
     <main style={{ margin: 0, padding: 0, fontFamily: "'Inter',system-ui,sans-serif", background: '#fff', minHeight: '100vh' }}>
 
       <nav style={{ background: 'white', borderBottom: '1px solid #f0f0f0', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 20 }}>
-        <Logo />
+        <Logo height={32} />
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <a href="/map" style={{ color: '#555', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>Find a Restroom</a>
           <button onClick={() => setShowDemo(true)} style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '9px 18px', borderRadius: '9px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>
