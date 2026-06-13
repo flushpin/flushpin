@@ -14,12 +14,28 @@ export const translations = {
     thankYou: 'Thank you for helping the FlushPin community.',
 
     // Hero
-    badge: 'Now in California',
-    heroTitle1: 'Find restroom access.',
-    heroTitle2: 'Quickly, with dignity.',
-    heroDesc: 'Community-shared restroom access information for travelers, parents, and anyone in need. Always respectful of business policies.',
-    findBtn: 'Find a Restroom',
+    badge: 'Restroom intelligence · California',
+    heroTitle1: 'Restroom intelligence',
+    heroTitle2: 'when you need access.',
+    heroDesc: 'Location-based restroom guidance for travelers, parents, and anyone in a hurry — powered by community updates and respectful of business policies.',
+    findBtn: 'Open the Map',
     businessBtn: 'For Businesses',
+    downloadIos: 'Download on the App Store',
+    downloadIosSub: 'Free on iOS',
+
+    // How it works
+    howTitle: 'How FlushPin works',
+    howSub: 'Three steps. Community-powered. Business-respectful.',
+    howStep1Title: '1. Open the map',
+    howStep1Desc: 'Find nearby businesses with restroom access guidance, distance, and community status.',
+    howStep2Title: '2. See the intelligence',
+    howStep2Desc: 'View access type, community updates, and cleanliness signals — not guesses from a generic map.',
+    howStep3Title: '3. Help others',
+    howStep3Desc: 'Confirm, update, or share access info so the next person finds what they need faster.',
+
+    // Who it's for
+    whoTitle: 'Built for real moments',
+    whoSub: 'Parents, travelers, gig workers, and anyone who needs a restroom without the awkward ask.',
 
     // Map
     findingLocation: 'Finding your location...',
@@ -85,9 +101,10 @@ export const translations = {
     disclaimer: 'By signing up you agree to help keep FlushPin accurate. Your name will appear on contributions.',
 
     // Footer
-    footerSlogan: 'Find it. Rate it. Flush it.',
+    footerSlogan: 'Intelligence for access. Opportunity for business.',
     privacy: 'Privacy Policy',
     terms: 'Terms of Service',
+    safety: 'Safety Notice',
     contact: 'Contact',
 
     // Community notice
@@ -109,12 +126,28 @@ export const translations = {
     thankYou: 'Gracias por ayudar a la comunidad FlushPin.',
 
     // Hero
-    badge: 'Ahora en California',
-    heroTitle1: 'Encuentra acceso al baño.',
-    heroTitle2: 'Rápido y con dignidad.',
-    heroDesc: 'Información de acceso a baños compartida por la comunidad, para viajeros, padres de familia y quien lo necesite. Siempre respetuoso con los negocios.',
-    findBtn: 'Encontrar Baño',
+    badge: 'Inteligencia de baños · California',
+    heroTitle1: 'Inteligencia de baños',
+    heroTitle2: 'cuando lo necesitas.',
+    heroDesc: 'Guía de baños basada en ubicación para viajeros, padres y quien tenga prisa — con actualizaciones comunitarias y respeto por las políticas de los negocios.',
+    findBtn: 'Abrir el mapa',
     businessBtn: 'Para Negocios',
+    downloadIos: 'Descargar en App Store',
+    downloadIosSub: 'Gratis en iOS',
+
+    // How it works
+    howTitle: 'Cómo funciona FlushPin',
+    howSub: 'Tres pasos. Comunidad. Respeto a los negocios.',
+    howStep1Title: '1. Abre el mapa',
+    howStep1Desc: 'Encuentra negocios cercanos con guía de acceso, distancia y estado comunitario.',
+    howStep2Title: '2. Ve la inteligencia',
+    howStep2Desc: 'Consulta tipo de acceso, actualizaciones y señales de limpieza — no suposiciones de un mapa genérico.',
+    howStep3Title: '3. Ayuda a otros',
+    howStep3Desc: 'Confirma, actualiza o comparte información para que la siguiente persona llegue más rápido.',
+
+    // Who it's for
+    whoTitle: 'Hecho para momentos reales',
+    whoSub: 'Padres, viajeros, repartidores y quien necesite un baño sin la pregunta incómoda.',
 
     // Map
     findingLocation: 'Buscando tu ubicación...',
@@ -180,9 +213,10 @@ export const translations = {
     disclaimer: 'Al registrarte aceptas ayudar a mantener FlushPin preciso. Tu nombre aparecerá en tus contribuciones.',
 
     // Footer
-    footerSlogan: 'Encuéntralo. Califícalo. Úsalo.',
+    footerSlogan: 'Inteligencia para el acceso. Oportunidad para negocios.',
     privacy: 'Política de Privacidad',
     terms: 'Términos de Servicio',
+    safety: 'Aviso de Seguridad',
     contact: 'Contacto',
 
     // Community notice

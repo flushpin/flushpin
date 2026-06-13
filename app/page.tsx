@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import CounterSection from '../components/CounterSection'
 import Logo from '../components/Logo'
 import { useLang } from '../lib/LanguageContext'
+import { APP_STORE_URL } from '../lib/site'
 
 const COLOR_OPTIONS = [
   '#E74C3C','#E67E22','#F1C40F','#2ECC71','#1ABC9C',
@@ -177,18 +178,57 @@ export default function Home() {
           </button>
         </div>
 
-        <div style={{display:"flex",gap:"12px",justifyContent:"center",flexWrap:"wrap"}}>
+        <div style={{display:"flex",gap:"12px",justifyContent:"center",flexWrap:"wrap",marginBottom:"20px"}}>
           <a href="/map" style={{background:"#1D9E75",color:"white",padding:"15px 34px",borderRadius:"11px",textDecoration:"none",fontSize:"17px",fontWeight:"700"}}>{t.findBtn}</a>
           <a href="/business" style={{background:"white",color:"#0A2E1F",padding:"15px 34px",borderRadius:"11px",textDecoration:"none",fontSize:"17px",border:"1.5px solid #e0e0e0",fontWeight:"600"}}>{t.businessBtn}</a>
+        </div>
+
+        <a
+          href={APP_STORE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{display:"inline-flex",alignItems:"center",gap:"10px",background:"#0A2E1F",color:"white",padding:"12px 22px",borderRadius:"11px",textDecoration:"none",fontSize:"15px",fontWeight:"700"}}
+        >
+          <span style={{fontSize:"22px",lineHeight:1}}></span>
+          <span style={{display:"flex",flexDirection:"column",alignItems:"flex-start",lineHeight:1.2}}>
+            <span style={{fontSize:"10px",fontWeight:"500",opacity:0.85}}>{t.downloadIosSub}</span>
+            <span>{t.downloadIos}</span>
+          </span>
+        </a>
+      </section>
+
+      <section style={{padding:"0 20px 56px",maxWidth:"920px",margin:"0 auto"}}>
+        <h2 style={{textAlign:"center",fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"clamp(24px,5vw,32px)",fontWeight:"700",color:"#0A2E1F",marginBottom:"8px",letterSpacing:"-0.5px"}}>{t.howTitle}</h2>
+        <p style={{textAlign:"center",color:"#999",marginBottom:"28px",fontSize:"16px"}}>{t.howSub}</p>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:"16px"}}>
+          {[
+            {title:t.howStep1Title,desc:t.howStep1Desc,icon:"🗺️"},
+            {title:t.howStep2Title,desc:t.howStep2Desc,icon:"📊"},
+            {title:t.howStep3Title,desc:t.howStep3Desc,icon:"🤝"},
+          ].map((step,i)=>(
+            <div key={i} style={{background:"#f8f8f8",borderRadius:"16px",padding:"24px",border:"1px solid #eee"}}>
+              <div style={{fontSize:"28px",marginBottom:"12px"}}>{step.icon}</div>
+              <div style={{fontSize:"16px",fontWeight:"700",color:"#0A2E1F",marginBottom:"8px"}}>{step.title}</div>
+              <div style={{fontSize:"14px",color:"#666",lineHeight:"1.65"}}>{step.desc}</div>
+            </div>
+          ))}
         </div>
       </section>
 
       <CounterSection/>
 
+      <section style={{padding:"0 20px 48px",maxWidth:"920px",margin:"0 auto",textAlign:"center"}}>
+        <h2 style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"clamp(20px,4vw,26px)",fontWeight:"700",color:"#0A2E1F",marginBottom:"8px"}}>{t.whoTitle}</h2>
+        <p style={{color:"#666",fontSize:"16px",lineHeight:"1.7",maxWidth:"560px",margin:"0 auto"}}>{t.whoSub}</p>
+      </section>
+
       <section style={{padding:"0 20px 60px",maxWidth:"920px",margin:"0 auto"}}>
         <div style={{background:"#E1F5EE",borderRadius:"18px",padding:"24px",border:"1px solid #9FE1CB"}}>
-          <p style={{fontSize:"15px",color:"#0F6E56",fontWeight:"600",marginBottom:"16px"}}>
-            {lang==='es'?'Baños cerca de ti — Irvine, CA':'Restrooms near you — Irvine, CA'}
+          <p style={{fontSize:"15px",color:"#0F6E56",fontWeight:"600",marginBottom:"6px"}}>
+            {lang==='es'?'Ejemplos de listados — Irvine, CA':'Example listings — Irvine, CA'}
+          </p>
+          <p style={{fontSize:"12px",color:"#5DCAA5",marginBottom:"16px"}}>
+            {lang==='es'?'Vista previa ilustrativa. Abre el mapa para datos en vivo.':'Illustrative preview. Open the map for live data.'}
           </p>
           <div style={{display:"flex",gap:"12px",flexWrap:"wrap"}}>
             {[
@@ -288,9 +328,10 @@ export default function Home() {
         <div style={{display:"flex",gap:"16px",justifyContent:"center",flexWrap:"wrap"}}>
           <a href="/privacy" style={{color:"#5DCAA5",fontSize:"13px",textDecoration:"none"}}>{t.privacy}</a>
           <a href="/terms" style={{color:"#5DCAA5",fontSize:"13px",textDecoration:"none"}}>{t.terms}</a>
+          <a href="/safety" style={{color:"#5DCAA5",fontSize:"13px",textDecoration:"none"}}>{t.safety}</a>
           <a href="/contact" style={{color:"#5DCAA5",fontSize:"13px",textDecoration:"none"}}>{t.contact}</a>
         </div>
-        <p style={{color:"#2D6A4F",fontSize:"12px",marginTop:"12px"}}>© 2025 FlushPin. All rights reserved.</p>
+        <p style={{color:"#2D6A4F",fontSize:"12px",marginTop:"12px"}}>© 2026 FlushPin. All rights reserved.</p>
       </footer>
 
       {showAuth && (
