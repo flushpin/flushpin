@@ -1,15 +1,18 @@
-/** Last synced from Supabase — June 13, 2026 */
-export const LIVE_STATS = {
-  accessIntel: 42,
-  venues: 36,
-  cities: 6,
-} as const
-
-export const LIVE_CITIES = [
-  'Dublin',
+/** Fallback showcase cities — updated when /api/stats loads */
+export const SOCAL_SHOWCASE_CITIES = [
+  'Los Angeles',
+  'San Diego',
   'Irvine',
-  'Lake Forest',
-  'Livermore',
-  'Pleasanton',
-  'San Ramon',
+  'Anaheim',
+  'Long Beach',
+  'Santa Ana',
+  'Riverside',
+  'Pasadena',
+  'Huntington Beach',
+  'Newport Beach',
+  'Glendale',
+  'Torrance',
+  'Oceanside',
+  'Carlsbad',
+  'Laguna Beach',
 ] as const

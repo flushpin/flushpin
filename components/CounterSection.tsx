@@ -30,11 +30,17 @@ function useCountUp(target: number, duration: number = 2000) {
   return { count, ref }
 }
 
-type Stats = { accessIntel: number; venues: number; cities: number; cityList?: string[] }
+type Stats = {
+  region?: string
+  venues: number
+  cities: number
+  communityAccess: number
+  cityList?: string[]
+}
 
 export default function CounterSection() {
   const { lang } = useLang()
-  const [stats, setStats] = useState<Stats>({ accessIntel: 0, venues: 0, cities: 0 })
+  const [stats, setStats] = useState<Stats>({ venues: 0, cities: 0, communityAccess: 0 })
   const [loaded, setLoaded] = useState(false)
   const [pulse, setPulse] = useState(true)
 
@@ -50,33 +56,37 @@ export default function CounterSection() {
     return () => clearInterval(interval)
   }, [])
 
-  const { count: accessIntel, ref } = useCountUp(stats.accessIntel)
-  const { count: venues, ref: ref2 } = useCountUp(stats.venues)
-  const { count: cities, ref: ref3 } = useCountUp(stats.cities)
+  const { count: venues, ref } = useCountUp(stats.venues)
+  const { count: cities, ref: ref2 } = useCountUp(stats.cities)
+  const { count: communityAccess, ref: ref3 } = useCountUp(stats.communityAccess)
 
   const labels = lang === 'es'
     ? {
-        live: 'EN VIVO · CALIFORNIA',
-        access: 'puntos de inteligencia de acceso',
-        accessSub: 'información comunitaria activa',
+        live: 'EN VIVO · SUR DE CALIFORNIA',
         venues: 'lugares en el mapa',
         venuesSub: 'cafés, restaurantes y más',
         cities: 'ciudades cubiertas',
-        citiesSub: 'en California',
+        citiesSub: 'en el sur de California',
+        access: 'acceso verificado',
+        accessSub: 'inteligencia comunitaria activa',
         quote: '"Por fin no tengo que preguntarle al barista." — Usuario de FlushPin',
-        loading: 'Cargando estadísticas en vivo…',
+        loading: 'Cargando cobertura en SoCal…',
+        footnote: 'Cobertura del mapa en SoCal · el acceso comunitario verificado crece cada semana',
       }
     : {
-        live: 'LIVE · CALIFORNIA',
-        access: 'access intelligence points',
-        accessSub: 'active community guidance',
-        venues: 'venues mapped',
+        live: 'LIVE · SOUTHERN CALIFORNIA',
+        venues: 'locations on the map',
         venuesSub: 'cafes, restaurants & more',
         cities: 'cities covered',
-        citiesSub: 'across California',
+        citiesSub: 'across SoCal',
+        access: 'verified access',
+        accessSub: 'active community intelligence',
         quote: '"Finally, I don\'t have to ask the barista anymore." — FlushPin user, California',
-        loading: 'Loading live stats…',
+        loading: 'Loading SoCal coverage…',
+        footnote: 'SoCal map coverage · community-verified access grows weekly',
       }
+
+  const showPlus = (n: number) => n >= 100
 
   return (
     <section style={{ padding: '0 40px 70px', maxWidth: '920px', margin: '0 auto' }}>
@@ -99,20 +109,10 @@ export default function CounterSection() {
           <p style={{ textAlign: 'center', color: '#5DCAA5', fontSize: '14px', margin: '0 0 24px' }}>{labels.loading}</p>
         ) : null}
 
-        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '32px' }}>
+        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '20px' }}>
           <div ref={ref} style={{ textAlign: 'center', flex: '1', minWidth: '160px' }}>
             <div style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: '48px', fontWeight: '700', color: 'white', letterSpacing: '-2px', lineHeight: 1 }}>
-              {accessIntel.toLocaleString()}{stats.accessIntel > 0 ? <span style={{ color: '#1D9E75', fontSize: '36px' }}>+</span> : null}
-            </div>
-            <div style={{ fontSize: '14px', fontWeight: '700', color: '#9FE1CB', marginTop: '8px' }}>{labels.access}</div>
-            <div style={{ fontSize: '12px', color: '#5DCAA5', marginTop: '4px' }}>{labels.accessSub}</div>
-          </div>
-
-          <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)', alignSelf: 'stretch', margin: '0 8px' }} />
-
-          <div ref={ref2} style={{ textAlign: 'center', flex: '1', minWidth: '160px' }}>
-            <div style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: '48px', fontWeight: '700', color: 'white', letterSpacing: '-2px', lineHeight: 1 }}>
-              {venues.toLocaleString()}{stats.venues > 0 ? <span style={{ color: '#1D9E75', fontSize: '36px' }}>+</span> : null}
+              {venues.toLocaleString()}{showPlus(stats.venues) ? <span style={{ color: '#1D9E75', fontSize: '36px' }}>+</span> : null}
             </div>
             <div style={{ fontSize: '14px', fontWeight: '700', color: '#9FE1CB', marginTop: '8px' }}>{labels.venues}</div>
             <div style={{ fontSize: '12px', color: '#5DCAA5', marginTop: '4px' }}>{labels.venuesSub}</div>
@@ -120,14 +120,26 @@ export default function CounterSection() {
 
           <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)', alignSelf: 'stretch', margin: '0 8px' }} />
 
-          <div ref={ref3} style={{ textAlign: 'center', flex: '1', minWidth: '160px' }}>
+          <div ref={ref2} style={{ textAlign: 'center', flex: '1', minWidth: '160px' }}>
             <div style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: '48px', fontWeight: '700', color: 'white', letterSpacing: '-2px', lineHeight: 1 }}>
-              {cities.toLocaleString()}{stats.cities > 0 ? <span style={{ color: '#1D9E75', fontSize: '36px' }}>+</span> : null}
+              {cities.toLocaleString()}{showPlus(stats.cities) ? <span style={{ color: '#1D9E75', fontSize: '36px' }}>+</span> : null}
             </div>
             <div style={{ fontSize: '14px', fontWeight: '700', color: '#9FE1CB', marginTop: '8px' }}>{labels.cities}</div>
             <div style={{ fontSize: '12px', color: '#5DCAA5', marginTop: '4px' }}>{labels.citiesSub}</div>
           </div>
+
+          <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)', alignSelf: 'stretch', margin: '0 8px' }} />
+
+          <div ref={ref3} style={{ textAlign: 'center', flex: '1', minWidth: '160px' }}>
+            <div style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: '48px', fontWeight: '700', color: 'white', letterSpacing: '-2px', lineHeight: 1 }}>
+              {communityAccess.toLocaleString()}
+            </div>
+            <div style={{ fontSize: '14px', fontWeight: '700', color: '#9FE1CB', marginTop: '8px' }}>{labels.access}</div>
+            <div style={{ fontSize: '12px', color: '#5DCAA5', marginTop: '4px' }}>{labels.accessSub}</div>
+          </div>
         </div>
+
+        <p style={{ textAlign: 'center', fontSize: '11px', color: '#5DCAA5', margin: '0 0 20px', opacity: 0.85 }}>{labels.footnote}</p>
 
         <div style={{ textAlign: 'center' }}>
           <p style={{ fontSize: '13px', color: '#5DCAA5', margin: 0, fontStyle: 'italic' }}>{labels.quote}</p>

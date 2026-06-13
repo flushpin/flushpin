@@ -14,7 +14,7 @@ export const translations = {
     thankYou: 'Thank you for helping the FlushPin community.',
 
     // Hero
-    badge: 'Restroom intelligence · California',
+    badge: 'Southern California coverage',
     heroTitle1: 'Restroom intelligence',
     heroTitle2: 'when you need access.',
     heroDesc: 'Location-based restroom guidance for travelers, parents, and anyone in a hurry — powered by community updates and respectful of business policies.',
@@ -126,7 +126,7 @@ export const translations = {
     thankYou: 'Gracias por ayudar a la comunidad FlushPin.',
 
     // Hero
-    badge: 'Inteligencia de baños · California',
+    badge: 'Cobertura en el sur de California',
     heroTitle1: 'Inteligencia de baños',
     heroTitle2: 'cuando lo necesitas.',
     heroDesc: 'Guía de baños basada en ubicación para viajeros, padres y quien tenga prisa — con actualizaciones comunitarias y respeto por las políticas de los negocios.',

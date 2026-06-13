@@ -5,7 +5,7 @@ import CounterSection from '../components/CounterSection'
 import Logo from '../components/Logo'
 import { useLang } from '../lib/LanguageContext'
 import { APP_STORE_URL } from '../lib/site'
-import { LIVE_CITIES } from '../lib/siteStats'
+import { SOCAL_SHOWCASE_CITIES } from '../lib/siteStats'
 
 const COLOR_OPTIONS = [
   '#E74C3C','#E67E22','#F1C40F','#2ECC71','#1ABC9C',
@@ -26,7 +26,7 @@ export default function Home() {
   const [message, setMessage] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [liveCities, setLiveCities] = useState<string[]>([...LIVE_CITIES])
+  const [liveCities, setLiveCities] = useState<string[]>([...SOCAL_SHOWCASE_CITIES])
 
   useEffect(() => {
     fetch('/api/stats')
@@ -318,8 +318,11 @@ export default function Home() {
       </section>
 
       <section style={{padding:"0 20px 60px",maxWidth:"920px",margin:"0 auto",textAlign:"center"}}>
-        <p style={{fontSize:"13px",fontWeight:"600",color:"#bbb",marginBottom:"12px",letterSpacing:"1px"}}>
-          {lang==='es'?'CIUDADES CON INTELIGENCIA ACTIVA':'CITIES WITH ACTIVE INTELLIGENCE'}
+        <p style={{fontSize:"13px",fontWeight:"600",color:"#bbb",marginBottom:"8px",letterSpacing:"1px"}}>
+          {lang==='es'?'COBERTURA EN EL SUR DE CALIFORNIA':'SOUTHERN CALIFORNIA COVERAGE'}
+        </p>
+        <p style={{fontSize:"12px",color:"#ccc",marginBottom:"14px"}}>
+          {lang==='es'?'Ciudades con lugares en el mapa de FlushPin':'Cities with locations on the FlushPin map'}
         </p>
         <div style={{display:"flex",gap:"8px",flexWrap:"wrap",justifyContent:"center"}}>
           {liveCities.map((c,i)=>(
