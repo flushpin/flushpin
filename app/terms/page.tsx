@@ -19,7 +19,7 @@ export default function TermsPage() {
 
       <div style={{ maxWidth: '760px', margin: '0 auto', padding: '48px 24px 80px' }}>
         <h1 style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: 'clamp(28px,5vw,40px)', fontWeight: '700', color: '#0A2E1F', marginBottom: '8px' }}>Terms of Service</h1>
-        <p style={{ color: '#999', fontSize: '14px', marginBottom: '40px' }}>Last updated: June 12, 2026. Effective date: June 12, 2026.</p>
+        <p style={{ color: '#999', fontSize: '14px', marginBottom: '40px' }}>Last updated: June 13, 2026. Effective date: June 13, 2026.</p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '36px', color: '#444', lineHeight: '1.8', fontSize: '15px' }}>
 
@@ -33,8 +33,16 @@ export default function TermsPage() {
             <p>FlushPin operates www.flushpin.com and the FlushPin mobile app. FlushPin provides location-based <strong>restroom intelligence</strong> for consumers and businesses — including access guidance, demand signals, experience information, community-reported access details where permitted or publicly available, ratings, and related feedback.</p>
             <p style={{ marginTop: '8px' }}>FlushPin also offers optional paid business plans that may include restroom intelligence reports, listing management tools, alerts, customer recovery tools, and related business features as described on our website.</p>
             <p style={{ marginTop: '8px' }}>The Service relies on community contributions, third-party place data, and automated systems. FlushPin does not guarantee that any restroom information is accurate, current, complete, available, safe, or suitable at any given time. Restroom access policies are set by businesses and may change without notice.</p>
+            <p style={{ marginTop: '8px' }}>Business names, addresses, and location details may come from third-party map or place data providers. FlushPin does not control and is not responsible for third-party data accuracy, completeness, or updates. Any trademarks or business names displayed belong to their respective owners.</p>
             <p style={{ marginTop: '8px' }}>Terms such as &quot;verified&quot; or similar status indicators reflect platform review or reporting status — not a guarantee of accuracy, availability, cleanliness, safety, or ADA compliance.</p>
-            <p style={{ marginTop: '8px' }}><strong>FlushPin is not a medical or emergency service.</strong> Do not rely on FlushPin in health emergencies or urgent medical situations. See our <a href="/safety" style={link}>Safety Notice</a> for more information.</p>
+
+            <div style={{ marginTop: '20px', padding: '18px 20px', background: '#FEF3F2', border: '1.5px solid #FECACA', borderRadius: '12px' }}>
+              <p style={{ margin: 0, fontWeight: '700', color: '#991B1B', fontSize: '15px' }}>FlushPin is NOT for medical emergencies.</p>
+              <p style={{ margin: '8px 0 0', color: '#7F1D1D', fontSize: '14px', lineHeight: '1.7' }}>If you are experiencing a medical emergency, call emergency services (such as 911 in the United States) or seek immediate assistance. Do not rely on FlushPin in health emergencies or urgent medical situations.</p>
+            </div>
+
+            <p style={{ marginTop: '20px' }}><strong>FlushPin does not authorize entry into any restroom or business premises.</strong> FlushPin provides information only. You must follow posted business policies, staff instructions, customer requirements, and local law. Denied access, ejection, or trespass disputes are between you and the business — not FlushPin.</p>
+            <p style={{ marginTop: '8px' }}>See our <a href="/safety" style={link}>Safety Notice</a> for more information.</p>
           </section>
 
           <section>
@@ -56,9 +64,8 @@ export default function TermsPage() {
               <li>The information you submit is accurate to the best of your knowledge</li>
               <li>You will not submit false, misleading, harmful, or unauthorized information</li>
               <li>You have the right to share the information you submit and that your submission complies with business policies and applicable law</li>
-              <li>You grant FlushPin a non-exclusive, worldwide, royalty-free, perpetual license to use, display, store, reproduce, modify, and distribute your contributions to operate, improve, and provide the Service — including to create aggregated, anonymized, and statistical insights, reports, and intelligence products</li>
+              <li>You grant FlushPin a non-exclusive, royalty-free license to use, display, store, reproduce, modify, and distribute your contributions <strong>solely for the purpose of operating, improving, and providing the Service</strong> — including aggregated, anonymized, and statistical insights and reports. You retain ownership of your submissions. FlushPin does not sell your individually attributed submissions to third parties</li>
               <li>You will not submit private information about individuals without their consent</li>
-              <li>You retain ownership of your submissions, subject to the license above</li>
             </ul>
             <p style={{ marginTop: '12px' }}>Community-submitted information may be published, reviewed, accepted, rejected, edited, hidden, or removed at any time for safety, accuracy, business-owner request, legal, or platform integrity reasons. Some submissions may appear on the platform before manual review. FlushPin does not pre-verify all community contributions before display and has no obligation to monitor all user content, but may do so at its discretion.</p>
           </section>
@@ -68,7 +75,7 @@ export default function TermsPage() {
             <p>You agree not to:</p>
             <ul style={{ marginTop: '8px', paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <li>Submit deliberately false, misleading, or unauthorized restroom access information or ratings</li>
-              <li>Share, scrape, export, or redistribute access codes or restricted platform data outside authorized Service flows</li>
+              <li>Systematically share, scrape, bulk export, or commercially redistribute access codes or restricted platform data outside authorized Service flows</li>
               <li>Harass, threaten, or harm other users, businesses, or FlushPin personnel</li>
               <li>Attempt to access systems, accounts, or data you are not authorized to access</li>
               <li>Submit fraudulent business claims, opt-out requests, or removal requests</li>
@@ -93,17 +100,18 @@ export default function TermsPage() {
 
           <section>
             <h2 style={h2}>8. Business subscriptions</h2>
-            <p>If you purchase a FlushPin business plan, including Business or Business Pro tiers, you agree to this Section 8 and any order form, checkout terms, promotional offer, or written agreement between you and FlushPin.</p>
+            <p>If you purchase a FlushPin business plan, including Business or Business Pro tiers, you agree to this Section 8 and any order form, checkout terms, promotional offer, or written agreement between you and FlushPin. If there is a conflict between these Terms and a signed written agreement or accepted order form, the signed agreement or order form controls for that business relationship.</p>
             <ul style={{ marginTop: '8px', paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <li>Subscriptions are generally billed monthly per location unless otherwise agreed in writing</li>
               <li>Subscription pricing, features, and availability are described on our website</li>
-              <li>Unless stated otherwise at checkout or in a separate agreement, subscriptions renew monthly until canceled</li>
-              <li>You may cancel at any time by contacting <a href="mailto:admin@flushpin.com" style={link}>admin@flushpin.com</a>; cancellation takes effect at the end of the current billing period unless otherwise stated</li>
-              <li>We will provide at least 30 days&apos; notice of material changes to subscription pricing or core subscription features for business subscribers</li>
+              <li>Unless stated otherwise at checkout or in a separate agreement, subscriptions automatically renew monthly until canceled</li>
+              <li>You may cancel at any time by emailing <a href="mailto:admin@flushpin.com" style={link}>admin@flushpin.com</a> with your business name and account email; cancellation takes effect at the end of the current billing period unless otherwise stated</li>
+              <li>We will provide at least 30 days&apos; notice of material changes to subscription pricing or core subscription features for business subscribers by email or in-product notice where practicable</li>
               <li>Fees are generally non-refundable except where required by law or expressly stated in writing</li>
               <li>Promotional offers, free trials, or custom enterprise terms apply only as described in the applicable offer or signed agreement</li>
               <li>Business subscribers are responsible for providing accurate business, billing, and authorized contact information, and for any applicable taxes</li>
-              <li>By subscribing, you represent that you have authority to act on behalf of the locations you manage and that any manager contacts or promotional content you provide are authorized</li>
+              <li>By subscribing, you represent that you have authority to act on behalf of the locations you manage, that any manager contacts or promotional content you provide are authorized, and that you will not use FlushPin to submit false flags, harass competitors, or misrepresent location data</li>
+              <li>Business intelligence reports, dashboards, and exports are licensed for your internal business use only unless otherwise agreed in writing</li>
             </ul>
             <p style={{ marginTop: '12px' }}>FlushPin may suspend or terminate business access for non-payment, misuse, violation of these Terms, or fraudulent activity.</p>
           </section>
@@ -114,6 +122,7 @@ export default function TermsPage() {
             <p style={{ marginTop: '8px' }}>These features reflect platform activity, modeled estimates, and aggregated signals. They are not guarantees of foot traffic, sales, conversions, customer recovery, promo performance, restroom usage counts, or business outcomes. Business decisions should not be based solely on FlushPin intelligence. FlushPin does not warrant the accuracy, completeness, or fitness for a particular purpose of any intelligence output.</p>
             <p style={{ marginTop: '8px' }}>Business subscribers may not resell, sublicense, scrape, or redistribute FlushPin intelligence except as expressly permitted in writing. Intelligence outputs may not be used for credit, employment, housing, insurance, or other regulated eligibility decisions.</p>
             <p style={{ marginTop: '8px' }}>If FlushPin offers SMS, email, or other notifications to business subscribers or their designated contacts, you are responsible for obtaining any legally required consent from recipients and for providing accurate contact information.</p>
+            <p style={{ marginTop: '8px' }}>Promotional messages, offers, or customer recovery content displayed through FlushPin are provided by participating businesses. FlushPin does not create, endorse, or guarantee promotional content and is not responsible for promo delivery, redemption, or conversion.</p>
           </section>
 
           <section>
@@ -137,7 +146,7 @@ export default function TermsPage() {
 
           <section>
             <h2 style={h2}>13. Children</h2>
-            <p>FlushPin is not directed to children under 13. Users under 13 may not create accounts, submit information, or use interactive features of the Service. If we learn that a child under 13 has provided personal information, we may delete the account and associated information. If you believe a child under 13 has created an account, contact <a href="mailto:admin@flushpin.com" style={link}>admin@flushpin.com</a>.</p>
+            <p>FlushPin is not directed to children under 13. Users under 13 may browse public information where permitted, but may not create accounts, submit content, or use interactive features of the Service. If we learn that a child under 13 has provided personal information through an account or submission, we may delete the account and associated information. If you believe a child under 13 has created an account, contact <a href="mailto:admin@flushpin.com" style={link}>admin@flushpin.com</a>.</p>
           </section>
 
           <section>

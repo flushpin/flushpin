@@ -19,13 +19,18 @@ export default function SafetyPage() {
 
       <div style={{ maxWidth: '760px', margin: '0 auto', padding: '48px 24px 80px' }}>
         <h1 style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: 'clamp(28px,5vw,40px)', fontWeight: '700', color: '#0A2E1F', marginBottom: '8px' }}>Safety Notice</h1>
-        <p style={{ color: '#999', fontSize: '14px', marginBottom: '40px' }}>Last updated: June 12, 2026. Effective date: June 12, 2026.</p>
+        <p style={{ color: '#999', fontSize: '14px', marginBottom: '40px' }}>Last updated: June 13, 2026. Effective date: June 13, 2026.</p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '36px', color: '#444', lineHeight: '1.8', fontSize: '15px' }}>
 
+          <div style={{ padding: '18px 20px', background: '#FEF3F2', border: '1.5px solid #FECACA', borderRadius: '12px' }}>
+            <p style={{ margin: 0, fontWeight: '700', color: '#991B1B', fontSize: '15px' }}>FlushPin is NOT for medical emergencies.</p>
+            <p style={{ margin: '8px 0 0', color: '#7F1D1D', fontSize: '14px', lineHeight: '1.7' }}>If you are experiencing a medical emergency, call emergency services (such as 911 in the United States) or seek immediate assistance. Do not rely on FlushPin in health emergencies or urgent medical situations.</p>
+          </div>
+
           <section>
             <h2 style={h2}>Not for emergencies</h2>
-            <p>FlushPin is not a medical, emergency, or safety service. Do not rely on FlushPin in health emergencies, urgent medical situations, or situations where immediate assistance is required. If you have a medical emergency, contact local emergency services.</p>
+            <p>FlushPin is not a medical, emergency, or safety service. Do not rely on FlushPin when immediate assistance is required.</p>
           </section>
 
           <section>
@@ -35,7 +40,7 @@ export default function SafetyPage() {
 
           <section>
             <h2 style={h2}>Respect business policies</h2>
-            <p>Restroom access is controlled by businesses. Always follow posted rules, staff directions, customer-only restrictions, and local law. Do not trespass, bypass security, or use access information in a way that violates business policies or applicable law.</p>
+            <p><strong>FlushPin does not authorize entry into any restroom or business premises.</strong> Restroom access is controlled by businesses. Always follow posted rules, staff directions, customer-only restrictions, and local law. Do not trespass, bypass security, or use access information in a way that violates business policies or applicable law.</p>
           </section>
 
           <section>
