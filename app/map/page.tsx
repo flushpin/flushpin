@@ -80,6 +80,7 @@ export default function FindPage() {
   const [editMode, setEditMode] = useState<'update'|'correct'|'share'>('update')
   const [editEntry, setEditEntry] = useState<{pin:string;accessible:boolean;accessType:AccessType}>({pin:'',accessible:false,accessType:'keypad_code'})
   const [savingEdit, setSavingEdit] = useState(false)
+  const [editError, setEditError] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [searchInput, setSearchInput] = useState('')
@@ -247,11 +248,81 @@ export default function FindPage() {
       : t.chipLocked,
   }))
 
+  const closeEditForm = () => {
+    setShowEditForm(false)
+    setEditTarget(null)
+    setEditMode('update')
+    setEditError('')
+  }
+
+  const findExistingRestroomId = async (target: any) => {
+    const { data } = await supabase
+      .from('restroom')
+      .select('id')
+      .ilike('name', target.name)
+      .gte('lat', target.lat - 0.0005)
+      .lte('lat', target.lat + 0.0005)
+      .gte('lng', target.lng - 0.0005)
+      .lte('lng', target.lng + 0.0005)
+      .limit(1)
+      .maybeSingle()
+    return data?.id ?? null
+  }
+
+  const persistAccessUpdate = async (target: any, entry: typeof editEntry) => {
+    const payload = buildAccessPayload(entry)
+
+    if (hasDbRestroomId(target.id)) {
+      const { error } = await supabase
+        .from('restroom')
+        .update(payload)
+        .eq('id', target.id)
+      if (error) throw error
+      return { ...target, ...payload }
+    }
+
+    const insertRow = {
+      name: target.name,
+      address: target.address,
+      lat: target.lat,
+      lng: target.lng,
+      type: target.type || 'other',
+      source: target.source || 'google',
+      score: 0,
+      stars: 0,
+      ...payload,
+    }
+
+    const { data, error } = await supabase
+      .from('restroom')
+      .insert(insertRow)
+      .select('id')
+      .maybeSingle()
+
+    if (!error && data?.id) {
+      return { ...target, ...payload, id: data.id, distance: target.distance }
+    }
+
+    const existingId = await findExistingRestroomId(target)
+    if (existingId) {
+      const { error: updateError } = await supabase
+        .from('restroom')
+        .update(payload)
+        .eq('id', existingId)
+      if (updateError) throw updateError
+      return { ...target, ...payload, id: existingId, distance: target.distance }
+    }
+
+    if (error) throw error
+    return { ...target, ...payload, distance: target.distance }
+  }
+
   const handleEditOpen = (r: any, e: React.MouseEvent, mode: 'update' | 'correct' | 'share' = 'update') => {
     e.stopPropagation()
     const { accessType, displayPin } = resolveRestroomAccess(r)
     setEditTarget(r)
     setEditMode(mode)
+    setEditError('')
     setEditEntry({
       pin: mode === 'correct' ? '' : (displayPin || ''),
       accessible: r.accessible || false,
@@ -273,69 +344,38 @@ export default function FindPage() {
   const handleEditSave = async () => {
     if (!editTarget || savingEdit) return
     if (editEntry.accessType === 'keypad_code' && !editEntry.pin.trim()) {
-      setSuccessMsg(t.enterPinError)
-      setTimeout(() => setSuccessMsg(''), 4000)
+      setEditError(t.enterPinError)
       return
     }
 
+    const target = editTarget
+    const entry = editEntry
     setSavingEdit(true)
-    const payload = buildAccessPayload(editEntry)
-    let updated: any = null
+    setEditError('')
 
-    if (hasDbRestroomId(editTarget.id)) {
-      const { data, error } = await supabase
-        .from('restroom')
-        .update(payload)
-        .eq('id', editTarget.id)
-        .select()
-        .single()
-      if (error) {
-        setSavingEdit(false)
-        setSuccessMsg(t.saveError)
-        setTimeout(() => setSuccessMsg(''), 4000)
-        return
-      }
-      updated = { ...editTarget, ...data }
-    } else {
-      const { data, error } = await supabase
-        .from('restroom')
-        .insert({
-          name: editTarget.name,
-          address: editTarget.address,
-          lat: editTarget.lat,
-          lng: editTarget.lng,
-          type: editTarget.type || 'other',
-          source: editTarget.source || 'google',
-          score: 0,
-          stars: 0,
-          ...payload,
-        })
-        .select()
-        .single()
-      if (error) {
-        setSavingEdit(false)
-        setSuccessMsg(t.saveError)
-        setTimeout(() => setSuccessMsg(''), 4000)
-        return
-      }
-      updated = { ...editTarget, ...data, distance: editTarget.distance }
+    try {
+      const updated = await persistAccessUpdate(target, entry)
+      const payload = buildAccessPayload(entry)
+
+      setRestrooms(prev => {
+        const idx = prev.findIndex(r => r.id === target.id)
+        if (idx < 0) return [...prev, updated]
+        const next = [...prev]
+        next[idx] = { ...prev[idx], ...updated, distance: prev[idx].distance }
+        return next
+      })
+
+      closeEditForm()
+      setSelected(updated)
+      setShowPin(true)
+      const badge = getAccessListLabel(updated)
+      setSuccessMsg(`${t.liveNow} — ${badge.label} · ${formatUpdatedAt(payload.pin_updated_at)}`)
+      setTimeout(() => setSuccessMsg(''), 5000)
+    } catch {
+      setEditError(t.saveError)
+    } finally {
+      setSavingEdit(false)
     }
-
-    setRestrooms(prev => {
-      const idx = prev.findIndex(r => r.id === editTarget.id)
-      if (idx < 0) return [...prev, updated]
-      const next = [...prev]
-      next[idx] = { ...prev[idx], ...updated, distance: prev[idx].distance }
-      return next
-    })
-    setSelected(updated)
-    setShowPin(true)
-    setShowEditForm(false)
-    setEditTarget(null)
-    setSavingEdit(false)
-    const badge = getAccessListLabel(updated)
-    setSuccessMsg(`${t.liveNow} — ${badge.label} · ${formatUpdatedAt(payload.pin_updated_at)}`)
-    setTimeout(() => setSuccessMsg(''), 5000)
   }
 
   const renderAccessPanel = (r: any) => {
@@ -561,11 +601,11 @@ export default function FindPage() {
       {showRating&&ratingTarget&&(<RatingModal restroom={ratingTarget} user={user} onClose={()=>setShowRating(false)} onDone={()=>{setShowRating(false);setSuccessMsg('✅ Thank you!');setTimeout(()=>setSuccessMsg(''),3000);loadData(anchorLat,anchorLng,searchQuery)}} initialPinWorked={ratingTarget?._pinWorked}/>)}
 
       {showEditForm&&editTarget&&(
-        <div onClick={()=>setShowEditForm(false)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:50,display:'flex',alignItems:'flex-end'}}>
+        <div onClick={()=>{if(!savingEdit)closeEditForm()}} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:50,display:'flex',alignItems:'flex-end'}}>
           <div onClick={e=>e.stopPropagation()} style={{background:'white',borderRadius:'20px 20px 0 0',padding:'24px 20px',width:'100%',maxHeight:'85vh',overflowY:'auto'}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px'}}>
               <h2 style={{margin:0,fontSize:'19px',fontWeight:'700',color:'#0A2E1F'}}>{editFormTitle}</h2>
-              <button onClick={()=>setShowEditForm(false)} style={{background:'none',border:'none',fontSize:'26px',cursor:'pointer',color:'#999'}}>✕</button>
+              <button type="button" onClick={()=>{if(!savingEdit)closeEditForm()}} disabled={savingEdit} style={{background:'none',border:'none',fontSize:'26px',cursor:savingEdit?'not-allowed':'pointer',color:'#999',opacity:savingEdit?0.4:1}}>✕</button>
             </div>
             <div style={{display:'flex',flexDirection:'column',gap:'14px'}}>
               {editMode === 'correct' && (
@@ -589,7 +629,8 @@ export default function FindPage() {
                 <input type="checkbox" id="acc-edit" checked={editEntry.accessible} onChange={e=>setEditEntry(p=>({...p,accessible:e.target.checked}))} style={{width:'18px',height:'18px',cursor:'pointer'}}/>
                 <label htmlFor="acc-edit" style={{fontSize:'15px',color:'#555',cursor:'pointer'}}>{t.wheelchair}</label>
               </div>
-              <button onClick={handleEditSave} disabled={savingEdit} style={{background:savingEdit?'#9CA3AF':'#1D9E75',color:'white',border:'none',padding:'16px',borderRadius:'10px',fontSize:'16px',fontWeight:'700',cursor:savingEdit?'wait':'pointer'}}>{savingEdit?t.publishing:t.publishNow}</button>
+              {editError&&<p style={{fontSize:'14px',color:'#DC2626',margin:0,fontWeight:'600'}}>{editError}</p>}
+              <button type="button" onClick={handleEditSave} disabled={savingEdit} style={{background:savingEdit?'#9CA3AF':'#1D9E75',color:'white',border:'none',padding:'16px',borderRadius:'10px',fontSize:'16px',fontWeight:'700',cursor:savingEdit?'wait':'pointer'}}>{savingEdit?t.publishing:t.publishNow}</button>
             </div>
           </div>
         </div>
