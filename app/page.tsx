@@ -5,6 +5,7 @@ import CounterSection from '../components/CounterSection'
 import Logo from '../components/Logo'
 import { useLang } from '../lib/LanguageContext'
 import { APP_STORE_URL } from '../lib/site'
+import { LIVE_CITIES } from '../lib/siteStats'
 
 const COLOR_OPTIONS = [
   '#E74C3C','#E67E22','#F1C40F','#2ECC71','#1ABC9C',
@@ -25,6 +26,14 @@ export default function Home() {
   const [message, setMessage] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [liveCities, setLiveCities] = useState<string[]>([...LIVE_CITIES])
+
+  useEffect(() => {
+    fetch('/api/stats')
+      .then(r => r.json())
+      .then(d => { if (d.cityList?.length) setLiveCities(d.cityList) })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null))
@@ -310,11 +319,11 @@ export default function Home() {
 
       <section style={{padding:"0 20px 60px",maxWidth:"920px",margin:"0 auto",textAlign:"center"}}>
         <p style={{fontSize:"13px",fontWeight:"600",color:"#bbb",marginBottom:"12px",letterSpacing:"1px"}}>
-          {lang==='es'?'COMENZANDO EN CALIFORNIA':'STARTING IN CALIFORNIA'}
+          {lang==='es'?'CIUDADES CON INTELIGENCIA ACTIVA':'CITIES WITH ACTIVE INTELLIGENCE'}
         </p>
         <div style={{display:"flex",gap:"8px",flexWrap:"wrap",justifyContent:"center"}}>
-          {["Beverly Hills","Newport Beach","Malibu","Palo Alto","Santa Barbara","La Jolla","Bel Air","Laguna Beach","Carmel","Rancho Santa Fe"].map((c,i)=>(
-            <span key={i} style={{background:"#E1F5EE",color:"#0F6E56",border:"1px solid #9FE1CB",borderRadius:"20px",fontSize:"14px",padding:"7px 18px",fontWeight:i<3?"600":"400"}}>{c}</span>
+          {liveCities.map((c,i)=>(
+            <span key={c} style={{background:"#E1F5EE",color:"#0F6E56",border:"1px solid #9FE1CB",borderRadius:"20px",fontSize:"14px",padding:"7px 18px",fontWeight:i<3?"600":"400"}}>{c}</span>
           ))}
         </div>
       </section>

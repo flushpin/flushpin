@@ -30,7 +30,7 @@ function useCountUp(target: number, duration: number = 2000) {
   return { count, ref }
 }
 
-type Stats = { accessIntel: number; venues: number; cities: number }
+type Stats = { accessIntel: number; venues: number; cities: number; cityList?: string[] }
 
 export default function CounterSection() {
   const { lang } = useLang()
