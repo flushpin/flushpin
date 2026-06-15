@@ -1,0 +1,18 @@
+---
+description: Restore checkpoint 2026-06-14 — user says "bugüne dön" or "restore checkpoint"
+alwaysApply: true
+---
+
+# FlushPin restore checkpoint (14 Jun 2026)
+
+When the user says **bugüne dön**, **restore checkpoint**, or **2026-06-14 checkpoint**:
+
+1. Read `docs/RESTORE-CHECKPOINT-2026-06-14.md` and follow its playbook.
+2. Known-good git anchor: tag **`restore-2026-06-14`**, commit **`2537103`** on **`main`**.
+3. Production: **https://www.flushpin.com** (Vercel). Prefer Vercel Redeploy of that commit before force-push.
+4. **Never** touch the mobile app repo. **Never** rename/drop legacy `verified` TEXT in Supabase.
+5. **Preserve:** `scripts/sql/enrich-restroom-schema.sql`, `scripts/enrich-restrooms.ts`, `lib/restroomVerified.ts`.
+6. **Do not re-add** `*.backup_20260614_*` junk or `public/logo.png`.
+7. Verify with `npm run build` after any code restore.
+
+Last good stack: `2537103` Fix build after enrichment rebase → `0a52268` Add mobile-safe restroom enrichment → `768ff4e` map access form.
