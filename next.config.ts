@@ -25,6 +25,8 @@ const nextConfig: NextConfig = {
       { source: '/restrooms/los-angeles', destination: '/map', permanent: true },
       { source: '/restrooms/sofi-stadium', destination: '/map', permanent: true },
       { source: '/restrooms/disneyland-area', destination: '/map', permanent: true },
+      { source: '/accessible-restrooms/orange-county', destination: '/restrooms/orange-county', permanent: true },
+      { source: '/restrooms-for-seniors/orange-county', destination: '/restrooms/orange-county', permanent: true },
       { source: '/accessible-restrooms/:region', destination: '/map', permanent: true },
       { source: '/baby-changing-restrooms/:region', destination: '/map', permanent: true },
       { source: '/restrooms-for-seniors/:region', destination: '/map', permanent: true },
