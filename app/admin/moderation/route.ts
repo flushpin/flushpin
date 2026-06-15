@@ -104,7 +104,7 @@ export async function GET() {
     await Promise.all([
       supabase
         .from('pin_submissions')
-        .select('id, restroom_id, user_id, submitted_pin, access_type, status, source, created_at, restroom:restroom_id(id, name, address, pin, status, access_type, created_at)')
+        .select('id, restroom_id, user_id, submitted_pin, access_type, status, source, created_at')
         .eq('status', 'pending')
         .order('created_at', { ascending: false })
         .limit(100),
@@ -124,9 +124,34 @@ export async function GET() {
     return NextResponse.json({ error: recentError.message }, { status: 500 })
   }
 
+  const submissionRestroomIds = [
+    ...new Set((pendingSubmissions ?? []).map((row) => row.restroom_id).filter(Boolean)),
+  ]
+  const restroomMap = new Map<string, RestroomRow>()
+
+  if (submissionRestroomIds.length > 0) {
+    const restroomIdsForQuery = submissionRestroomIds.map((id) => {
+      const numericId = Number(id)
+      return Number.isFinite(numericId) ? numericId : id
+    })
+
+    const { data: linkedRestrooms, error: linkedRestroomsError } = await supabase
+      .from('restroom')
+      .select('id, name, address, pin, status, access_type, created_at')
+      .in('id', restroomIdsForQuery)
+
+    if (linkedRestroomsError) {
+      return NextResponse.json({ error: linkedRestroomsError.message }, { status: 500 })
+    }
+
+    for (const row of linkedRestrooms ?? []) {
+      restroomMap.set(String(row.id), row)
+    }
+  }
+
   const normalizedPending = (pendingSubmissions ?? []).map((row: SubmissionRow) => ({
     ...row,
-    restroom: Array.isArray(row.restroom) ? row.restroom[0] ?? null : row.restroom ?? null,
+    restroom: restroomMap.get(String(row.restroom_id)) ?? null,
   }))
 
   const duplicateGroups = groupDuplicateRestrooms(recentRestrooms ?? [])

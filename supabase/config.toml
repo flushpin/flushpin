@@ -1,0 +1,7 @@
+# FlushPin web — Supabase Edge Functions (opt-out email alerts)
+# Mobile app repo is separate; do not merge supabase folders.
+
+project_id = "ygpsgolbxyychdnzeorj"
+
+[functions.notify-optout]
+verify_jwt = false
