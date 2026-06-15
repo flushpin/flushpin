@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://www.flushpin.com'),
   title: 'FlushPin — Restroom Intelligence',
   description: 'Location-based restroom intelligence for people who need access and businesses who want opportunity. Community-powered, California-first.',
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
     title: 'FlushPin — Restroom Intelligence',
     description: 'Find nearby restroom access guidance, community updates, and business intelligence.',
