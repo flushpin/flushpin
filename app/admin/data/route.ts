@@ -1,18 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { getServiceClient } from '@/lib/supabaseService'
 
 export const dynamic = 'force-dynamic'
 
 const PAGE_SIZE = 1000
-
-function getServiceClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) return null
-  return createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
-}
 
 function parseTodayStart(searchParams: URLSearchParams): Date {
   const raw = searchParams.get('todayStart')
@@ -54,9 +46,7 @@ function countByDay(rows: { ts: string }[], dayKeys: string[]) {
   return dayKeys.map((date) => ({ date, label: formatChartLabel(date), count: map[date] }))
 }
 
-async function countAuthUsers(todayStart: Date) {
-  const supabase = getServiceClient()
-  if (!supabase) return { totalMembers: 0, newMembersToday: 0 }
+async function countAuthUsers(supabase: SupabaseClient, todayStart: Date) {
 
   let totalMembers = 0
   let newMembersToday = 0
@@ -76,8 +66,7 @@ async function countAuthUsers(todayStart: Date) {
   return { totalMembers, newMembersToday }
 }
 
-async function fetchPinViewsSince(since: Date) {
-  const supabase = getServiceClient()!
+async function fetchPinViewsSince(supabase: SupabaseClient, since: Date) {
   const rows: { ts: string }[] = []
   let from = 0
 
@@ -103,8 +92,7 @@ async function fetchPinViewsSince(since: Date) {
   return rows
 }
 
-async function fetchRestroomCreatedSince(since: Date) {
-  const supabase = getServiceClient()!
+async function fetchRestroomCreatedSince(supabase: SupabaseClient, since: Date) {
   const rows: { ts: string }[] = []
   let from = 0
 
@@ -131,13 +119,11 @@ async function fetchRestroomCreatedSince(since: Date) {
 }
 
 export async function GET(request: NextRequest) {
-  const supabase = getServiceClient()
-  if (!supabase) {
-    return NextResponse.json(
-      { error: 'SUPABASE_SERVICE_ROLE_KEY is not configured on the server.' },
-      { status: 503 },
-    )
+  const service = getServiceClient()
+  if (!service.client) {
+    return NextResponse.json({ error: service.error }, { status: service.status })
   }
+  const supabase = service.client
 
   const todayStart = parseTodayStart(request.nextUrl.searchParams)
   const dayKeys = last7DayKeys()
@@ -155,7 +141,7 @@ export async function GET(request: NextRequest) {
       pinViewRows,
       restroomRows,
     ] = await Promise.all([
-      countAuthUsers(todayStart),
+      countAuthUsers(supabase, todayStart),
       supabase.from('restroom').select('*', { count: 'exact', head: true }),
       supabase.from('pin_views').select('*', { count: 'exact', head: true }).gte('viewed_at', todayStart.toISOString()),
       supabase.from('pin_views').select('*', { count: 'exact', head: true }),
@@ -166,8 +152,8 @@ export async function GET(request: NextRequest) {
         .order('created_at', { ascending: false })
         .limit(10),
       supabase.from('admin_logs').select('*').order('created_at', { ascending: false }).limit(10),
-      fetchPinViewsSince(weekStart),
-      fetchRestroomCreatedSince(weekStart),
+      fetchPinViewsSince(supabase, weekStart),
+      fetchRestroomCreatedSince(supabase, weekStart),
     ])
 
     return NextResponse.json({
@@ -183,7 +169,11 @@ export async function GET(request: NextRequest) {
       recentAdminLogs: recentLogsRes.data ?? [],
     })
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to load admin dashboard data'
+    let message = err instanceof Error ? err.message : 'Failed to load admin dashboard data'
+    if (/invalid api key/i.test(message)) {
+      message =
+        'Invalid API key — Vercel likely has the anon key or a truncated copy. Supabase → Project Settings → API → copy service_role (secret), not anon (public).'
+    }
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

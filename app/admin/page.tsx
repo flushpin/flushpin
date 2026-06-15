@@ -17,11 +17,69 @@ type TabKey = 'overview' | 'live' | 'pins' | 'flagged' | 'optout' | 'logs'
 
 type DashboardData = {
   metrics: DashboardMetrics
-  restrooms: any[]
+  metricsError: string | null
   optouts: any[]
   flagged: any[]
   logs: any[]
   supabase: any
+}
+
+type ModerationSubmission = {
+  id: number
+  restroom_id: string
+  user_id: string
+  submitted_pin: string | null
+  access_type: string
+  status: string
+  source: string | null
+  created_at: string
+  restroom: {
+    id: number | string
+    name?: string | null
+    address?: string | null
+    pin?: string | null
+    status?: string | null
+    access_type?: string | null
+    created_at?: string | null
+  } | null
+}
+
+type DuplicateGroup = {
+  key: string
+  name?: string | null
+  address?: string | null
+  rows: Array<{
+    id: number | string
+    name?: string | null
+    address?: string | null
+    pin?: string | null
+    status?: string | null
+    created_at?: string | null
+  }>
+}
+
+type ModerationQueue = {
+  pendingSubmissions: ModerationSubmission[]
+  duplicateGroups: DuplicateGroup[]
+  summary: { pendingCount: number; duplicateGroupCount: number }
+}
+
+type BusinessClaimsQueue = {
+  claims: any[]
+  optouts: any[]
+  summary: {
+    pendingClaims: number
+    pendingOptouts: number
+    removalRequests: number
+    totalPending: number
+  }
+}
+
+function claimTypeLabel(type: string) {
+  if (type === 'removal') return '🗑️ Removal — hide PIN / listing'
+  if (type === 'update') return '✏️ Update access info'
+  if (type === 'claim') return '🏢 Claim listing'
+  return type
 }
 
 function cardStyle(extra?: React.CSSProperties): React.CSSProperties {
@@ -81,6 +139,85 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false)
   const [liveActivity, setLiveActivity] = useState<LiveActivityPayload | null>(null)
   const [liveLoading, setLiveLoading] = useState(false)
+  const [moderation, setModeration] = useState<ModerationQueue | null>(null)
+  const [moderationLoading, setModerationLoading] = useState(false)
+  const [moderationError, setModerationError] = useState<string | null>(null)
+  const [actionBusy, setActionBusy] = useState<string | null>(null)
+  const [businessClaims, setBusinessClaims] = useState<BusinessClaimsQueue | null>(null)
+  const [businessClaimsLoading, setBusinessClaimsLoading] = useState(false)
+  const [businessClaimsError, setBusinessClaimsError] = useState<string | null>(null)
+
+  const loadBusinessClaims = async () => {
+    setBusinessClaimsLoading(true)
+    setBusinessClaimsError(null)
+    try {
+      const res = await fetch('/admin/business-claims')
+      const json = await res.json().catch(() => null)
+      if (!res.ok) {
+        setBusinessClaimsError(json?.error || `Business claims unavailable (HTTP ${res.status})`)
+        setBusinessClaims(null)
+        return
+      }
+      setBusinessClaims(json)
+    } finally {
+      setBusinessClaimsLoading(false)
+    }
+  }
+
+  const runBusinessClaimAction = async (payload: Record<string, unknown>) => {
+    setActionBusy(String(payload.table))
+    try {
+      const res = await fetch('/admin/business-claims', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const json = await res.json().catch(() => null)
+      if (!res.ok) {
+        alert(json?.error || 'Action failed')
+        return
+      }
+      await Promise.all([loadBusinessClaims(), loadData()])
+    } finally {
+      setActionBusy(null)
+    }
+  }
+
+  const loadModeration = async () => {
+    setModerationLoading(true)
+    setModerationError(null)
+    try {
+      const res = await fetch('/admin/moderation')
+      const json = await res.json().catch(() => null)
+      if (!res.ok) {
+        setModerationError(json?.error || `Moderation queue unavailable (HTTP ${res.status})`)
+        setModeration(null)
+        return
+      }
+      setModeration(json)
+    } finally {
+      setModerationLoading(false)
+    }
+  }
+
+  const runModerationAction = async (payload: Record<string, unknown>) => {
+    setActionBusy(String(payload.action))
+    try {
+      const res = await fetch('/admin/moderation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const json = await res.json().catch(() => null)
+      if (!res.ok) {
+        alert(json?.error || 'Action failed')
+        return
+      }
+      await Promise.all([loadModeration(), loadData()])
+    } finally {
+      setActionBusy(null)
+    }
+  }
 
   const loadLiveActivity = async () => {
     setLiveLoading(true)
@@ -101,6 +238,16 @@ export default function AdminDashboard() {
     return () => clearInterval(interval)
   }, [loggedIn, activeTab])
 
+  useEffect(() => {
+    if (!loggedIn || activeTab !== 'pins') return
+    loadModeration()
+  }, [loggedIn, activeTab])
+
+  useEffect(() => {
+    if (!loggedIn || activeTab !== 'optout') return
+    loadBusinessClaims()
+  }, [loggedIn, activeTab])
+
   const loadData = async () => {
     setLoading(true)
 
@@ -114,42 +261,42 @@ export default function AdminDashboard() {
     today.setHours(0, 0, 0, 0)
 
     const metricsRes = await fetch(`/admin/data?todayStart=${encodeURIComponent(today.toISOString())}`)
-    const metricsJson = metricsRes.ok ? await metricsRes.json() : null
+    const metricsJson = metricsRes.ok ? await metricsRes.json() : await metricsRes.json().catch(() => null)
+    const metricsError = metricsRes.ok
+      ? null
+      : (metricsJson?.error as string | undefined) ||
+        `Admin metrics unavailable (HTTP ${metricsRes.status}). Add SUPABASE_SERVICE_ROLE_KEY on Vercel.`
 
-    const metrics: DashboardMetrics = metricsJson ?? {
-      totalRestrooms: 0,
-      totalMembers: 0,
-      newMembersToday: 0,
-      pinViewsToday: 0,
-      totalPinViews: 0,
-      flaggedPending: 0,
-      pinViewsByDay: [],
-      restroomsByDay: [],
-      recentRestrooms: [],
-      recentAdminLogs: [],
-    }
+    const metrics: DashboardMetrics = metricsRes.ok && metricsJson
+      ? metricsJson
+      : {
+          totalRestrooms: 0,
+          totalMembers: 0,
+          newMembersToday: 0,
+          pinViewsToday: 0,
+          totalPinViews: 0,
+          flaggedPending: 0,
+          pinViewsByDay: [],
+          restroomsByDay: [],
+          recentRestrooms: [],
+          recentAdminLogs: [],
+        }
 
-    const [{ data: restrooms }, { data: optouts }, { data: flagged }, { data: logs }] = await Promise.all([
-      supabase.from('restroom').select('*'),
+    const [{ count: restroomCount }, { data: optouts }, { data: flagged }, { data: logs }] = await Promise.all([
+      supabase.from('restroom').select('*', { count: 'exact', head: true }),
       supabase.from('optout_requests').select('*'),
       supabase.from('flagged_content').select('*').eq('status', 'pending'),
       supabase.from('admin_logs').select('*').order('created_at', { ascending: false }).limit(50),
     ])
 
-    const withFlags = (restrooms || [])
-      .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, 50)
-      .map((r: any) => {
-        const pinText = String(r.pin || r.access_code || '')
-        const words = BAD_WORDS.filter(
-          (w) => pinText.toLowerCase().includes(w) || (r.name || '').toLowerCase().includes(w),
-        )
-        return { ...r, isFlagged: words.length > 0, flagWords: words }
-      })
+    if (!metricsRes.ok) {
+      metrics.totalRestrooms = restroomCount ?? 0
+      metrics.flaggedPending = flagged?.length ?? 0
+    }
 
     setData({
       metrics,
-      restrooms: withFlags,
+      metricsError,
       optouts: optouts || [],
       flagged: flagged || [],
       logs: logs || [],
@@ -174,11 +321,7 @@ export default function AdminDashboard() {
     loadData()
   }
 
-  const handleDelete = async (id: string) => {
-    if (!data || !confirm('Delete this restroom?')) return
-    await data.supabase.from('restroom').delete().eq('id', id)
-    loadData()
-  }
+  const pinsBadge = (moderation?.summary.pendingCount ?? 0) + (moderation?.summary.duplicateGroupCount ?? 0)
 
   const shellStyle: React.CSSProperties = {
     minHeight: '100vh',
@@ -271,9 +414,9 @@ export default function AdminDashboard() {
   const tabs: Array<{ key: TabKey; label: string; badge?: number }> = [
     { key: 'overview', label: 'Overview' },
     { key: 'live', label: 'Live Map', badge: liveActivity?.summary.recentViews || undefined },
-    { key: 'pins', label: 'Pins' },
+    { key: 'pins', label: 'Pins', badge: pinsBadge || undefined },
     { key: 'flagged', label: 'Flagged', badge: metrics.flaggedPending },
-    { key: 'optout', label: 'Opt-Out', badge: data.optouts.filter((o) => o.status === 'pending').length },
+    { key: 'optout', label: 'Business Claims', badge: businessClaims?.summary.totalPending || data.optouts.filter((o) => o.status === 'pending').length || undefined },
     { key: 'logs', label: 'Logs' },
   ]
 
@@ -307,6 +450,8 @@ export default function AdminDashboard() {
             onClick={() => {
               loadData()
               if (activeTab === 'live') loadLiveActivity()
+              if (activeTab === 'pins') loadModeration()
+              if (activeTab === 'optout') loadBusinessClaims()
             }}
             style={btnStyle('ghost')}
           >
@@ -366,6 +511,31 @@ export default function AdminDashboard() {
           )
         })}
       </nav>
+
+      {data.metricsError ? (
+        <div
+          style={{
+            margin: '0 16px',
+            marginTop: 16,
+            maxWidth: 1200,
+            marginLeft: 'auto',
+            marginRight: 'auto',
+            background: 'rgba(251, 191, 36, 0.12)',
+            border: '1px solid rgba(251, 191, 36, 0.35)',
+            borderRadius: 12,
+            padding: '14px 16px',
+            color: adminTheme.warning,
+            fontSize: 13,
+            lineHeight: 1.5,
+            fontFamily: adminTheme.fontBody,
+          }}
+        >
+          <strong>Service metrics offline.</strong> {data.metricsError}
+          <br />
+          Member counts need <code style={{ color: adminTheme.textSoft }}>SUPABASE_SERVICE_ROLE_KEY</code> in Vercel →
+          Settings → Environment Variables → Production, then redeploy.
+        </div>
+      ) : null}
 
       <main style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 16px 48px' }}>
         {activeTab === 'overview' && (
@@ -597,44 +767,174 @@ export default function AdminDashboard() {
 
         {activeTab === 'pins' && (
           <div>
-            <p style={{ color: adminTheme.textMuted, fontSize: 13, marginTop: 0, marginBottom: 16 }}>
-              Latest {data.restrooms.length} restroom records
-            </p>
-            {data.restrooms.map((pin: any) => (
+            {moderationError ? (
               <div
-                key={pin.id}
                 style={{
                   ...cardStyle(),
                   padding: 16,
-                  marginBottom: 12,
-                  borderColor: pin.isFlagged ? 'rgba(248, 113, 113, 0.35)' : adminTheme.cardBorder,
+                  marginBottom: 16,
+                  borderColor: 'rgba(251, 191, 36, 0.35)',
+                  color: adminTheme.warning,
+                  fontSize: 13,
                 }}
               >
-                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, fontFamily: adminTheme.fontDisplay }}>
-                  {pin.name || 'Unknown'}
-                  {pin.isFlagged ? (
-                    <span style={{ marginLeft: 8, fontSize: 10, background: adminTheme.danger, color: '#fff', borderRadius: 6, padding: '2px 6px' }}>
-                      FLAGGED
-                    </span>
-                  ) : null}
-                </div>
-                <div style={{ fontSize: 12, color: adminTheme.textMuted, marginBottom: 4 }}>{pin.address || '—'}</div>
-                <div style={{ fontSize: 12, color: adminTheme.textSoft, marginBottom: 4 }}>
-                  PIN: <span style={{ color: adminTheme.teal, fontFamily: 'monospace' }}>{pin.pin || pin.access_code || '—'}</span>
-                </div>
-                <div style={{ fontSize: 11, color: adminTheme.textMuted, marginBottom: 10 }}>
-                  {pin.created_at ? new Date(pin.created_at).toLocaleString() : '—'} · {pin.status || 'active'}
-                </div>
-                {pin.isFlagged ? (
-                  <div style={{ fontSize: 11, color: adminTheme.danger, marginBottom: 10 }}>Detected: {pin.flagWords.join(', ')}</div>
-                ) : null}
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <button type="button" onClick={() => handleAction('restroom', pin.id, { status: 'approved' })} style={btnStyle('ghost')}>Approve</button>
-                  <button type="button" onClick={() => handleAction('restroom', pin.id, { status: 'rejected' })} style={btnStyle('ghost')}>Reject</button>
-                  <button type="button" onClick={() => handleDelete(pin.id)} style={btnStyle('danger')}>Delete</button>
-                </div>
+                {moderationError}
               </div>
-            ))}
+            ) : null}
+
+            {moderationLoading ? (
+              <div style={{ ...cardStyle(), padding: 40, textAlign: 'center', color: adminTheme.textMuted }}>
+                Loading moderation queue…
+              </div>
+            ) : (
+              <>
+                <p style={{ color: adminTheme.textMuted, fontSize: 13, marginTop: 0, marginBottom: 16 }}>
+                  {moderation?.summary.pendingCount ?? 0} pending submission
+                  {(moderation?.summary.pendingCount ?? 0) === 1 ? '' : 's'} ·{' '}
+                  {moderation?.summary.duplicateGroupCount ?? 0} duplicate group
+                  {(moderation?.summary.duplicateGroupCount ?? 0) === 1 ? '' : 's'}
+                </p>
+
+                <h3 style={{ color: adminTheme.textSoft, fontSize: 14, margin: '0 0 12px', fontFamily: adminTheme.fontDisplay }}>
+                  Pending access submissions
+                </h3>
+                {(moderation?.pendingSubmissions.length ?? 0) === 0 ? (
+                  <div style={{ ...cardStyle(), padding: 24, textAlign: 'center', color: adminTheme.textMuted, marginBottom: 24 }}>
+                    No pending submissions
+                  </div>
+                ) : (
+                  moderation?.pendingSubmissions.map((item) => {
+                    const venue = item.restroom
+                    const pinText = String(item.submitted_pin || venue?.pin || '—')
+                    const pinWords = BAD_WORDS.filter(
+                      (w) => pinText.toLowerCase().includes(w) || (venue?.name || '').toLowerCase().includes(w),
+                    )
+                    const busy = actionBusy === 'approve_submission' || actionBusy === 'reject_submission'
+                    return (
+                      <div
+                        key={item.id}
+                        style={{
+                          ...cardStyle(),
+                          padding: 16,
+                          marginBottom: 12,
+                          borderColor: pinWords.length ? 'rgba(248, 113, 113, 0.35)' : adminTheme.cardBorder,
+                        }}
+                      >
+                        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, fontFamily: adminTheme.fontDisplay }}>
+                          {venue?.name || `Restroom #${item.restroom_id}`}
+                          {pinWords.length ? (
+                            <span style={{ marginLeft: 8, fontSize: 10, background: adminTheme.danger, color: '#fff', borderRadius: 6, padding: '2px 6px' }}>
+                              FLAGGED
+                            </span>
+                          ) : null}
+                        </div>
+                        <div style={{ fontSize: 12, color: adminTheme.textMuted, marginBottom: 4 }}>{venue?.address || '—'}</div>
+                        <div style={{ fontSize: 12, color: adminTheme.textSoft, marginBottom: 4 }}>
+                          Access: <span style={{ color: adminTheme.teal }}>{item.access_type}</span>
+                          {' · '}
+                          PIN: <span style={{ fontFamily: 'monospace', color: adminTheme.teal }}>{pinText}</span>
+                        </div>
+                        <div style={{ fontSize: 11, color: adminTheme.textMuted, marginBottom: 10 }}>
+                          Submitted {new Date(item.created_at).toLocaleString()} · source {item.source || 'app'} · venue status{' '}
+                          {venue?.status || 'unknown'}
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => runModerationAction({ action: 'approve_submission', submissionId: item.id })}
+                            style={btnStyle('ghost')}
+                          >
+                            Approve & publish
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => runModerationAction({ action: 'reject_submission', submissionId: item.id })}
+                            style={btnStyle('ghost')}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
+
+                <h3 style={{ color: adminTheme.textSoft, fontSize: 14, margin: '24px 0 12px', fontFamily: adminTheme.fontDisplay }}>
+                  Duplicate restrooms
+                </h3>
+                {(moderation?.duplicateGroups.length ?? 0) === 0 ? (
+                  <div style={{ ...cardStyle(), padding: 24, textAlign: 'center', color: adminTheme.textMuted }}>
+                    No duplicate name+address groups in recent records
+                  </div>
+                ) : (
+                  moderation?.duplicateGroups.map((group) => (
+                    <div key={group.key} style={{ ...cardStyle(), padding: 16, marginBottom: 12 }}>
+                      <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4, fontFamily: adminTheme.fontDisplay }}>
+                        {group.name}
+                      </div>
+                      <div style={{ fontSize: 12, color: adminTheme.textMuted, marginBottom: 12 }}>{group.address}</div>
+                      {group.rows.map((row, index) => (
+                        <div
+                          key={row.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 12,
+                            padding: '10px 0',
+                            borderTop: index === 0 ? 'none' : `1px solid ${adminTheme.cardBorder}`,
+                          }}
+                        >
+                          <div>
+                            <div style={{ fontSize: 12, color: adminTheme.textSoft }}>
+                              ID {row.id} · PIN {row.pin || '—'} · {row.status || 'unknown'}
+                            </div>
+                            <div style={{ fontSize: 11, color: adminTheme.textMuted }}>
+                              {row.created_at ? new Date(row.created_at).toLocaleString() : '—'}
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            <button
+                              type="button"
+                              disabled={!!actionBusy}
+                              onClick={() => runModerationAction({ action: 'approve_restroom', restroomId: row.id })}
+                              style={btnStyle('ghost')}
+                            >
+                              Keep & verify
+                            </button>
+                            {index === 0 ? (
+                              <button
+                                type="button"
+                                disabled={!!actionBusy}
+                                onClick={() => runModerationAction({ action: 'dedupe_restroom', keeperId: row.id })}
+                                style={btnStyle('ghost')}
+                              >
+                                Merge dupes here
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                disabled={!!actionBusy}
+                                onClick={() => {
+                                  if (confirm('Delete this duplicate restroom row?')) {
+                                    runModerationAction({ action: 'delete_restroom', restroomId: row.id })
+                                  }
+                                }}
+                                style={btnStyle('danger')}
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ))
+                )}
+              </>
+            )}
           </div>
         )}
 
@@ -673,36 +973,159 @@ export default function AdminDashboard() {
 
         {activeTab === 'optout' && (
           <div>
-            {data.optouts.length === 0 ? (
-              <div style={{ ...cardStyle(), padding: 40, textAlign: 'center', color: adminTheme.textMuted }}>No opt-out requests</div>
+            {businessClaimsError ? (
+              <div
+                style={{
+                  ...cardStyle(),
+                  padding: 16,
+                  marginBottom: 16,
+                  borderColor: 'rgba(251, 191, 36, 0.35)',
+                  color: adminTheme.warning,
+                  fontSize: 13,
+                }}
+              >
+                {businessClaimsError}
+              </div>
+            ) : null}
+
+            {businessClaimsLoading ? (
+              <div style={{ ...cardStyle(), padding: 40, textAlign: 'center', color: adminTheme.textMuted }}>
+                Loading business claims…
+              </div>
             ) : (
-              data.optouts.map((item: any) => (
-                <div
-                  key={item.id}
-                  style={{
-                    ...cardStyle(),
-                    padding: 16,
-                    marginBottom: 12,
-                    borderColor: item.status === 'pending' ? 'rgba(251, 191, 36, 0.35)' : adminTheme.cardBorder,
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
-                    <div style={{ fontWeight: 700, fontFamily: adminTheme.fontDisplay }}>{item.business_name || 'Unknown'}</div>
-                    <span style={{ fontSize: 11, color: item.status === 'pending' ? adminTheme.warning : adminTheme.teal }}>{item.status}</span>
+              <>
+                <p style={{ color: adminTheme.textMuted, fontSize: 13, marginTop: 0, marginBottom: 16 }}>
+                  {businessClaims?.summary.totalPending ?? 0} pending ·{' '}
+                  {businessClaims?.summary.removalRequests ?? 0} removal / hide-PIN requests from claim portal
+                </p>
+
+                <h3 style={{ color: adminTheme.textSoft, fontSize: 14, margin: '0 0 12px', fontFamily: adminTheme.fontDisplay }}>
+                  /business/claim submissions
+                </h3>
+                {(businessClaims?.claims.length ?? 0) === 0 ? (
+                  <div style={{ ...cardStyle(), padding: 24, textAlign: 'center', color: adminTheme.textMuted, marginBottom: 24 }}>
+                    No claim portal requests yet
                   </div>
-                  <div style={{ fontSize: 12, color: adminTheme.textMuted, marginBottom: 4 }}>{item.city || '—'}</div>
-                  <div style={{ fontSize: 12, color: adminTheme.textSoft, marginBottom: 4 }}>{item.reason || item.request_type || '—'}</div>
-                  <div style={{ fontSize: 11, color: adminTheme.textMuted, marginBottom: 10 }}>
-                    {item.contact_email || '—'} · {item.created_at ? new Date(item.created_at).toLocaleDateString() : '—'}
-                  </div>
-                  {item.status === 'pending' ? (
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button type="button" onClick={() => handleAction('optout_requests', item.id, { status: 'approved' })} style={btnStyle('ghost')}>Approve</button>
-                      <button type="button" onClick={() => handleAction('optout_requests', item.id, { status: 'rejected' })} style={btnStyle('danger')}>Reject</button>
+                ) : (
+                  businessClaims?.claims.map((item: any) => (
+                    <div
+                      key={item.id}
+                      style={{
+                        ...cardStyle(),
+                        padding: 16,
+                        marginBottom: 12,
+                        borderColor:
+                          item.request_type === 'removal' && item.status === 'pending'
+                            ? 'rgba(248, 113, 113, 0.45)'
+                            : item.status === 'pending'
+                              ? 'rgba(251, 191, 36, 0.35)'
+                              : adminTheme.cardBorder,
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
+                        <div style={{ fontWeight: 700, fontFamily: adminTheme.fontDisplay }}>
+                          {item.business_name || 'Unknown'}
+                          {item.request_type === 'removal' && item.status === 'pending' ? (
+                            <span style={{ marginLeft: 8, fontSize: 10, background: adminTheme.danger, color: '#fff', borderRadius: 6, padding: '2px 6px' }}>
+                              HIDE PIN
+                            </span>
+                          ) : null}
+                        </div>
+                        <span style={{ fontSize: 11, color: item.status === 'pending' ? adminTheme.warning : adminTheme.teal }}>
+                          {item.status}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 12, color: adminTheme.textSoft, marginBottom: 4 }}>{claimTypeLabel(item.request_type)}</div>
+                      <div style={{ fontSize: 12, color: adminTheme.textMuted, marginBottom: 4 }}>{item.business_address || '—'}</div>
+                      <div style={{ fontSize: 12, color: adminTheme.textMuted, marginBottom: 4 }}>{item.message || '—'}</div>
+                      <div style={{ fontSize: 11, color: adminTheme.textMuted, marginBottom: 10 }}>
+                        {item.contact_name} · {item.contact_email} · {item.contact_phone || '—'} ·{' '}
+                        {item.created_at ? new Date(item.created_at).toLocaleString() : '—'}
+                        {item.email_trust ? ` · ${item.email_trust} email` : ''}
+                      </div>
+                      {item.status === 'pending' ? (
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            disabled={!!actionBusy}
+                            onClick={() => runBusinessClaimAction({ table: 'business_claim_requests', id: item.id, status: 'reviewed' })}
+                            style={btnStyle('ghost')}
+                          >
+                            Mark reviewed
+                          </button>
+                          <button
+                            type="button"
+                            disabled={!!actionBusy}
+                            onClick={() => runBusinessClaimAction({ table: 'business_claim_requests', id: item.id, status: 'resolved' })}
+                            style={btnStyle('ghost')}
+                          >
+                            Mark resolved
+                          </button>
+                          <button
+                            type="button"
+                            disabled={!!actionBusy}
+                            onClick={() => runBusinessClaimAction({ table: 'business_claim_requests', id: item.id, status: 'rejected' })}
+                            style={btnStyle('danger')}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      ) : null}
                     </div>
-                  ) : null}
-                </div>
-              ))
+                  ))
+                )}
+
+                <h3 style={{ color: adminTheme.textSoft, fontSize: 14, margin: '24px 0 12px', fontFamily: adminTheme.fontDisplay }}>
+                  /optout form (restroom not publicly available)
+                </h3>
+                {(businessClaims?.optouts.length ?? data.optouts.length) === 0 ? (
+                  <div style={{ ...cardStyle(), padding: 24, textAlign: 'center', color: adminTheme.textMuted }}>
+                    No opt-out requests
+                  </div>
+                ) : (
+                  (businessClaims?.optouts ?? data.optouts).map((item: any) => (
+                    <div
+                      key={item.id}
+                      style={{
+                        ...cardStyle(),
+                        padding: 16,
+                        marginBottom: 12,
+                        borderColor: item.status === 'pending' ? 'rgba(251, 191, 36, 0.35)' : adminTheme.cardBorder,
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
+                        <div style={{ fontWeight: 700, fontFamily: adminTheme.fontDisplay }}>{item.business_name || 'Unknown'}</div>
+                        <span style={{ fontSize: 11, color: item.status === 'pending' ? adminTheme.warning : adminTheme.teal }}>{item.status}</span>
+                      </div>
+                      <div style={{ fontSize: 12, color: adminTheme.textMuted, marginBottom: 4 }}>{item.city || '—'}</div>
+                      <div style={{ fontSize: 12, color: adminTheme.textSoft, marginBottom: 4 }}>{item.reason || '—'}</div>
+                      <div style={{ fontSize: 11, color: adminTheme.textMuted, marginBottom: 10 }}>
+                        {item.contact_name || '—'} · {item.email || '—'} · {item.created_at ? new Date(item.created_at).toLocaleString() : '—'}
+                      </div>
+                      {item.status === 'pending' ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button
+                            type="button"
+                            disabled={!!actionBusy}
+                            onClick={() => runBusinessClaimAction({ table: 'optout_requests', id: item.id, status: 'approved' })}
+                            style={btnStyle('ghost')}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            disabled={!!actionBusy}
+                            onClick={() => runBusinessClaimAction({ table: 'optout_requests', id: item.id, status: 'rejected' })}
+                            style={btnStyle('danger')}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                  ))
+                )}
+              </>
             )}
           </div>
         )}

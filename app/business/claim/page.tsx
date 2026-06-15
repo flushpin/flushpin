@@ -1,11 +1,6 @@
 'use client'
 import { useState } from 'react'
-
-const FORMSPREE_ID = 'maqkrnep'
-
-const Logo = () => (
-  <img src="/logo.png" alt="FlushPin" className="h-12 w-auto" />
-)
+import Logo from '../../../components/Logo'
 
 type RequestType = 'claim' | 'update' | 'removal'
 
@@ -73,20 +68,23 @@ export default function ClaimPage() {
     if (!form.name || !form.email || !form.business || !requestType) return
     setSending(true)
     try {
-      await fetch(`https://formspree.io/f/${FORMSPREE_ID}`, {
+      const res = await fetch('/api/business-claim', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          _subject: `FlushPin Business ${requestType.toUpperCase()} — ${form.business}`,
-          type: requestType,
-          name: form.name,
-          business: form.business,
-          address: form.address,
-          email: form.email,
-          phone: form.phone || '—',
-          message: form.message || '—',
+          request_type: requestType,
+          contact_name: form.name,
+          business_name: form.business,
+          business_address: form.address,
+          contact_email: form.email,
+          contact_phone: form.phone,
+          message: form.message,
         }),
       })
+      const json = await res.json().catch(() => null)
+      if (!res.ok) {
+        throw new Error(json?.error || 'Request failed')
+      }
       setSent(true)
     } catch {
       alert('Something went wrong. Please try again.')
@@ -99,7 +97,7 @@ export default function ClaimPage() {
 
       {/* Nav */}
       <nav style={{background:"white",borderBottom:"1px solid #f0f0f0",padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:20}}>
-        <Logo />
+        <Logo height={48} />
         <a href="/business" style={{color:"#555",textDecoration:"none",fontSize:"14px",fontWeight:"500"}}>← Back to Business</a>
       </nav>
 
@@ -236,12 +234,14 @@ export default function ClaimPage() {
         )}
       </div>
 
-      <footer style={{background:"#0A2E1F",padding:"24px 20px",textAlign:"center"}}>
-        <div style={{fontSize:"13px",color:"#5DCAA5",marginBottom:"4px"}}>FlushPin — Business Owner Portal</div>
-        <div style={{fontSize:"11px",color:"#2D6A4F"}}>
-          <a href="/terms" style={{color:"#2D6A4F",textDecoration:"none",marginRight:"12px"}}>Terms of Service</a>
-          <a href="/privacy" style={{color:"#2D6A4F",textDecoration:"none"}}>Privacy Policy</a>
+      <footer style={{background:"#0A2E1F",padding:"28px 20px",textAlign:"center"}}>
+        <div style={{fontSize:"13px",color:"#5DCAA5",marginBottom:"12px"}}>FlushPin — Business Owner Portal</div>
+        <div style={{display:"flex",gap:"20px",justifyContent:"center",flexWrap:"wrap",marginBottom:"12px"}}>
+          <a href="/privacy" style={{color:"#5DCAA5",fontSize:"13px",textDecoration:"none"}}>Privacy Policy</a>
+          <a href="/terms" style={{color:"#5DCAA5",fontSize:"13px",textDecoration:"none"}}>Terms of Service</a>
+          <a href="/contact" style={{color:"#5DCAA5",fontSize:"13px",textDecoration:"none"}}>Contact</a>
         </div>
+        <p style={{color:"#2D6A4F",fontSize:"11px",margin:0}}>© {new Date().getFullYear()} FlushPin. All rights reserved.</p>
       </footer>
 
     </main>
