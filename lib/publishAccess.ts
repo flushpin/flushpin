@@ -32,9 +32,9 @@ const VERIFIED_LABELS: Record<AccessType, string> = {
   unknown: 'Access info shared',
 }
 
-function buildVerifiedLabel(type: AccessType, locale: string, at = new Date()): string {
+function buildVerifiedLabel(type: AccessType, _locale: string, at = new Date()): string {
   const iso = at.toISOString()
-  return `${VERIFIED_LABELS[type]} · Updated ${formatUpdatedAt(iso, locale)}`
+  return `${VERIFIED_LABELS[type]} · Updated ${formatUpdatedAt(iso)}`
 }
 
 /** DB columns for web direct update — does not write legacy verified TEXT. */

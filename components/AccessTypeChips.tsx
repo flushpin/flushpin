@@ -1,7 +1,6 @@
 'use client'
 
 import { ACCESS_TYPE_CHIPS, type AccessType } from '../lib/accessType'
-import { useLang } from '../lib/LanguageContext'
 
 const TEAL = '#0EB5AB'
 
@@ -11,8 +10,6 @@ type Props = {
 }
 
 export default function AccessTypeChips({ value, onChange }: Props) {
-  const { t } = useLang()
-
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
       {ACCESS_TYPE_CHIPS.map((chip) => {
@@ -33,7 +30,7 @@ export default function AccessTypeChips({ value, onChange }: Props) {
               cursor: 'pointer',
             }}
           >
-            {chip.emoji} {t.accessType.chips[chip.labelKey]}
+            {chip.emoji} {chip.label}
           </button>
         )
       })}
