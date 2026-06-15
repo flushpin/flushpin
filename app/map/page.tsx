@@ -18,6 +18,15 @@ import {
   type AccessMethod,
 } from '../../lib/accessType'
 
+function recordPinView(restroom: { id?: unknown }, userId?: string | null) {
+  if (!hasDbRestroomId(restroom)) return
+  fetch('/api/pin-view', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ restroom_id: restroom.id, user_id: userId ?? null }),
+  }).catch(() => {})
+}
+
 function getDistance(lat1:number, lng1:number, lat2:number, lng2:number) {
   const R = 3958.8
   const dLat = (lat2-lat1) * Math.PI/180
@@ -365,6 +374,7 @@ export default function FindPage() {
       closeEditForm()
       setSelected(updated)
       setShowPin(true)
+      recordPinView(updated, user?.id)
       const badge = getAccessListLabel(updated)
       setSuccessMsg(`${t.liveNow} — ${badge.label} · ${formatUpdatedAt(payload.pin_updated_at)}`)
       setTimeout(() => setSuccessMsg(''), 5000)
@@ -597,7 +607,7 @@ export default function FindPage() {
         ))}
       </div>
 
-      {showPromo&&promoTarget&&(<PromoModal restroom={promoTarget} onComplete={()=>{setShowPromo(false);setShowPin(true)}}/>)}
+      {showPromo&&promoTarget&&(<PromoModal restroom={promoTarget} onComplete={()=>{recordPinView(promoTarget, user?.id);setShowPromo(false);setShowPin(true)}}/>)}
       {showRating&&ratingTarget&&(<RatingModal restroom={ratingTarget} user={user} onClose={()=>setShowRating(false)} onDone={()=>{setShowRating(false);setSuccessMsg('✅ Thank you!');setTimeout(()=>setSuccessMsg(''),3000);loadData(anchorLat,anchorLng,searchQuery)}} initialPinWorked={ratingTarget?._pinWorked}/>)}
 
       {showEditForm&&editTarget&&(
