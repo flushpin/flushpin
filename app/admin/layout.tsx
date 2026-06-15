@@ -1,4 +1,8 @@
 import type { Metadata } from 'next'
+import { Inter, Space_Grotesk } from 'next/font/google'
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-admin-inter' })
+const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-admin-display' })
 
 export const metadata: Metadata = {
   alternates: {
@@ -11,5 +15,9 @@ export const metadata: Metadata = {
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return children
+  return (
+    <div className={`${inter.variable} ${spaceGrotesk.variable}`} style={{ minHeight: '100vh' }}>
+      {children}
+    </div>
+  )
 }
