@@ -3,6 +3,7 @@ import './globals.css'
 import { LanguageProvider } from '../lib/LanguageContext'
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://www.flushpin.com'),
   title: 'FlushPin — Restroom Intelligence',
   description: 'Location-based restroom intelligence for people who need access and businesses who want opportunity. Community-powered, California-first.',
   openGraph: {

@@ -18,6 +18,7 @@ export const translations = {
     heroTitle1: 'Restroom intelligence',
     heroTitle2: 'when you need access.',
     heroDesc: 'Location-based restroom guidance for travelers, parents, and anyone in a hurry — powered by community updates and respectful of business policies.',
+    appStoreSoon: 'Coming soon to the App Store',
     findBtn: 'Open the Map',
     businessBtn: 'For Businesses',
     downloadIos: 'Download on the App Store',
@@ -138,6 +139,64 @@ export const translations = {
 
     // Community notice
     communityNotice: 'Community-shared restroom access information · Always respect business policies ·',
+
+    stats: {
+      venuesTitle: 'venues mapped',
+      venuesSub: 'cafes, restaurants & more',
+      citiesTitle: 'cities covered',
+      citiesSub: 'across California',
+    },
+
+    accessType: {
+      chips: {
+        hasCode: 'Has Code',
+        noCode: 'No Code',
+        askStaff: 'Ask Staff',
+        customersOnly: 'Customers Only',
+        locked: 'Locked',
+        unknown: 'Unknown',
+      },
+      enterCode: 'Enter access code (numbers only)',
+      badge: {
+        keypad_code: '🔐 ACCESS CODE',
+        no_code_needed: '🚪 NO CODE NEEDED',
+        ask_staff: '🔑 ASK STAFF',
+        customers_only: '🧾 CUSTOMERS ONLY',
+        locked: '🚫 CURRENTLY LOCKED',
+        unknown: '❓ UNKNOWN ACCESS',
+      },
+      short: {
+        keypad_code: 'Code available',
+        no_code_needed: 'No code needed',
+        ask_staff: 'Ask staff',
+        customers_only: 'Customers only',
+        locked: 'Locked',
+        unknown: 'Unknown access',
+      },
+      panelSub: {
+        no_code_needed: 'No code required — open to customers',
+        customers_only: 'Purchase may be required — ask staff if unsure',
+        ask_staff: 'Key or code available at the counter',
+        locked: 'Not publicly available right now',
+        unknown: 'Please ask staff — help us update this',
+      },
+    },
+
+    pinSuccess: {
+      title: 'Thank you! ❤️',
+      body: 'You just helped someone find the restroom.',
+      codeLabel: 'Your code',
+      live: 'Code {{pin}} is now live for everyone nearby.',
+      btn: 'Awesome!',
+    },
+
+    editForm: {
+      accessTypeLabel: 'How do you access the restroom?',
+      signInRequired: 'Please sign in to share access info.',
+      pinRequired: 'Please enter a numeric access code.',
+      save: 'Save ✓',
+      updated: '✅ Updated — thank you!',
+    },
   },
 
   es: {
@@ -159,6 +218,7 @@ export const translations = {
     heroTitle1: 'Inteligencia de baños',
     heroTitle2: 'cuando lo necesitas.',
     heroDesc: 'Guía de baños basada en ubicación para viajeros, padres y quien tenga prisa — con actualizaciones comunitarias y respeto por las políticas de los negocios.',
+    appStoreSoon: 'Próximamente en el App Store',
     findBtn: 'Abrir el mapa',
     businessBtn: 'Para Negocios',
     downloadIos: 'Descargar en App Store',
@@ -279,6 +339,64 @@ export const translations = {
 
     // Community notice
     communityNotice: 'Información de acceso a baños compartida por la comunidad · Respeta siempre las políticas del negocio ·',
+
+    stats: {
+      venuesTitle: 'lugares registrados',
+      venuesSub: 'cafés, restaurantes y más',
+      citiesTitle: 'ciudades cubiertas',
+      citiesSub: 'en toda California',
+    },
+
+    accessType: {
+      chips: {
+        hasCode: 'Tiene código',
+        noCode: 'Sin código',
+        askStaff: 'Preguntar al personal',
+        customersOnly: 'Solo clientes',
+        locked: 'Cerrado',
+        unknown: 'Desconocido',
+      },
+      enterCode: 'Ingresa el código de acceso (solo números)',
+      badge: {
+        keypad_code: '🔐 CÓDIGO DE ACCESO',
+        no_code_needed: '🚪 SIN CÓDIGO',
+        ask_staff: '🔑 PREGUNTA AL PERSONAL',
+        customers_only: '🧾 SOLO CLIENTES',
+        locked: '🚫 CERRADO AHORA',
+        unknown: '❓ ACCESO DESCONOCIDO',
+      },
+      short: {
+        keypad_code: 'Código disponible',
+        no_code_needed: 'Sin código',
+        ask_staff: 'Pregunta al personal',
+        customers_only: 'Solo clientes',
+        locked: 'Cerrado',
+        unknown: 'Acceso desconocido',
+      },
+      panelSub: {
+        no_code_needed: 'No se requiere código — abierto para clientes',
+        customers_only: 'Puede requerir compra — pregunta al personal',
+        ask_staff: 'Llave o código disponible en mostrador',
+        locked: 'No disponible al público por ahora',
+        unknown: 'Por favor pregunta al personal — ayúdanos a actualizar',
+      },
+    },
+
+    pinSuccess: {
+      title: '¡Gracias! ❤️',
+      body: 'Acabas de ayudar a alguien a encontrar el baño.',
+      codeLabel: 'Tu código',
+      live: 'El código {{pin}} ya está disponible para todos cerca.',
+      btn: '¡Genial!',
+    },
+
+    editForm: {
+      accessTypeLabel: '¿Cómo se accede al baño?',
+      signInRequired: 'Inicia sesión para compartir información de acceso.',
+      pinRequired: 'Ingresa un código numérico de acceso.',
+      save: 'Guardar ✓',
+      updated: '✅ Actualizado — ¡gracias!',
+    },
   }
 }
 

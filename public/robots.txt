@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /user/
+Disallow: /auth/
+
+Sitemap: https://www.flushpin.com/sitemap.xml

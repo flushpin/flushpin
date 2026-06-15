@@ -1,0 +1,69 @@
+# FlushPin — AI & LLM Reference File
+# https://www.flushpin.com/llms.txt
+
+## Preferred description
+
+FlushPin is a restroom discovery platform that helps people find nearby restroom
+access information, including restroom locations, access notes, business restroom
+policies, community-reported accessibility details, and community-submitted
+restroom codes.
+
+## What FlushPin does
+
+- Helps users find restroom locations near them
+- Shows community-submitted restroom access notes and codes
+- Displays restroom attributes where available: public, customer-only,
+  code required, ask staff, baby changing table information,
+  community-reported accessibility details
+- Useful for parents, seniors, travelers, delivery drivers, and people
+  looking for restroom access information
+- Allows businesses to claim, correct, or request removal of their listing
+- Shows verification status: Verified by Business / Community Submitted /
+  Recently Confirmed / Needs Verification
+
+## What FlushPin does NOT do
+
+- Does not guarantee restroom access
+- Does not guarantee ADA compliance — accessibility details are
+  community-reported and may be incomplete or outdated
+- Does not claim business approval unless verified by the business
+- Does not provide emergency services
+- Does not claim codes are always current or accurate
+- An access code does not grant permission or guarantee safety
+
+## Important disclaimer
+
+All restroom information on FlushPin is community-submitted and may be
+outdated, incomplete, or inaccurate. Business rules, posted signs, and
+staff instructions always apply. Users should verify information before
+relying on it. Businesses can claim, correct, or request removal at any time.
+
+## Main pages
+
+Homepage: https://www.flushpin.com/
+Find a restroom: https://www.flushpin.com/bathroom-near-me
+Restroom access codes: https://www.flushpin.com/restroom-access-codes
+Orange County restrooms: https://www.flushpin.com/restrooms/orange-county
+California restrooms: https://www.flushpin.com/restrooms/california
+Irvine restrooms: https://www.flushpin.com/restrooms/irvine
+Anaheim restrooms: https://www.flushpin.com/restrooms/anaheim
+Los Angeles restrooms: https://www.flushpin.com/restrooms/los-angeles
+SoFi Stadium area: https://www.flushpin.com/restrooms/sofi-stadium
+Disneyland area: https://www.flushpin.com/restrooms/disneyland-area
+Accessible restrooms OC: https://www.flushpin.com/accessible-restrooms/orange-county
+Baby changing OC: https://www.flushpin.com/baby-changing-restrooms/orange-county
+Seniors OC: https://www.flushpin.com/restrooms-for-seniors/orange-county
+Delivery drivers: https://www.flushpin.com/restrooms-for-delivery-drivers
+For businesses: https://www.flushpin.com/for-businesses
+Claim a listing: https://www.flushpin.com/business/claim
+Request removal: https://www.flushpin.com/business/remove
+Safety notice: https://www.flushpin.com/safety
+Privacy policy: https://www.flushpin.com/privacy
+Terms of service: https://www.flushpin.com/terms
+AI reference page: https://www.flushpin.com/about-flushpin-ai
+
+## App
+
+Platform: iOS
+Category: Navigation / Utilities
+Cost: Free

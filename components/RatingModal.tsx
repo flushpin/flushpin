@@ -40,7 +40,8 @@ export default function RatingModal({restroom, user, onClose, onDone, initialPin
       })
       await supabase.from('restroom').update({
         status: 'red',
-        verified: 'PIN reported broken',
+        verified_note: 'PIN reported broken',
+        status_note: 'PIN reported broken',
       }).eq('id', restroom.id)
     } else {
       const avg = Math.round((cleanliness+smell+appearance)/3*10)/10
@@ -55,7 +56,7 @@ export default function RatingModal({restroom, user, onClose, onDone, initialPin
         score: avg,
         stars: Math.round(avg),
         status: avg>=4.5?'green':avg>=3?'amber':'red',
-        verified: 'Just rated',
+        verified_note: 'Just rated',
       }).eq('id', restroom.id)
     }
 

@@ -1,76 +1,96 @@
 'use client'
 import { useState } from 'react'
-import Logo from '../../components/Logo'
+import Link from 'next/link'
 
 const FORMSPREE_ID = 'maqkrnep'
 
-const valueProps = [
+const stats = [
+  { number: '2.3×', label: 'more likely to enter a business when restroom access is confirmed' },
+  { number: '68%', label: 'of restroom visitors make a purchase when shown a relevant offer' },
+  { number: '4 min', label: 'average time a customer spends inside after finding your restroom' },
+]
+
+const insights = [
   {
     icon: '📊',
     title: 'Foot Traffic Intelligence',
-    desc: 'Understand restroom demand, peak times, customer behavior signals, and location trends — so you know when opportunity is walking through your door.',
+    desc: 'Understand restroom demand, peak hours, and intent traffic signals at your location. Know when people are coming — and why.',
   },
   {
-    icon: '🔄',
+    icon: '🎯',
     title: 'Customer Recovery',
-    desc: 'Someone came for the restroom. Give them a reason to stay, buy, or return — before they walk away to a competitor.',
+    desc: 'Someone came for the restroom. Give them a reason to stay, buy, or return. Show your offer before they walk away.',
   },
   {
-    icon: '✨',
+    icon: '✅',
     title: 'Restroom Experience Management',
-    desc: 'Improve restroom experience, reduce complaints, keep information accurate, and build trust with every visit.',
+    desc: 'Keep restroom info accurate, reduce complaints, and build the trust that keeps customers coming back.',
   },
 ]
 
-const businessFeatures = [
-  'Verified restroom information',
-  'Restroom access management',
-  'Incorrect info priority fixes',
-  'Monthly restroom intelligence reports',
-  'Promo visibility before restroom access',
-  'Demand trends & peak restroom hours',
-  'Trust / reliability score',
-]
-
-const proFeatures = [
-  'Everything in Business — plus:',
-  'See every location. Fix problems before customers do.',
-  'Know which locations are killing it — and which aren\'t.',
-  'Real-time alerts when a location gets flagged',
-  'SMS to your managers when restroom needs attention',
-  'Your restroom data, city by city — regional heat map',
-  'One report. Every location. Ready Monday morning.',
-  'Custom branded reports with your logo',
-  'A real human who knows your account',
-]
-
-const insightRows = [
-  { label: 'Restroom demand signals', value: 'Trending up', note: 'vs. prior 30 days' },
-  { label: 'Peak restroom hours', value: '11am – 2pm', note: 'weekday pattern' },
-  { label: 'Access interest', value: 'High intent', note: 'people searched or viewed restroom access' },
-  { label: 'Estimated engagement', value: 'Promo opportunity', note: 'before restroom access' },
+const plans = [
+  {
+    name: 'Business',
+    badge: 'Get Started',
+    badgeColor: '#0EB5AB',
+    price: null,
+    priceLabel: 'Free forever',
+    bg: '#f8fffe',
+    border: '#c8ede9',
+    cta: 'Claim Your Listing',
+    ctaBg: '#0A2E1F',
+    ctaHref: '/business/claim',
+    features: [
+      'Claim your listing on FlushPin',
+      'Update restroom access info',
+      'Appear in user searches',
+      'Community visibility across iOS & web',
+      '1 location',
+    ],
+  },
+  {
+    name: 'Business Pro',
+    badge: 'Recommended',
+    badgeColor: '#D97706',
+    price: null,
+    priceLabel: 'Contact us for pricing',
+    bg: '#0A2E1F',
+    border: '#0A2E1F',
+    dark: true,
+    cta: 'Book a Demo',
+    ctaBg: '#0EB5AB',
+    ctaHref: null,
+    features: [
+      'Everything in Community',
+      'Monthly Restroom Intent Traffic report',
+      'Peak demand hours dashboard',
+      'Promo visibility before restroom access',
+      'Priority fix for incorrect listings',
+      'Verified Business badge',
+      'QR sticker pack (mailed to you)',
+      'Multi-location management',
+      'Chain analytics & benchmarking',
+      'Dedicated account support',
+    ],
+  },
 ]
 
 const faqs = [
   {
-    q: 'What kind of data does FlushPin provide?',
-    a: 'FlushPin surfaces restroom demand signals, access interest, peak hour patterns, and estimated engagement — helping you understand when people are looking for your restroom and where customer opportunity exists.',
+    q: 'What does "restroom intent traffic" mean?',
+    a: 'It refers to people who actively searched for or viewed restroom access at your location on FlushPin. This is demand signal data — not guaranteed conversions, but real behavioral interest from nearby customers.',
   },
   {
-    q: 'How does customer recovery work?',
-    a: 'When someone visits for restroom access, FlushPin gives you a moment to present a relevant offer, message, or reason to stay — turning restroom intent traffic into a customer opportunity.',
+    q: 'How is FlushPin different from other restroom finder apps?',
+    a: 'We ran a side-by-side test in the same neighborhood. FlushPin found the nearest verified restroom, confirmed it had a baby changing station, noted accessible entry for guests with disabilities, and showed accurate access info in real time. The competing app directed users to a location 0.5 miles away — which was closed — with no additional details. FlushPin wins on proximity, accuracy, and information depth.',
   },
   {
-    q: 'Do you track exact visit counts or guaranteed conversions?',
-    a: 'No. We report restroom demand, intent traffic, and estimated engagement — not hard conversion guarantees. Our language reflects what we can responsibly measure.',
+    q: 'What does the promo before restroom access look like?',
+    a: 'Before a user sees your restroom PIN or access info, they see a short, branded offer from your business — like "Free coffee refill with any purchase today." It\'s 4 seconds, skippable, and drives real foot traffic, not just impressions.',
   },
   {
     q: 'Can I manage multiple locations?',
-    a: 'Yes. Business Pro includes a multi-location dashboard with regional comparison, chain analytics, real-time alerts, and SMS notifications to your field managers.',
-  },
-  {
-    q: 'What if my restroom information is wrong on the map?',
-    a: 'Business subscribers get priority fixes for incorrect listings. Keeping restroom info accurate protects trust and reduces customer frustration.',
+    a: 'Yes. Business Intelligence includes a multi-location dashboard with regional comparison, chain analytics, real-time alerts, and notifications to your field managers.',
   },
   {
     q: 'Is there a contract?',
@@ -81,26 +101,15 @@ const faqs = [
 export default function BusinessPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [showDemo, setShowDemo] = useState(false)
-  const [form, setForm] = useState({ name: '', business: '', email: '', locations: '1', plan: 'Business', message: '' })
+  const [form, setForm] = useState({ name: '', business: '', email: '', locations: '1', message: '' })
   const [sent, setSent] = useState(false)
   const [sending, setSending] = useState(false)
-
-  const inputStyle = {
-    width: '100%', padding: '11px 14px', borderRadius: '9px', border: '1px solid #e0e0e0',
-    fontSize: '14px', outline: 'none', boxSizing: 'border-box' as const, color: '#1a1a1a',
-    fontFamily: "'Inter',system-ui,sans-serif",
-  }
-  const labelStyle = { fontSize: '12px', fontWeight: '600' as const, color: '#444', marginBottom: '6px', display: 'block' as const }
-
-  const scrollToInsights = () => {
-    document.getElementById('insights-section')?.scrollIntoView({ behavior: 'smooth' })
-  }
 
   const handleDemoSubmit = async () => {
     if (!form.name || !form.email || !form.business) return
     setSending(true)
     try {
-      const res = await fetch(`https://formspree.io/f/${FORMSPREE_ID}`, {
+      await fetch(`https://formspree.io/f/${FORMSPREE_ID}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -110,300 +119,206 @@ export default function BusinessPage() {
           business: form.business,
           email: form.email,
           locations: form.locations,
-          plan: form.plan,
           message: form.message || '—',
         }),
       })
-      if (!res.ok) throw new Error('Form submit failed')
       setSent(true)
     } catch {
       alert('Something went wrong. Please try again.')
+    } finally {
+      setSending(false)
     }
-    setSending(false)
   }
 
-  const sectionTitle = {
-    fontFamily: "'Space Grotesk','Inter',sans-serif",
-    fontSize: 'clamp(22px,4vw,32px)',
-    fontWeight: '700' as const,
-    color: '#0A2E1F',
-    marginBottom: '10px',
-    textAlign: 'center' as const,
+  const inp: React.CSSProperties = {
+    width: '100%', padding: '11px 14px', borderRadius: '9px',
+    border: '1px solid #e0e0e0', fontSize: '14px', outline: 'none',
+    boxSizing: 'border-box', color: '#1a1a1a',
+    fontFamily: "'Inter',system-ui,sans-serif",
+  }
+  const lbl: React.CSSProperties = {
+    fontSize: '12px', fontWeight: 600, color: '#444',
+    marginBottom: '6px', display: 'block',
   }
 
   return (
-    <main style={{ margin: 0, padding: 0, fontFamily: "'Inter',system-ui,sans-serif", background: '#fff', minHeight: '100vh' }}>
+    <div style={{ fontFamily: "'Inter',system-ui,sans-serif", background: '#fff', minHeight: '100vh', color: '#1a1a1a' }}>
 
-      <nav style={{ background: 'white', borderBottom: '1px solid #f0f0f0', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 20 }}>
-        <Logo height={32} />
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <a href="/map" style={{ color: '#555', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>Find a Restroom</a>
-          <button onClick={() => setShowDemo(true)} style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '9px 18px', borderRadius: '9px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>
-            Book a Demo
-          </button>
-        </div>
+      {/* NAV */}
+      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid #f0f0f0', maxWidth: '1100px', margin: '0 auto' }}>
+        <a href="/" style={{ textDecoration: 'none' }}>
+          <img src="/logo.png" alt="FlushPin" className="h-12 w-auto" />
+        </a>
+        <Link href="/" style={{ fontSize: '14px', color: '#666', textDecoration: 'none' }}>← Back to home</Link>
       </nav>
 
-      {/* Hero */}
-      <section style={{ textAlign: 'center', padding: '72px 24px 64px', background: 'linear-gradient(180deg,#f0faf6 0%,#fff 100%)' }}>
-        <div style={{ display: 'inline-block', background: '#E1F5EE', color: '#0F6E56', fontSize: '13px', padding: '6px 18px', borderRadius: '20px', marginBottom: '24px', fontWeight: '600' }}>
-          Restroom Intelligence + Customer Recovery
+      {/* HERO */}
+      <section style={{ textAlign: 'center', padding: '72px 24px 56px', maxWidth: '780px', margin: '0 auto' }}>
+        <div style={{ display: 'inline-block', background: '#f0fdfb', border: '1px solid #c8ede9', borderRadius: '100px', padding: '6px 16px', fontSize: '12px', fontWeight: 600, color: '#0EB5AB', letterSpacing: '0.05em', marginBottom: '24px' }}>
+          FOR BUSINESSES
         </div>
-        <h1 style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: 'clamp(28px,6vw,48px)', fontWeight: '700', color: '#0A2E1F', lineHeight: '1.15', marginBottom: '20px', letterSpacing: '-1px', maxWidth: '720px', margin: '0 auto 20px' }}>
-          Turn restroom traffic into customer opportunity
+        <h1 style={{ fontSize: 'clamp(32px,6vw,58px)', fontWeight: 800, lineHeight: 1.1, color: '#0A2E1F', margin: '0 0 20px', fontFamily: "'Space Grotesk','Inter',sans-serif", letterSpacing: '-1px' }}>
+          Turn restroom traffic<br />into customer opportunity
         </h1>
-        <p style={{ fontSize: 'clamp(15px,3vw,18px)', color: '#666', maxWidth: '560px', margin: '0 auto 36px', lineHeight: '1.7' }}>
+        <p style={{ fontSize: '18px', color: '#555', lineHeight: 1.7, margin: '0 0 36px', maxWidth: '560px', marginLeft: 'auto', marginRight: 'auto' }}>
           Understand restroom demand, recover missed customers, and improve customer experience before people walk away.
         </p>
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button onClick={() => setShowDemo(true)} style={{ background: '#1D9E75', color: 'white', padding: '14px 32px', borderRadius: '11px', border: 'none', fontSize: '16px', fontWeight: '700', cursor: 'pointer' }}>
-            Book a Demo →
+          <button onClick={() => setShowDemo(true)} style={{ background: '#0EB5AB', color: 'white', border: 'none', borderRadius: '12px', padding: '14px 28px', fontSize: '16px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Space Grotesk','Inter',sans-serif" }}>
+            Book a Demo
           </button>
-          <button onClick={scrollToInsights} style={{ background: 'white', color: '#0A2E1F', padding: '14px 32px', borderRadius: '11px', fontSize: '16px', border: '1.5px solid #e0e0e0', fontWeight: '600', cursor: 'pointer' }}>
-            See Business Insights
-          </button>
+          <Link href="/business/claim" style={{ background: '#f5f5f5', color: '#0A2E1F', borderRadius: '12px', padding: '14px 28px', fontSize: '16px', fontWeight: 600, textDecoration: 'none', display: 'inline-block' }}>
+            Claim Free Listing
+          </Link>
         </div>
       </section>
 
-      {/* Value props */}
-      <section style={{ padding: '0 24px 72px', maxWidth: '1000px', margin: '0 auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '20px' }}>
-          {valueProps.map((v, i) => (
-            <div key={i} style={{ background: '#f8f8f8', borderRadius: '16px', padding: '28px 24px', border: '1px solid #eee' }}>
-              <div style={{ fontSize: '28px', marginBottom: '14px' }}>{v.icon}</div>
-              <div style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: '18px', fontWeight: '700', color: '#0A2E1F', marginBottom: '10px' }}>{v.title}</div>
-              <div style={{ fontSize: '14px', color: '#666', lineHeight: '1.7' }}>{v.desc}</div>
+      {/* STATS */}
+      <section style={{ background: '#f8fffe', padding: '48px 24px', borderTop: '1px solid #e8f5f3', borderBottom: '1px solid #e8f5f3' }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '32px', textAlign: 'center' }}>
+          {stats.map((s, i) => (
+            <div key={i}>
+              <div style={{ fontSize: '42px', fontWeight: 800, color: '#0EB5AB', fontFamily: "'Space Grotesk','Inter',sans-serif", letterSpacing: '-1px' }}>{s.number}</div>
+              <div style={{ fontSize: '14px', color: '#555', lineHeight: 1.5, marginTop: '8px', maxWidth: '200px', margin: '8px auto 0' }}>{s.label}</div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Positioning */}
-      <section style={{ padding: '0 24px 72px', maxWidth: '900px', margin: '0 auto' }}>
-        <div style={{ background: '#0A2E1F', borderRadius: '20px', padding: '40px 32px', textAlign: 'center' }}>
-          <p style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: 'clamp(20px,4vw,28px)', fontWeight: '700', color: 'white', marginBottom: '16px', lineHeight: '1.3' }}>
-            Map is a commodity.<br />
-            <span style={{ color: '#5DCAA5' }}>FlushPin data is the product.</span>
-          </p>
-          <p style={{ fontSize: '15px', color: '#9FE1CB', lineHeight: '1.7', maxWidth: '560px', margin: '0 auto' }}>
-            We don&apos;t sell restroom codes or bathroom passwords. We help businesses understand restroom demand, recover customers, and turn restroom visitors into real opportunity.
-          </p>
+      {/* INSIGHTS */}
+      <section id="insights-section" style={{ padding: '72px 24px', maxWidth: '980px', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+          <h2 style={{ fontSize: 'clamp(26px,4vw,40px)', fontWeight: 800, color: '#0A2E1F', fontFamily: "'Space Grotesk','Inter',sans-serif", letterSpacing: '-0.5px', margin: '0 0 12px' }}>
+            What FlushPin gives your business
+          </h2>
+          <p style={{ color: '#666', fontSize: '16px' }}>Data and tools built around the most overlooked customer touchpoint.</p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '24px' }}>
+          {insights.map((item, i) => (
+            <div key={i} style={{ background: '#f8fffe', border: '1px solid #e0f5f2', borderRadius: '16px', padding: '28px 24px' }}>
+              <div style={{ fontSize: '32px', marginBottom: '12px' }}>{item.icon}</div>
+              <div style={{ fontWeight: 700, fontSize: '17px', color: '#0A2E1F', marginBottom: '8px', fontFamily: "'Space Grotesk','Inter',sans-serif" }}>{item.title}</div>
+              <div style={{ fontSize: '14px', color: '#666', lineHeight: 1.6 }}>{item.desc}</div>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* Insights preview */}
-      <section id="insights-section" style={{ padding: '0 24px 72px', maxWidth: '1000px', margin: '0 auto' }}>
-        <h2 style={sectionTitle}>Restroom intelligence, not guesswork</h2>
-        <p style={{ textAlign: 'center', color: '#999', fontSize: '15px', maxWidth: '520px', margin: '0 auto 36px', lineHeight: '1.6' }}>
-          Monthly reports built on restroom demand signals and access interest — responsibly worded, actionable for your team.
-        </p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: '24px', alignItems: 'start' }}>
-          <div style={{ background: '#f8f8f8', borderRadius: '16px', padding: '28px', border: '1px solid #eee' }}>
-            <div style={{ fontSize: '12px', fontWeight: '700', color: '#1D9E75', letterSpacing: '0.5px', marginBottom: '16px', textTransform: 'uppercase' }}>Sample intelligence snapshot</div>
-            {insightRows.map((row, i) => (
-              <div key={i} style={{ padding: '14px 0', borderBottom: i < insightRows.length - 1 ? '1px solid #eee' : 'none' }}>
-                <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>{row.label}</div>
-                <div style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: '18px', fontWeight: '700', color: '#0A2E1F' }}>{row.value}</div>
-                <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>{row.note}</div>
-              </div>
-            ))}
-            <p style={{ fontSize: '11px', color: '#aaa', marginTop: '16px', lineHeight: '1.5', fontStyle: 'italic' }}>
-              Illustrative example. Actual reports reflect your location&apos;s restroom demand trends and access interest.
-            </p>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {[
-              { title: 'Demand trends', desc: 'See when restroom intent traffic rises and falls — weekdays, weekends, seasons.' },
-              { title: 'Customer opportunity', desc: 'Identify moments to present offers, loyalty prompts, or reasons to stay before access.' },
-              { title: 'Trust & reliability', desc: 'Keep restroom information accurate and your reliability score strong across FlushPin.' },
-              { title: 'Promo visibility', desc: 'Reach people at the right moment — when restroom demand is highest at your location.' },
-            ].map((item, i) => (
-              <div key={i} style={{ background: 'white', borderRadius: '14px', padding: '20px 22px', border: '1px solid #eee' }}>
-                <div style={{ fontSize: '15px', fontWeight: '700', color: '#0A2E1F', marginBottom: '6px' }}>{item.title}</div>
-                <div style={{ fontSize: '14px', color: '#666', lineHeight: '1.6' }}>{item.desc}</div>
-              </div>
-            ))}
-          </div>
+      {/* COSTCO CALLOUT */}
+      <section style={{ background: '#0A2E1F', padding: '56px 24px' }}>
+        <div style={{ maxWidth: '720px', margin: '0 auto', textAlign: 'center' }}>
+          <div style={{ fontSize: '13px', fontWeight: 600, color: '#0EB5AB', letterSpacing: '0.1em', marginBottom: '16px' }}>THE OPPORTUNITY</div>
+          <h2 style={{ fontSize: 'clamp(24px,4vw,38px)', fontWeight: 800, color: 'white', fontFamily: "'Space Grotesk','Inter',sans-serif", lineHeight: 1.2, margin: '0 0 20px' }}>
+            Your competitors are invisible. You don&apos;t have to be.
+          </h2>
+          <p style={{ color: '#9FE1CB', fontSize: '16px', lineHeight: 1.7, margin: '0 0 32px' }}>
+            We tested two restroom apps in the same neighborhood. FlushPin found the closest restroom, confirmed it had a baby changing station, flagged accessible entry for guests with disabilities, and showed real-time access info. The other app pointed to a location 0.5 miles away — that turned out to be closed — with zero additional details. That difference is your competitive advantage.
+          </p>
+          <button onClick={() => setShowDemo(true)} style={{ background: '#0EB5AB', color: 'white', border: 'none', borderRadius: '12px', padding: '14px 28px', fontSize: '16px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Space Grotesk','Inter',sans-serif" }}>
+            Get Listed Today
+          </button>
         </div>
       </section>
 
-      {/* Pricing */}
-      <section style={{ padding: '0 24px 72px', maxWidth: '960px', margin: '0 auto' }}>
-        <h2 style={sectionTitle}>Plans built for business owners</h2>
-        <p style={{ textAlign: 'center', color: '#999', marginBottom: '36px', fontSize: '15px' }}>Per location · No long-term contracts · Cancel anytime</p>
+      {/* PRICING */}
+      <section style={{ padding: '72px 24px', maxWidth: '900px', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+          <h2 style={{ fontSize: 'clamp(26px,4vw,40px)', fontWeight: 800, color: '#0A2E1F', fontFamily: "'Space Grotesk','Inter',sans-serif", letterSpacing: '-0.5px', margin: '0 0 12px' }}>
+            Simple plans, real results
+          </h2>
+          <p style={{ color: '#666', fontSize: '16px' }}>Start free. Upgrade when you&apos;re ready to unlock intelligence.</p>
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: '24px', alignItems: 'start' }}>
-
-          {/* Business Card */}
-          <div style={{ background: '#E1F5EE', borderRadius: '20px', padding: '36px 28px', border: '2px solid #1D9E75', position: 'relative' }}>
-            <div style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', background: '#1D9E75', color: 'white', fontSize: '11px', fontWeight: '700', padding: '4px 14px', borderRadius: '20px', whiteSpace: 'nowrap' }}>
-              Sweet spot
-            </div>
-            <div style={{ fontSize: '12px', fontWeight: '700', color: '#1D9E75', letterSpacing: '1px', marginBottom: '8px', textTransform: 'uppercase' }}>For single locations</div>
-            <div style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: '24px', fontWeight: '800', color: '#0A2E1F', marginBottom: '8px' }}>Business</div>
-            <div style={{ marginBottom: '8px' }}>
-              <span style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: '44px', fontWeight: '800', color: '#0A2E1F' }}>$49</span>
-              <span style={{ fontSize: '15px', color: '#0F6E56' }}>/location/mo</span>
-            </div>
-            <p style={{ fontSize: '14px', color: '#555', lineHeight: '1.6', marginBottom: '28px' }}>
-              For single-location owners who want restroom intelligence and customer recovery tools.
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
-              {businessFeatures.map((f, j) => (
-                <div key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                  <span style={{ color: '#1D9E75', fontWeight: '700', flexShrink: 0, fontSize: '16px' }}>✓</span>
-                  <span style={{ fontSize: '14px', color: '#444', lineHeight: '1.5' }}>{f}</span>
+          {plans.map((plan, i) => (
+            <div key={i} style={{ background: plan.bg, border: `2px solid ${plan.border}`, borderRadius: '20px', padding: '32px 28px', color: plan.dark ? 'white' : '#0A2E1F' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                <div>
+                  <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', color: plan.badgeColor, marginBottom: '6px' }}>{plan.badge}</div>
+                  <div style={{ fontSize: '24px', fontWeight: 800, fontFamily: "'Space Grotesk','Inter',sans-serif" }}>{plan.name}</div>
                 </div>
-              ))}
-            </div>
-            <button onClick={() => { setForm(p => ({ ...p, plan: 'Business' })); setShowDemo(true) }}
-              style={{ width: '100%', background: '#1D9E75', color: 'white', border: 'none', padding: '15px', borderRadius: '11px', fontSize: '15px', fontWeight: '700', cursor: 'pointer' }}>
-              Book a Demo
-            </button>
-          </div>
-
-          {/* Pro Card */}
-          <div style={{
-            background: 'linear-gradient(145deg, #0f1628 0%, #1a2340 50%, #0f1628 100%)',
-            borderRadius: '20px',
-            padding: '36px 28px',
-            border: '1.5px solid #c9a84c',
-            position: 'relative',
-            boxShadow: '0 8px 32px rgba(201,168,76,0.15), 0 2px 8px rgba(0,0,0,0.4)',
-          }}>
-            <div style={{
-              position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)',
-              background: 'linear-gradient(90deg, #b8962e, #e8c84a, #b8962e)',
-              color: '#0f1628', fontSize: '11px', fontWeight: '800', padding: '5px 18px',
-              borderRadius: '20px', whiteSpace: 'nowrap', letterSpacing: '1px',
-            }}>
-              ✦ ENTERPRISE
-            </div>
-
-            <div style={{ fontSize: '12px', fontWeight: '700', color: '#c9a84c', letterSpacing: '1px', marginBottom: '8px', textTransform: 'uppercase' }}>For chains & multi-location</div>
-            <div style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: '24px', fontWeight: '800', color: '#ffffff', marginBottom: '8px' }}>Business Pro</div>
-            <div style={{ marginBottom: '8px' }}>
-              <span style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: '44px', fontWeight: '800', color: '#c9a84c' }}>$149</span>
-              <span style={{ fontSize: '15px', color: '#8a9bb8' }}>/location/mo</span>
-            </div>
-            <p style={{ fontSize: '14px', color: '#8a9bb8', lineHeight: '1.6', marginBottom: '28px' }}>
-              For operators who need to know what&apos;s happening across every location — before their customers do.
-            </p>
-
-            <div style={{ height: '1px', background: 'linear-gradient(90deg, transparent, #c9a84c44, transparent)', marginBottom: '20px' }} />
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
-              {proFeatures.map((f, j) => (
-                <div key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                  <span style={{
-                    color: j === 0 ? '#8a9bb8' : '#c9a84c',
-                    fontWeight: '700', flexShrink: 0, fontSize: j === 0 ? '14px' : '16px',
-                    fontStyle: j === 0 ? 'italic' : 'normal',
-                  }}>
-                    {j === 0 ? '' : '✦'}
-                  </span>
-                  <span style={{
-                    fontSize: '14px',
-                    color: j === 0 ? '#8a9bb8' : '#e8e8e8',
-                    lineHeight: '1.5',
-                    fontStyle: j === 0 ? 'italic' : 'normal',
-                    fontWeight: j === 0 ? '400' : '500',
-                  }}>{f}</span>
-                </div>
-              ))}
-            </div>
-
-            <div style={{ height: '1px', background: 'linear-gradient(90deg, transparent, #c9a84c44, transparent)', marginBottom: '20px' }} />
-
-            <button
-              onClick={() => { setForm(p => ({ ...p, plan: 'Business Pro' })); setShowDemo(true) }}
-              style={{
-                width: '100%',
-                background: 'linear-gradient(90deg, #b8962e, #e8c84a, #b8962e)',
-                color: '#0f1628',
-                border: 'none',
-                padding: '15px',
-                borderRadius: '11px',
-                fontSize: '15px',
-                fontWeight: '800',
-                cursor: 'pointer',
-                letterSpacing: '0.3px',
-              }}>
-              Talk to Sales →
-            </button>
-            <p style={{ fontSize: '12px', color: '#8a9bb8', textAlign: 'center', marginTop: '10px' }}>
-              First 90 days free for qualifying chains
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Goal statement */}
-      <section style={{ padding: '0 24px 72px', maxWidth: '720px', margin: '0 auto', textAlign: 'center' }}>
-        <div style={{ background: '#f8f8f8', borderRadius: '18px', padding: '36px 28px', border: '1px solid #eee' }}>
-          <p style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: 'clamp(17px,3vw,22px)', color: '#0A2E1F', fontWeight: '600', lineHeight: '1.6', margin: 0 }}>
-            &ldquo;FlushPin helps me turn restroom visitors into customers and gives me useful traffic intelligence.&rdquo;
-          </p>
-          <p style={{ fontSize: '13px', color: '#999', marginTop: '16px' }}>The outcome every smart business owner should instantly understand.</p>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section style={{ padding: '0 24px 72px', maxWidth: '680px', margin: '0 auto' }}>
-        <h2 style={{ ...sectionTitle, marginBottom: '32px' }}>Frequently asked questions</h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {faqs.map((faq, i) => (
-            <div key={i} style={{ background: '#f8f8f8', borderRadius: '12px', overflow: 'hidden', border: '1px solid #eee' }}>
-              <button onClick={() => setOpenFaq(openFaq === i ? null : i)} style={{ width: '100%', background: 'none', border: 'none', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', textAlign: 'left' }}>
-                <span style={{ fontSize: '14px', fontWeight: '600', color: '#0A2E1F' }}>{faq.q}</span>
-                <span style={{ fontSize: '20px', color: '#1D9E75', fontWeight: '700', flexShrink: 0, marginLeft: '12px' }}>{openFaq === i ? '−' : '+'}</span>
-              </button>
-              {openFaq === i && (
-                <div style={{ padding: '0 20px 16px' }}>
-                  <p style={{ fontSize: '14px', color: '#666', lineHeight: '1.7', margin: 0 }}>{faq.a}</p>
-                </div>
+              </div>
+              <div style={{ fontSize: '15px', fontWeight: 600, color: plan.dark ? '#9FE1CB' : '#0EB5AB', marginBottom: '24px' }}>{plan.priceLabel}</div>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {plan.features.map((f, j) => (
+                  <li key={j} style={{ display: 'flex', gap: '10px', fontSize: '14px', color: plan.dark ? '#d4f5ef' : '#444', lineHeight: 1.4 }}>
+                    <span style={{ color: plan.dark ? '#0EB5AB' : '#0EB5AB', flexShrink: 0, marginTop: '1px' }}>✓</span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              {plan.ctaHref ? (
+                <Link href={plan.ctaHref} style={{ display: 'block', textAlign: 'center', background: plan.ctaBg, color: 'white', borderRadius: '12px', padding: '13px', fontSize: '15px', fontWeight: 700, textDecoration: 'none', fontFamily: "'Space Grotesk','Inter',sans-serif" }}>
+                  {plan.cta}
+                </Link>
+              ) : (
+                <button onClick={() => setShowDemo(true)} style={{ width: '100%', background: plan.ctaBg, color: 'white', border: 'none', borderRadius: '12px', padding: '13px', fontSize: '15px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Space Grotesk','Inter',sans-serif" }}>
+                  {plan.cta}
+                </button>
               )}
             </div>
           ))}
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section style={{ padding: '0 24px 80px', maxWidth: '680px', margin: '0 auto', textAlign: 'center' }}>
-        <div style={{ background: 'linear-gradient(135deg,#0A2E1F 0%,#1a4a32 100%)', borderRadius: '20px', padding: '48px 28px' }}>
-          <h2 style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: 'clamp(22px,4vw,30px)', fontWeight: '700', color: 'white', marginBottom: '14px' }}>
-            Ready to turn restroom traffic into opportunity?
+      {/* PROMO PREVIEW */}
+      <section style={{ background: '#f8fffe', padding: '64px 24px', borderTop: '1px solid #e8f5f3' }}>
+        <div style={{ maxWidth: '680px', margin: '0 auto', textAlign: 'center' }}>
+          <h2 style={{ fontSize: 'clamp(24px,4vw,36px)', fontWeight: 800, color: '#0A2E1F', fontFamily: "'Space Grotesk','Inter',sans-serif", margin: '0 0 12px' }}>
+            Your offer, shown at the right moment
           </h2>
-          <p style={{ color: '#9FE1CB', fontSize: '15px', marginBottom: '28px', lineHeight: '1.6' }}>
-            See how FlushPin intelligence works for your location — book a demo with our team.
+          <p style={{ color: '#666', fontSize: '16px', marginBottom: '36px', lineHeight: 1.6 }}>
+            Before a user sees restroom access, they see your promotion. Real intent traffic. Real opportunity.
           </p>
-          <button onClick={() => setShowDemo(true)} style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '15px 36px', borderRadius: '11px', fontSize: '16px', fontWeight: '700', cursor: 'pointer' }}>
-            Book a Demo →
-          </button>
+          <div style={{ background: 'white', border: '1px solid #e0f5f2', borderRadius: '20px', padding: '28px 24px', maxWidth: '360px', margin: '0 auto', boxShadow: '0 4px 24px rgba(14,181,171,0.08)' }}>
+            <div style={{ fontSize: '13px', color: '#999', marginBottom: '16px', fontWeight: 500 }}>🚻 Restroom Access Available</div>
+            <div style={{ fontWeight: 800, fontSize: '18px', color: '#0A2E1F', fontFamily: "'Space Grotesk','Inter',sans-serif", marginBottom: '8px' }}>Today&apos;s Offer</div>
+            <div style={{ background: '#f0fdfb', border: '1px solid #c8ede9', borderRadius: '12px', padding: '14px', marginBottom: '16px' }}>
+              <div style={{ fontSize: '15px', color: '#0A2E1F', fontWeight: 500 }}>☕ Free coffee refill with any breakfast sandwich purchase.</div>
+            </div>
+            <div style={{ background: '#0EB5AB', color: 'white', borderRadius: '10px', padding: '11px', fontSize: '14px', fontWeight: 700 }}>Continue to restroom access</div>
+          </div>
         </div>
       </section>
 
-      <footer style={{ background: '#0A2E1F', padding: '28px 20px', textAlign: 'center' }}>
-        <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <a href="/privacy" style={{ color: '#5DCAA5', fontSize: '13px', textDecoration: 'none' }}>Privacy Policy</a>
-          <a href="/terms" style={{ color: '#5DCAA5', fontSize: '13px', textDecoration: 'none' }}>Terms of Service</a>
-          <a href="/contact" style={{ color: '#5DCAA5', fontSize: '13px', textDecoration: 'none' }}>Contact</a>
-        </div>
-        <p style={{ color: '#2D6A4F', fontSize: '11px', marginTop: '12px' }}>© 2026 FlushPin. All rights reserved.</p>
+      {/* FAQ */}
+      <section style={{ padding: '72px 24px', maxWidth: '700px', margin: '0 auto' }}>
+        <h2 style={{ fontSize: 'clamp(24px,4vw,36px)', fontWeight: 800, color: '#0A2E1F', fontFamily: "'Space Grotesk','Inter',sans-serif", textAlign: 'center', margin: '0 0 40px' }}>
+          Common questions
+        </h2>
+        {faqs.map((faq, i) => (
+          <div key={i} style={{ borderBottom: '1px solid #f0f0f0', padding: '20px 0' }}>
+            <button onClick={() => setOpenFaq(openFaq === i ? null : i)} style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
+              <span style={{ fontWeight: 600, fontSize: '15px', color: '#0A2E1F', lineHeight: 1.4 }}>{faq.q}</span>
+              <span style={{ color: '#0EB5AB', fontSize: '20px', flexShrink: 0 }}>{openFaq === i ? '−' : '+'}</span>
+            </button>
+            {openFaq === i && (
+              <p style={{ margin: '12px 0 0', fontSize: '14px', color: '#555', lineHeight: 1.7 }}>{faq.a}</p>
+            )}
+          </div>
+        ))}
+      </section>
+
+      {/* FOOTER */}
+      <footer style={{ borderTop: '1px solid #f0f0f0', padding: '32px 24px', textAlign: 'center' }}>
+        <a href="/" style={{ textDecoration: 'none' }}>
+          <img src="/logo.png" alt="FlushPin" className="h-12 w-auto" />
+        </a>
+        <p style={{ margin: '12px 0 0', fontSize: '13px', color: '#aaa' }}>© {new Date().getFullYear()} FlushPin. All rights reserved.</p>
       </footer>
 
-      {/* Demo modal */}
+      {/* DEMO MODAL */}
       {showDemo && (
         <div onClick={() => { setShowDemo(false); setSent(false) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
           <div onClick={e => e.stopPropagation()} style={{ background: 'white', borderRadius: '20px', padding: '28px 24px', width: '100%', maxWidth: '440px', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: '#0A2E1F', fontFamily: "'Space Grotesk','Inter',sans-serif" }}>
+              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: '#0A2E1F', fontFamily: "'Space Grotesk','Inter',sans-serif" }}>
                 {sent ? '✅ Request received!' : 'Book a Demo'}
               </h2>
               <button onClick={() => { setShowDemo(false); setSent(false) }} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#999' }}>✕</button>
             </div>
             {sent ? (
               <div style={{ textAlign: 'center', padding: '16px 0' }}>
-                <p style={{ fontSize: '15px', color: '#555', lineHeight: '1.7' }}>
+                <p style={{ fontSize: '15px', color: '#555', lineHeight: 1.7 }}>
                   Thanks! We&apos;ll reach out to <strong>{form.email}</strong> within 24 hours to schedule your demo.
                 </p>
               </div>
@@ -415,57 +330,48 @@ export default function BusinessPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   {[
                     { label: 'Your name', key: 'name', placeholder: 'Jane Smith', type: 'text' },
-                    { label: 'Business name', key: 'business', placeholder: 'e.g. Main Street Café', type: 'text' },
-                    { label: 'Email address', key: 'email', placeholder: 'you@business.com', type: 'email' },
+                    { label: 'Business name', key: 'business', placeholder: 'e.g. Sunrise Café', type: 'text' },
+                    { label: 'Work email', key: 'email', placeholder: 'you@yourbusiness.com', type: 'email' },
                   ].map(field => (
                     <div key={field.key}>
-                      <label style={labelStyle}>{field.label}</label>
+                      <label style={lbl}>{field.label}</label>
                       <input
                         type={field.type}
                         placeholder={field.placeholder}
                         value={form[field.key as keyof typeof form]}
-                        onChange={e => setForm(p => ({ ...p, [field.key]: e.target.value }))}
-                        style={inputStyle}
+                        onChange={e => setForm(f => ({ ...f, [field.key]: e.target.value }))}
+                        style={inp}
                       />
                     </div>
                   ))}
                   <div>
-                    <label style={labelStyle}>Number of locations</label>
-                    <select value={form.locations} onChange={e => setForm(p => ({ ...p, locations: e.target.value }))} style={inputStyle}>
-                      <option value="1">1 location</option>
-                      <option value="2-5">2–5 locations</option>
-                      <option value="6-20">6–20 locations</option>
-                      <option value="20+">20+ locations</option>
+                    <label style={lbl}>Number of locations</label>
+                    <select value={form.locations} onChange={e => setForm(f => ({ ...f, locations: e.target.value }))} style={{ ...inp }}>
+                      {['1', '2–5', '6–20', '21–50', '50+'].map(o => <option key={o} value={o}>{o}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label style={labelStyle}>Interested plan</label>
-                    <select value={form.plan} onChange={e => setForm(p => ({ ...p, plan: e.target.value }))} style={inputStyle}>
-                      <option>Business</option>
-                      <option>Business Pro</option>
-                      <option>Not sure yet</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Message (optional)</label>
+                    <label style={lbl}>Anything you want us to know? (optional)</label>
                     <textarea
+                      placeholder="e.g. We have 3 locations in Irvine and want to test the analytics..."
                       value={form.message}
-                      onChange={e => setForm(p => ({ ...p, message: e.target.value }))}
-                      placeholder="What would you like to learn about?"
-                      style={{ ...inputStyle, resize: 'none', height: '80px' }}
+                      onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
+                      style={{ ...inp, minHeight: '80px', resize: 'vertical' }}
                     />
                   </div>
-                  <button onClick={handleDemoSubmit} disabled={sending} style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '14px', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', opacity: sending ? 0.7 : 1 }}>
-                    {sending ? 'Sending...' : 'Request demo →'}
+                  <button
+                    onClick={handleDemoSubmit}
+                    disabled={sending || !form.name || !form.email || !form.business}
+                    style={{ background: sending ? '#ccc' : '#0EB5AB', color: 'white', border: 'none', borderRadius: '12px', padding: '13px', fontSize: '15px', fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', fontFamily: "'Space Grotesk','Inter',sans-serif" }}
+                  >
+                    {sending ? 'Sending…' : 'Request Demo →'}
                   </button>
-                  <p style={{ fontSize: '11px', color: '#aaa', margin: 0, textAlign: 'center' }}>No commitment required. We respond within 24 hours.</p>
                 </div>
               </>
             )}
           </div>
         </div>
       )}
-
-    </main>
+    </div>
   )
 }

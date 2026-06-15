@@ -1,28 +1,143 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
   <url>
     <loc>https://www.flushpin.com/</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>1.0</priority>
-    <changefreq>daily</changefreq>
   </url>
   <url>
     <loc>https://www.flushpin.com/map</loc>
-    <priority>0.9</priority>
+    <lastmod>2026-06-09</lastmod>
     <changefreq>daily</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.flushpin.com/business</loc>
-    <priority>0.8</priority>
+    <loc>https://www.flushpin.com/about-flushpin-ai</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.flushpin.com/bathroom-near-me</loc>
+    <lastmod>2026-06-09</lastmod>
     <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.flushpin.com/signup</loc>
+    <loc>https://www.flushpin.com/restroom-access-codes</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.flushpin.com/restrooms/orange-county</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.flushpin.com/restrooms/california</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.flushpin.com/restrooms/irvine</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.flushpin.com/restrooms/anaheim</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.flushpin.com/restrooms/los-angeles</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.flushpin.com/restrooms/sofi-stadium</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.flushpin.com/restrooms/disneyland-area</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.flushpin.com/accessible-restrooms/orange-county</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.flushpin.com/baby-changing-restrooms/orange-county</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.flushpin.com/restrooms-for-seniors/orange-county</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.flushpin.com/restrooms-for-delivery-drivers</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.flushpin.com/for-businesses</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.7</priority>
-    <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>https://www.flushpin.com/optout</loc>
-    <priority>0.5</priority>
+    <loc>https://www.flushpin.com/business/claim</loc>
+    <lastmod>2026-06-09</lastmod>
     <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
+  <url>
+    <loc>https://www.flushpin.com/business/remove</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.flushpin.com/safety</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.flushpin.com/community-guidelines</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.flushpin.com/privacy</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://www.flushpin.com/terms</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
 </urlset>
