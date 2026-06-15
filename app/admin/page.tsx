@@ -31,13 +31,20 @@ export default function AdminDashboard() {
       process.env.NEXT_PUBLIC_SUPABASE_URL as string,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
     )
+
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    const adminStatsRes = await fetch(
+      `/api/admin/stats?todayStart=${encodeURIComponent(today.toISOString())}`,
+    )
+    const adminStats = adminStatsRes.ok ? await adminStatsRes.json() : null
+
     const { data: restrooms } = await supabase.from('restroom').select('*')
     const { data: optouts } = await supabase.from('optout_requests').select('*')
     const { data: flagged } = await supabase.from('flagged_content').select('*').eq('status', 'pending')
     const { data: logs } = await supabase.from('admin_logs').select('*').order('created_at', { ascending: false }).limit(50)
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
     const cityMap: Record<string, number> = {}
     restrooms?.forEach((r: any) => {
       const city = r.city || 'Unknown'
@@ -65,6 +72,13 @@ export default function AdminDashboard() {
         flaggedCount: flagged?.length || 0,
       },
       cities: Object.entries(cityMap).sort((a, b) => b[1] - a[1]).slice(0, 10),
+      adminStats: adminStats ?? {
+        totalMembers: 0,
+        newMembersToday: 0,
+        pinViewsToday: 0,
+        totalPinViews: 0,
+        recentAdminLogs: [],
+      },
       supabase,
     })
     setLoading(false)
@@ -151,6 +165,39 @@ export default function AdminDashboard() {
         <div style={{ display: 'flex', gap: '8px' }}>
           <button onClick={loadData} style={{ background: '#334155', color: '#94a3b8', border: 'none', borderRadius: '8px', padding: '8px 12px', cursor: 'pointer', fontSize: '13px' }}>Refresh</button>
           <button onClick={() => setLoggedIn(false)} style={{ background: '#7c2d12', color: '#fb923c', border: 'none', borderRadius: '8px', padding: '8px 12px', cursor: 'pointer', fontSize: '13px' }}>Logout</button>
+        </div>
+      </div>
+
+      <div style={{ padding: '16px', maxWidth: '600px', margin: '0 auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+          {[
+            { label: 'Total Members', value: data.adminStats.totalMembers, color: '#a78bfa' },
+            { label: 'New Members Today', value: data.adminStats.newMembersToday, color: '#34d399' },
+            { label: 'PIN Views Today', value: data.adminStats.pinViewsToday, color: '#fbbf24' },
+            { label: 'Total PIN Views', value: data.adminStats.totalPinViews, color: '#60a5fa' },
+          ].map(s => (
+            <div key={s.label} style={{ background: '#1e293b', borderRadius: '12px', padding: '16px', border: '1px solid #334155' }}>
+              <div style={{ fontSize: '28px', fontWeight: 700, color: s.color }}>{s.value.toLocaleString()}</div>
+              <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ background: '#1e293b', borderRadius: '12px', padding: '16px', border: '1px solid #334155', marginBottom: '16px' }}>
+          <div style={{ fontWeight: 600, marginBottom: '12px', color: '#94a3b8' }}>Recent Admin Logs</div>
+          {data.adminStats.recentAdminLogs.length === 0 ? (
+            <div style={{ textAlign: 'center', color: '#64748b', padding: '16px 0', fontSize: '13px' }}>No logs yet</div>
+          ) : (
+            data.adminStats.recentAdminLogs.map((log: any) => (
+              <div key={log.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #334155' }}>
+                <div>
+                  <span style={{ color: '#60a5fa', fontWeight: 600, fontSize: '13px' }}>{log.action}</span>
+                  <span style={{ color: '#64748b', fontSize: '12px', marginLeft: '8px' }}>{log.target_type}</span>
+                </div>
+                <div style={{ fontSize: '11px', color: '#64748b' }}>{new Date(log.created_at).toLocaleString()}</div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
