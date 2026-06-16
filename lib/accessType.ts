@@ -317,5 +317,6 @@ export function normalizeRestroomId(id: unknown): string | number | null {
   if (!hasDbRestroomId(id)) return null
   if (typeof id === 'number') return id
   if (typeof id === 'string' && /^\d+$/.test(id.trim())) return Number(id.trim())
-  return id.trim()
+  if (typeof id === 'string') return id.trim()
+  return null
 }

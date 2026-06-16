@@ -11,7 +11,6 @@ import {
   formatUpdatedAt,
   getAccessListLabel,
   hasDbRestroomId,
-  normalizeRestroomId,
   parseAccessEditState,
   parseAccessRecord,
   restroomHasAccessInfo,
@@ -262,101 +261,36 @@ export default function FindPage() {
     setEditError('')
   }
 
-  const findExistingRestroomId = async (target: any) => {
-    const name = target.name?.trim()
-    const address = target.address?.trim()
-    if (name && address) {
-      const { data: byAddress } = await supabase
-        .from('restroom')
-        .select('id')
-        .ilike('name', name)
-        .ilike('address', address)
-        .limit(1)
-        .maybeSingle()
-      if (byAddress?.id) return byAddress.id
-    }
-
-    const { data } = await supabase
-      .from('restroom')
-      .select('id')
-      .ilike('name', target.name)
-      .gte('lat', target.lat - 0.0005)
-      .lte('lat', target.lat + 0.0005)
-      .gte('lng', target.lng - 0.0005)
-      .lte('lng', target.lng + 0.0005)
-      .limit(1)
-      .maybeSingle()
-    return data?.id ?? null
-  }
-
-  const resolveTargetRestroomId = async (target: any): Promise<string | number | null> => {
-    const directId = normalizeRestroomId(target.id)
-    if (directId != null) return directId
-    return findExistingRestroomId(target)
-  }
-
   const persistAccessUpdate = async (target: any, entry: typeof editEntry, userId?: string | null) => {
     if (!userId) {
       throw new Error('SIGN_IN_REQUIRED')
     }
 
-    const payload = buildAccessPayload(entry)
-    const pendingPayload = {
-      ...payload,
-      status: 'amber',
-      verified: `${payload.verified} · Pending review`,
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) {
+      throw new Error('SIGN_IN_REQUIRED')
     }
 
-    let restroomId = await resolveTargetRestroomId(target)
-
-    if (restroomId == null) {
-      const insertRow = {
-        name: target.name,
-        address: target.address,
-        lat: target.lat,
-        lng: target.lng,
-        type: target.type || 'other',
-        source: target.source || 'google',
-        score: 0,
-        stars: 0,
-        added_by: userId,
-        ...pendingPayload,
-      }
-
-      const { data, error } = await supabase
-        .from('restroom')
-        .insert(insertRow)
-        .select('id')
-        .maybeSingle()
-
-      if (error) throw error
-      if (!data?.id) throw new Error('Could not create restroom')
-      restroomId = data.id
-    } else {
-      const { data, error } = await supabase
-        .from('restroom')
-        .update(pendingPayload)
-        .eq('id', restroomId)
-        .select('id')
-
-      if (error) throw error
-      if (!data?.length) {
-        throw new Error('Update blocked — check that you are signed in and try again')
-      }
-    }
-
-    const { error: submissionError } = await supabase.from('pin_submissions').insert({
-      restroom_id: String(restroomId),
-      user_id: userId,
-      submitted_pin: entry.method === 'keypad_code' ? entry.pin.trim() : null,
-      access_type: payload.access_type,
-      status: 'pending',
-      source: 'web',
+    const res = await fetch('/api/share-access', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ target, entry }),
     })
 
-    if (submissionError) throw submissionError
+    const json = (await res.json()) as { error?: string; restroom?: Record<string, unknown>; restroomId?: string | number }
+    if (!res.ok) {
+      throw new Error(json.error || 'Save failed')
+    }
 
-    return { ...target, ...pendingPayload, id: restroomId, distance: target.distance }
+    return {
+      ...target,
+      ...(json.restroom ?? {}),
+      id: json.restroomId ?? json.restroom?.id ?? target.id,
+      distance: target.distance,
+    }
   }
 
   const handleEditOpen = (r: any, e: React.MouseEvent, mode: 'update' | 'correct' | 'share' = 'update') => {
@@ -425,6 +359,8 @@ export default function FindPage() {
     } catch (err) {
       if (err instanceof Error && err.message === 'SIGN_IN_REQUIRED') {
         setEditError(`❌ ${t.editForm.signInRequired}`)
+      } else if (err instanceof Error && err.message) {
+        setEditError(`❌ ${err.message}`)
       } else {
         setEditError(t.saveError)
       }
