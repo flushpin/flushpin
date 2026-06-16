@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 
 export const metadata: Metadata = {
   alternates: {
@@ -10,7 +11,7 @@ export default function TermsPage() {
   return (
     <main style={{margin:0,padding:0,fontFamily:"'Inter',system-ui,sans-serif",background:"#fff",minHeight:"100vh"}}>
       <nav style={{background:"white",borderBottom:"1px solid #f0f0f0",padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:20}}>
-        <a href="/" style={{textDecoration:"none"}}><img src="/logo.png" alt="FlushPin" className="h-12 w-auto" /></a>
+        <a href="/" style={{textDecoration:"none"}}><Image src="/icon-512.png" alt="FlushPin" width={40} height={40} /></a>
         <a href="/" style={{color:"#555",textDecoration:"none",fontSize:"14px",fontWeight:"500"}}>← Back to home</a>
       </nav>
 

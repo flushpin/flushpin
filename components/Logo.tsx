@@ -1,16 +1,13 @@
+import Image from 'next/image'
+
 type LogoProps = {
   height?: number
   href?: string
 }
 
-export default function Logo({ height = 32, href = '/' }: LogoProps) {
+export default function Logo({ height = 40, href = '/' }: LogoProps) {
   const img = (
-    <img
-      src="/flushpin-logo.png"
-      alt="flushpin"
-      height={height}
-      style={{ height, width: 'auto', display: 'block' }}
-    />
+    <Image src="/icon-512.png" alt="FlushPin" width={height} height={height} />
   )
 
   if (!href) return img

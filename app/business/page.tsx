@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 const FORMSPREE_ID = 'maqkrnep'
 
@@ -147,7 +148,7 @@ export default function BusinessPage() {
       {/* NAV */}
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid #f0f0f0', maxWidth: '1100px', margin: '0 auto' }}>
         <a href="/" style={{ textDecoration: 'none' }}>
-          <img src="/flushpin-logo.png" alt="FlushPin" className="h-12 w-auto" />
+          <Image src="/icon-512.png" alt="FlushPin" width={40} height={40} />
         </a>
         <Link href="/" style={{ fontSize: '14px', color: '#666', textDecoration: 'none' }}>← Back to home</Link>
       </nav>
@@ -301,7 +302,7 @@ export default function BusinessPage() {
       {/* FOOTER */}
       <footer style={{ borderTop: '1px solid #f0f0f0', padding: '32px 24px', textAlign: 'center' }}>
         <a href="/" style={{ textDecoration: 'none' }}>
-          <img src="/flushpin-logo.png" alt="FlushPin" className="h-12 w-auto" />
+          <Image src="/icon-512.png" alt="FlushPin" width={40} height={40} />
         </a>
         <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '16px', marginBottom: '4px' }}>
           <a href="/privacy" style={{ color: '#666', fontSize: '13px', textDecoration: 'none' }}>Privacy Policy</a>
