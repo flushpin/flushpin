@@ -11,6 +11,7 @@ import {
   formatUpdatedAt,
   getAccessListLabel,
   hasDbRestroomId,
+  normalizeRestroomId,
   parseAccessEditState,
   parseAccessRecord,
   restroomHasAccessInfo,
@@ -19,7 +20,7 @@ import {
 } from '../../lib/accessType'
 
 function recordPinView(restroom: { id?: unknown }, userId?: string | null) {
-  if (!hasDbRestroomId(restroom)) return
+  if (!hasDbRestroomId(restroom.id)) return
   fetch('/api/pin-view', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -262,6 +263,19 @@ export default function FindPage() {
   }
 
   const findExistingRestroomId = async (target: any) => {
+    const name = target.name?.trim()
+    const address = target.address?.trim()
+    if (name && address) {
+      const { data: byAddress } = await supabase
+        .from('restroom')
+        .select('id')
+        .ilike('name', name)
+        .ilike('address', address)
+        .limit(1)
+        .maybeSingle()
+      if (byAddress?.id) return byAddress.id
+    }
+
     const { data } = await supabase
       .from('restroom')
       .select('id')
@@ -275,52 +289,74 @@ export default function FindPage() {
     return data?.id ?? null
   }
 
-  const persistAccessUpdate = async (target: any, entry: typeof editEntry) => {
+  const resolveTargetRestroomId = async (target: any): Promise<string | number | null> => {
+    const directId = normalizeRestroomId(target.id)
+    if (directId != null) return directId
+    return findExistingRestroomId(target)
+  }
+
+  const persistAccessUpdate = async (target: any, entry: typeof editEntry, userId?: string | null) => {
+    if (!userId) {
+      throw new Error('SIGN_IN_REQUIRED')
+    }
+
     const payload = buildAccessPayload(entry)
-
-    if (hasDbRestroomId(target.id)) {
-      const { error } = await supabase
-        .from('restroom')
-        .update(payload)
-        .eq('id', target.id)
-      if (error) throw error
-      return { ...target, ...payload }
-    }
-
-    const insertRow = {
-      name: target.name,
-      address: target.address,
-      lat: target.lat,
-      lng: target.lng,
-      type: target.type || 'other',
-      source: target.source || 'google',
-      score: 0,
-      stars: 0,
+    const pendingPayload = {
       ...payload,
+      status: 'amber',
+      verified: `${payload.verified} · Pending review`,
     }
 
-    const { data, error } = await supabase
-      .from('restroom')
-      .insert(insertRow)
-      .select('id')
-      .maybeSingle()
+    let restroomId = await resolveTargetRestroomId(target)
 
-    if (!error && data?.id) {
-      return { ...target, ...payload, id: data.id, distance: target.distance }
-    }
+    if (restroomId == null) {
+      const insertRow = {
+        name: target.name,
+        address: target.address,
+        lat: target.lat,
+        lng: target.lng,
+        type: target.type || 'other',
+        source: target.source || 'google',
+        score: 0,
+        stars: 0,
+        added_by: userId,
+        ...pendingPayload,
+      }
 
-    const existingId = await findExistingRestroomId(target)
-    if (existingId) {
-      const { error: updateError } = await supabase
+      const { data, error } = await supabase
         .from('restroom')
-        .update(payload)
-        .eq('id', existingId)
-      if (updateError) throw updateError
-      return { ...target, ...payload, id: existingId, distance: target.distance }
+        .insert(insertRow)
+        .select('id')
+        .maybeSingle()
+
+      if (error) throw error
+      if (!data?.id) throw new Error('Could not create restroom')
+      restroomId = data.id
+    } else {
+      const { data, error } = await supabase
+        .from('restroom')
+        .update(pendingPayload)
+        .eq('id', restroomId)
+        .select('id')
+
+      if (error) throw error
+      if (!data?.length) {
+        throw new Error('Update blocked — check that you are signed in and try again')
+      }
     }
 
-    if (error) throw error
-    return { ...target, ...payload, distance: target.distance }
+    const { error: submissionError } = await supabase.from('pin_submissions').insert({
+      restroom_id: String(restroomId),
+      user_id: userId,
+      submitted_pin: entry.method === 'keypad_code' ? entry.pin.trim() : null,
+      access_type: payload.access_type,
+      status: 'pending',
+      source: 'web',
+    })
+
+    if (submissionError) throw submissionError
+
+    return { ...target, ...pendingPayload, id: restroomId, distance: target.distance }
   }
 
   const handleEditOpen = (r: any, e: React.MouseEvent, mode: 'update' | 'correct' | 'share' = 'update') => {
@@ -349,6 +385,10 @@ export default function FindPage() {
 
   const handleEditSave = async () => {
     if (!editTarget || savingEdit) return
+    if (!user?.id) {
+      setEditError(`❌ ${t.editForm.signInRequired}`)
+      return
+    }
     if (editEntry.method === 'keypad_code' && !editEntry.pin.trim()) {
       setEditError(t.enterPinError)
       return
@@ -360,11 +400,12 @@ export default function FindPage() {
     setEditError('')
 
     try {
-      const updated = await persistAccessUpdate(target, entry)
+      const updated = await persistAccessUpdate(target, entry, user.id)
       const payload = buildAccessPayload(entry)
+      const isPending = updated.status === 'amber'
 
       setRestrooms(prev => {
-        const idx = prev.findIndex(r => r.id === target.id)
+        const idx = prev.findIndex(r => r.id === target.id || r.id === updated.id)
         if (idx < 0) return [...prev, updated]
         const next = [...prev]
         next[idx] = { ...prev[idx], ...updated, distance: prev[idx].distance }
@@ -374,12 +415,19 @@ export default function FindPage() {
       closeEditForm()
       setSelected(updated)
       setShowPin(true)
-      recordPinView(updated, user?.id)
-      const badge = getAccessListLabel(updated)
-      setSuccessMsg(`${t.liveNow} — ${badge.label} · ${formatUpdatedAt(payload.pin_updated_at)}`)
+      recordPinView(updated, user.id)
+      setSuccessMsg(
+        isPending
+          ? '✅ Submitted for review — visible after admin approval'
+          : `${t.liveNow} — ${getAccessListLabel(updated).label} · ${formatUpdatedAt(payload.pin_updated_at)}`,
+      )
       setTimeout(() => setSuccessMsg(''), 5000)
-    } catch {
-      setEditError(t.saveError)
+    } catch (err) {
+      if (err instanceof Error && err.message === 'SIGN_IN_REQUIRED') {
+        setEditError(`❌ ${t.editForm.signInRequired}`)
+      } else {
+        setEditError(t.saveError)
+      }
     } finally {
       setSavingEdit(false)
     }

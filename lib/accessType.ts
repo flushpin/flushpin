@@ -302,6 +302,20 @@ export function buildVerifiedLabel(
 }
 
 export function hasDbRestroomId(id: unknown): boolean {
-  if (!id || typeof id !== 'string') return false
-  return !id.startsWith('google_')
+  if (id == null) return false
+  if (typeof id === 'number' && Number.isFinite(id)) return true
+  if (typeof id === 'string') {
+    const trimmed = id.trim()
+    if (!trimmed) return false
+    return !trimmed.startsWith('google_')
+  }
+  return false
+}
+
+/** Normalize restroom id for Supabase `.eq('id', …)` (bigint or text). */
+export function normalizeRestroomId(id: unknown): string | number | null {
+  if (!hasDbRestroomId(id)) return null
+  if (typeof id === 'number') return id
+  if (typeof id === 'string' && /^\d+$/.test(id.trim())) return Number(id.trim())
+  return id.trim()
 }
