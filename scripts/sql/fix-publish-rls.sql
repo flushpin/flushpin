@@ -1,24 +1,46 @@
 -- Fix publish flow: admin_users RLS recursion, combo access_type, ensure restroom exists
 -- Copy of flushpin-mobile/supabase/migrations/20250616_fix_publish_rls.sql
-
-CREATE OR REPLACE FUNCTION public.is_flushpin_admin(p_user_id uuid DEFAULT auth.uid())
-RETURNS boolean
-LANGUAGE sql
-SECURITY DEFINER
-SET search_path = public
-STABLE
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.admin_users au WHERE au.user_id = p_user_id
-  );
-$$;
-
-REVOKE ALL ON FUNCTION public.is_flushpin_admin(uuid) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.is_flushpin_admin(uuid) TO anon, authenticated;
+--
+-- admin_users may use id, user_id, or auth_user_id for the auth uuid column.
+-- If this block fails, run in SQL Editor:
+--   SELECT column_name, data_type FROM information_schema.columns
+--   WHERE table_schema = 'public' AND table_name = 'admin_users';
 
 DO $$
-DECLARE pol record;
+DECLARE
+  pol record;
+  v_uid_col text;
 BEGIN
+  SELECT c.column_name INTO v_uid_col
+  FROM information_schema.columns c
+  WHERE c.table_schema = 'public'
+    AND c.table_name = 'admin_users'
+    AND c.column_name IN ('user_id', 'id', 'auth_user_id')
+  ORDER BY CASE c.column_name
+    WHEN 'user_id' THEN 1
+    WHEN 'id' THEN 2
+    WHEN 'auth_user_id' THEN 3
+  END
+  LIMIT 1;
+
+  IF v_uid_col IS NULL THEN
+    RAISE EXCEPTION 'admin_users has no user id column (expected user_id, id, or auth_user_id)';
+  END IF;
+
+  EXECUTE format($fn$
+    CREATE OR REPLACE FUNCTION public.is_flushpin_admin(p_user_id uuid DEFAULT auth.uid())
+    RETURNS boolean
+    LANGUAGE sql
+    SECURITY DEFINER
+    SET search_path = public
+    STABLE
+    AS $body$
+      SELECT EXISTS (
+        SELECT 1 FROM public.admin_users au WHERE au.%I = p_user_id
+      );
+    $body$;
+  $fn$, v_uid_col);
+
   FOR pol IN
     SELECT policyname
     FROM pg_policies
@@ -26,11 +48,15 @@ BEGIN
   LOOP
     EXECUTE format('DROP POLICY IF EXISTS %I ON public.admin_users', pol.policyname);
   END LOOP;
+
+  EXECUTE format(
+    'CREATE POLICY admin_users_select_own ON public.admin_users FOR SELECT TO authenticated USING (%I = auth.uid())',
+    v_uid_col
+  );
 END $$;
 
-CREATE POLICY admin_users_select_own ON public.admin_users
-  FOR SELECT TO authenticated
-  USING (user_id = auth.uid());
+REVOKE ALL ON FUNCTION public.is_flushpin_admin(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_flushpin_admin(uuid) TO anon, authenticated;
 
 CREATE OR REPLACE FUNCTION public.normalize_pin(raw_pin text)
 RETURNS text
