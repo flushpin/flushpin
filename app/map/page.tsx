@@ -261,6 +261,20 @@ export default function FindPage() {
     setEditError('')
   }
 
+  const findExistingRestroomId = async (target: any) => {
+    const { data } = await supabase
+      .from('restroom')
+      .select('id')
+      .ilike('name', target.name)
+      .gte('lat', target.lat - 0.0005)
+      .lte('lat', target.lat + 0.0005)
+      .gte('lng', target.lng - 0.0005)
+      .lte('lng', target.lng + 0.0005)
+      .limit(1)
+      .maybeSingle()
+    return data?.id ?? null
+  }
+
   const persistAccessUpdate = async (target: any, entry: typeof editEntry, userId?: string | null) => {
     if (!userId) {
       throw new Error('SIGN_IN_REQUIRED')
@@ -280,7 +294,11 @@ export default function FindPage() {
       body: JSON.stringify({ target, entry }),
     })
 
-    const json = (await res.json()) as { error?: string; restroom?: Record<string, unknown>; restroomId?: string | number }
+    const json = (await res.json()) as {
+      error?: string
+      restroom?: Record<string, unknown>
+      restroomId?: string | number
+    }
     if (!res.ok) {
       throw new Error(json.error || 'Save failed')
     }
@@ -291,6 +309,16 @@ export default function FindPage() {
       id: json.restroomId ?? json.restroom?.id ?? target.id,
       distance: target.distance,
     }
+  }
+
+  const publishErrorMessage = (error?: string) => {
+    if (!error) return t.saveError
+    const lower = error.toLowerCase()
+    if (lower.includes('not authenticated') || lower.includes('sign in') || lower.includes('jwt')) {
+      return `❌ ${t.editForm.signInRequired}`
+    }
+    if (lower.includes('pin required')) return t.enterPinError
+    return `❌ ${error}`
   }
 
   const handleEditOpen = (r: any, e: React.MouseEvent, mode: 'update' | 'correct' | 'share' = 'update') => {
@@ -336,7 +364,6 @@ export default function FindPage() {
     try {
       const updated = await persistAccessUpdate(target, entry, user.id)
       const payload = buildAccessPayload(entry)
-      const isPending = updated.status === 'amber'
 
       setRestrooms(prev => {
         const idx = prev.findIndex(r => r.id === target.id || r.id === updated.id)
@@ -351,16 +378,14 @@ export default function FindPage() {
       setShowPin(true)
       recordPinView(updated, user.id)
       setSuccessMsg(
-        isPending
-          ? '✅ Submitted for review — visible after admin approval'
-          : `${t.liveNow} — ${getAccessListLabel(updated).label} · ${formatUpdatedAt(payload.pin_updated_at)}`,
+        `${t.liveNow} — ${getAccessListLabel(updated).label} · ${formatUpdatedAt(payload.pin_updated_at)}`,
       )
       setTimeout(() => setSuccessMsg(''), 5000)
     } catch (err) {
       if (err instanceof Error && err.message === 'SIGN_IN_REQUIRED') {
         setEditError(`❌ ${t.editForm.signInRequired}`)
       } else if (err instanceof Error && err.message) {
-        setEditError(`❌ ${err.message}`)
+        setEditError(publishErrorMessage(err.message))
       } else {
         setEditError(t.saveError)
       }
