@@ -234,15 +234,23 @@ export async function resolveRestroomId(
   return String(created.id)
 }
 
+function simplifyAccessTypeForLegacyRpc(accessType: string): string {
+  if (accessType === 'customers_only+keypad_code') return 'keypad_code'
+  if (accessType === 'customers_only+no_code_needed') return 'customers_only'
+  if (accessType === 'customers_only+ask_staff') return 'ask_staff'
+  return accessType
+}
+
 async function publishViaRpc(
   db: SupabaseClient,
   restroomId: string,
   accessType: string,
   cleanedPin: string | null,
 ): Promise<{ ok: boolean; error?: string }> {
+  const rpcType = simplifyAccessTypeForLegacyRpc(accessType)
   const { error } = await db.rpc('apply_restroom_access', {
     p_restroom_id: restroomId,
-    p_access_type: accessType,
+    p_access_type: rpcType,
     p_submitted_pin: needsPin(accessType) ? cleanedPin : null,
   })
 
