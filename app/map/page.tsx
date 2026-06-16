@@ -151,11 +151,16 @@ export default function FindPage() {
     )
   }
 
-  const loadData = async (lat: number, lng: number, keyword: string = '') => {
+  const loadData = async (lat: number, lng: number, keyword: string = '', includeGoogle = false) => {
     setLoading(true)
+    const trimmedKeyword = keyword.trim()
+    const googlePromise =
+      includeGoogle && trimmedKeyword
+        ? fetchGooglePlaces(lat, lng, trimmedKeyword)
+        : Promise.resolve([])
     const [supabaseData, googlePlaces] = await Promise.all([
       fetchSupabaseNearby(lat, lng, keyword),
-      fetchGooglePlaces(lat, lng, keyword),
+      googlePromise,
     ])
 
     const newPlaces = googlePlaces.filter((gp: { name: string; lat: number; lng: number }) =>
@@ -201,7 +206,7 @@ export default function FindPage() {
     setSearchQuery(q); setSearchInput(q)
     supabase.auth.getSession().then(({data:{session}})=>setUser(session?.user??null))
     supabase.auth.onAuthStateChange((_,session)=>setUser(session?.user??null))
-    getLocation((lat, lng) => { loadData(lat, lng, q) })
+    getLocation((lat, lng) => { loadData(lat, lng, q, false) })
   }, [])
 
   const handleSearch = () => {
@@ -210,7 +215,7 @@ export default function FindPage() {
     const url = new URL(window.location.href)
     if (q) { url.searchParams.set('q', q) } else { url.searchParams.delete('q') }
     window.history.replaceState({}, '', url.toString())
-    loadData(anchorLat, anchorLng, q)
+    loadData(anchorLat, anchorLng, q, !!q)
   }
   const withDistance = restrooms
     .map(r => ({ ...r, distance: getDistance(anchorLat, anchorLng, r.lat, r.lng) }))
@@ -509,9 +514,9 @@ export default function FindPage() {
         {searchQuery&&(
           <div style={{display:'flex',alignItems:'center',gap:'8px',marginTop:'8px',flexWrap:'wrap'}}>
             <span style={{fontSize:'14px',color:'#555'}}>
-              Results for <strong style={{color:'#0A2E1F'}}>{searchQuery}</strong> near <strong style={{color:'#0A2E1F'}}>{locationName}</strong>
+              {lang === 'es' ? 'Resultados para ' : 'Results for '}<strong style={{color:'#0A2E1F'}}>{searchQuery}</strong>{lang === 'es' ? ' cerca de ' : ' near '}<strong style={{color:'#0A2E1F'}}>{locationName}</strong>
             </span>
-            <button onClick={()=>{setSearchQuery('');setSearchInput('');window.history.replaceState({},'',(window.location.pathname));loadData(anchorLat,anchorLng,'')}} style={{background:'#f0f0f0',border:'none',borderRadius:'20px',padding:'3px 10px',fontSize:'13px',cursor:'pointer',color:'#666'}}>✕ Clear</button>
+            <button onClick={()=>{setSearchQuery('');setSearchInput('');window.history.replaceState({},'',(window.location.pathname));loadData(anchorLat,anchorLng,'')}} style={{background:'#f0f0f0',border:'none',borderRadius:'20px',padding:'3px 10px',fontSize:'13px',cursor:'pointer',color:'#666'}}>{lang === 'es' ? '✕ Limpiar' : '✕ Clear'}</button>
           </div>
         )}
       </div>
@@ -520,37 +525,43 @@ export default function FindPage() {
         <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'10px'}}>
           <span style={{fontSize:'14px',color:'#1D9E75'}}>📍</span>
           <span style={{fontSize:'14px',color:'#555',fontWeight:'500'}}>
-            {locating ? 'Finding your location...' : `Near ${locationName}`}
+            {locating ? t.findingLocation : `${lang === 'es' ? 'Cerca de' : 'Near'} ${locationName}`}
           </span>
-          <button onClick={()=>getLocation((lat,lng)=>loadData(lat,lng,searchQuery))} style={{background:'none',border:'none',color:'#1D9E75',fontSize:'13px',cursor:'pointer',fontWeight:'600',marginLeft:'auto'}}>Update location</button>
+          <button onClick={()=>getLocation((lat,lng)=>loadData(lat,lng,searchQuery))} style={{background:'none',border:'none',color:'#1D9E75',fontSize:'13px',cursor:'pointer',fontWeight:'600',marginLeft:'auto'}}>{t.updateLocation}</button>
         </div>
         <div style={{display:'flex',gap:'8px',overflowX:'auto',paddingBottom:'2px'}}>
-          {[{id:'all',label:'All'},{id:'verified',label:'Verified'},{id:'accessible',label:'Accessible ♿'},{id:'pin',label:'Has access info'},{id:'baby',label:'🍼 Baby'}].map(f=>(
+          {[
+            {id:'all',label:t.allFilter},
+            {id:'verified',label:t.verifiedFilter},
+            {id:'accessible',label:t.accessibleFilter},
+            {id:'pin',label:t.pinFilter},
+            {id:'baby',label:lang === 'es' ? '🍼 Bebé' : '🍼 Baby'}
+          ].map(f=>(
             <button key={f.id} onClick={()=>setFilter(f.id)} style={{background:filter===f.id?'#0A2E1F':'#f5f5f5',color:filter===f.id?'white':'#555',border:'none',padding:'8px 16px',borderRadius:'20px',fontSize:'13px',fontWeight:'600',cursor:'pointer',whiteSpace:'nowrap',flexShrink:0}}>{f.label}</button>
           ))}
         </div>
       </div>
 
-      {emergency&&<div style={{background:'#FEF2F2',borderBottom:'1px solid #FCA5A5',padding:'10px 20px'}}><p style={{fontSize:'14px',fontWeight:'700',color:'#DC2626',margin:0}}>🚨 Urgent mode — nearest verified locations only</p></div>}
+      {emergency&&<div style={{background:'#FEF2F2',borderBottom:'1px solid #FCA5A5',padding:'10px 20px'}}><p style={{fontSize:'14px',fontWeight:'700',color:'#DC2626',margin:0}}>{t.urgentMode}</p></div>}
       {successMsg&&<div style={{background:'#E1F5EE',borderBottom:'1px solid #9FE1CB',padding:'10px 20px'}}><p style={{fontSize:'14px',fontWeight:'700',color:'#1D9E75',margin:0}}>{successMsg}</p></div>}
 
       <div style={{padding:'16px 16px 100px'}}>
         <p style={{fontSize:'14px',color:'#999',fontWeight:'500',margin:'0 0 12px'}}>
           {loading
-            ? 'Loading...'
-            : `${filtered.length} location${filtered.length !== 1 ? 's' : ''} within ${RADIUS_MILES} mi of ${locationName}`}
+            ? t.loading
+            : lang === 'es' ? `${filtered.length} lugar${filtered.length !== 1 ? 'es' : ''} dentro de ${RADIUS_MILES} mi de ${locationName}` : `${filtered.length} location${filtered.length !== 1 ? 's' : ''} within ${RADIUS_MILES} mi of ${locationName}`}
         </p>
 
         {loading&&<div style={{textAlign:'center',padding:'60px 20px'}}>
           <div style={{fontSize:'40px',marginBottom:'12px'}}>🚽</div>
-          <p style={{color:'#999',fontSize:'15px'}}>Finding restrooms near you...</p>
+          <p style={{color:'#999',fontSize:'15px'}}>{t.findingLocation}</p>
         </div>}
 
         {!loading&&filtered.length===0&&(
           <div style={{textAlign:'center',padding:'60px 20px'}}>
             <div style={{fontSize:'40px',marginBottom:'12px'}}>🔍</div>
-            <p style={{color:'#555',fontSize:'17px',fontWeight:'700',marginBottom:'8px'}}>No results for "{searchQuery}"</p>
-            <p style={{color:'#999',fontSize:'15px'}}>Try a different search term.</p>
+            <p style={{color:'#555',fontSize:'17px',fontWeight:'700',marginBottom:'8px'}}>{lang === 'es' ? `No hay resultados para "${searchQuery}"` : `No results for "${searchQuery}"`}</p>
+            <p style={{color:'#999',fontSize:'15px'}}>{lang === 'es' ? 'Prueba con otra búsqueda.' : 'Try a different search term.'}</p>
           </div>
         )}
 
@@ -566,7 +577,7 @@ export default function FindPage() {
                     {r.has_baby_changing&&<span style={{fontSize:'13px'}}>🍼</span>}
                   </div>
                   <p style={{fontSize:'13px',color:'#999',margin:'0 0 8px',paddingLeft:'17px'}}>{r.address}</p>
-                  {r.opt_out&&<div style={{background:'#FEE2E2',borderRadius:'8px',padding:'6px 12px',marginLeft:'17px',marginBottom:'6px',display:'inline-flex',alignItems:'center',gap:'6px'}}><span>🚫</span><span style={{fontSize:'13px',fontWeight:'700',color:'#DC2626'}}>Restroom not available to the public</span></div>}
+                  {r.opt_out&&<div style={{background:'#FEE2E2',borderRadius:'8px',padding:'6px 12px',marginLeft:'17px',marginBottom:'6px',display:'inline-flex',alignItems:'center',gap:'6px'}}><span>🚫</span><span style={{fontSize:'13px',fontWeight:'700',color:'#DC2626'}}>{lang === 'es' ? 'Baño no disponible al público' : 'Restroom not available to the public'}</span></div>}
                   <div style={{display:'flex',gap:'8px',alignItems:'center',paddingLeft:'17px',flexWrap:'wrap'}}>
                     {r.score>0&&r.stars>0&&!r.source&&<span style={{fontSize:'13px',color:'#D97706',fontWeight:'500'}}>{'★'.repeat(r.stars||0)}{'☆'.repeat(5-(r.stars||0))} {r.score}</span>}
                     {(() => {

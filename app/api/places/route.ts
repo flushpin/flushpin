@@ -1,5 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
+
+const RATE_LIMIT_WINDOW_MS = 60_000
+const RATE_LIMIT_MAX = 3
+const requestLog = new Map<string, number[]>()
+
+function getClientKey(request: NextRequest): string {
+  const forwarded = request.headers.get('x-forwarded-for')
+  if (forwarded) return forwarded.split(',')[0]?.trim() || 'unknown'
+  return request.headers.get('x-real-ip') || 'unknown'
+}
+
+function isRateLimited(key: string): boolean {
+  const now = Date.now()
+  const windowStart = now - RATE_LIMIT_WINDOW_MS
+  const hits = (requestLog.get(key) || []).filter((t) => t > windowStart)
+  if (hits.length >= RATE_LIMIT_MAX) {
+    requestLog.set(key, hits)
+    return true
+  }
+  hits.push(now)
+  requestLog.set(key, hits)
+  return false
+}
+
 export async function GET(request: NextRequest) {
+  const clientKey = getClientKey(request)
+  if (isRateLimited(clientKey)) {
+    return NextResponse.json(
+      { error: 'Too many requests. Try again in a minute.' },
+      { status: 429, headers: { 'Retry-After': '60' } },
+    )
+  }
+
   const { searchParams } = new URL(request.url)
   const lat = searchParams.get('lat')
   const lng = searchParams.get('lng')
