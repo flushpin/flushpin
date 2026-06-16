@@ -4,6 +4,7 @@ import {
   encodeAccessType,
   formatUpdatedAt,
   normalizeAccessType,
+  normalizeRestroomId,
   type AccessMethod,
   type AccessType,
 } from './accessType'
@@ -38,7 +39,11 @@ export type AccessUpdatePayload = {
 }
 
 const RESTROOM_ACCESS_FIELDS =
-  'id, access_type, pin, pin_updated_at, status, verified, verified_note, status_note, last_verified_at, name, address, score, accessible, lat, lng'
+  'id, access_type, pin, pin_updated_at, status, verified, name, address, accessible'
+
+function eqRestroomId(restroomId: string | number) {
+  return normalizeRestroomId(restroomId) ?? restroomId
+}
 
 const VERIFIED_LABELS: Record<AccessType, string> = {
   keypad_code: 'Access code shared',
@@ -153,10 +158,13 @@ async function fetchRestroomAccessRow(db: SupabaseClient, restroomId: string) {
   const { data, error } = await db
     .from('restroom')
     .select(RESTROOM_ACCESS_FIELDS)
-    .eq('id', restroomId)
+    .eq('id', eqRestroomId(restroomId))
     .maybeSingle()
 
-  if (error) return null
+  if (error) {
+    console.warn('[publishAccess] fetchRestroomAccessRow skipped:', error.message)
+    return null
+  }
   return data
 }
 
@@ -225,9 +233,13 @@ export async function resolveRestroomId(
       added_by: userId,
     })
     .select('id')
-    .single()
+    .maybeSingle()
 
-  if (createError || !created) {
+  if (createError) {
+    console.error('[publishAccess] restroom insert failed:', createError.message)
+    return null
+  }
+  if (!created?.id) {
     return null
   }
 
@@ -258,31 +270,21 @@ async function publishViaRpc(
   return { ok: true }
 }
 
-async function publishViaDirectUpdate(
-  db: SupabaseClient,
-  restroomId: string,
-  accessType: string,
-  cleanedPin: string | null,
-  userId: string,
-  locale: string,
-  accessible?: boolean,
-): Promise<{ ok: boolean; error?: string }> {
-  const payload = buildAccessDbUpdate(accessType, cleanedPin, locale, accessible)
-
-  const { error: updateError } = await db.from('restroom').update(payload).eq('id', restroomId)
-  if (updateError) {
-    return { ok: false, error: updateError.message }
+function buildOptimisticPayload(
+  input: PublishAccessInput,
+): AccessUpdatePayload {
+  return {
+    access_type: input.accessType,
+    pin: needsPin(input.accessType)
+      ? input.cleanedPin
+      : input.accessType.includes('no_code_needed')
+        ? 'open'
+        : null,
+    pin_updated_at: new Date().toISOString(),
+    status: 'green',
+    verified: 'Access info shared',
+    accessible: input.accessible ?? false,
   }
-
-  await db.from('pin_submissions').insert({
-    restroom_id: restroomId,
-    user_id: userId,
-    submitted_pin: needsPin(accessType) ? cleanedPin : null,
-    access_type: accessType,
-    status: 'approved',
-  })
-
-  return { ok: true }
 }
 
 export function buildPublishAccessInput(
@@ -320,35 +322,11 @@ export async function publishRestroomAccess(
 
   const rpcResult = await publishViaRpc(db, restroomId, input.accessType, input.cleanedPin)
   if (!rpcResult.ok) {
-    const fallback = await publishViaDirectUpdate(
-      db,
-      restroomId,
-      input.accessType,
-      input.cleanedPin,
-      userId,
-      locale,
-      input.accessible,
-    )
-    if (!fallback.ok) {
-      return { ok: false, restroomId, error: fallback.error ?? rpcResult.error }
-    }
+    return { ok: false, restroomId, error: rpcResult.error ?? 'Publish failed' }
   }
 
   const fresh = await fetchRestroomAccessRow(db, restroomId)
-  const payload = fresh
-    ? toAccessPayload(fresh, input.accessType)
-    : {
-        access_type: input.accessType,
-        pin: needsPin(input.accessType)
-          ? input.cleanedPin
-          : input.accessType.includes('no_code_needed')
-            ? 'open'
-            : null,
-        pin_updated_at: new Date().toISOString(),
-        status: 'green',
-        verified: 'Access info shared',
-        accessible: input.accessible ?? false,
-      }
+  const payload = fresh ? toAccessPayload(fresh, input.accessType) : buildOptimisticPayload(input)
 
   return { ok: true, restroomId, payload }
 }
