@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import Image from 'next/image'
+import Logo from '../../components/Logo'
 
 export const metadata: Metadata = {
   alternates: {
@@ -11,9 +11,7 @@ export default function PrivacyPage() {
   return (
     <main style={{ margin: 0, padding: 0, fontFamily: "'Inter',system-ui,sans-serif", background: "#fff", minHeight: "100vh" }}>
       <nav style={{ background: "white", borderBottom: "1px solid #f0f0f0", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 20 }}>
-        <a href="/" style={{ textDecoration: "none" }}>
-          <Image src="/icon-512.png" alt="FlushPin" width={40} height={40} />
-        </a>
+        <Logo height={48} />
         <a href="/" style={{ color: "#555", textDecoration: "none", fontSize: "14px", fontWeight: "500" }}>
           ← Back to home
         </a>
@@ -168,23 +166,11 @@ export default function PrivacyPage() {
 
         </div>
       </div>
-
-      <footer style={{ background: "#0A2E1F", padding: "28px 20px", textAlign: "center" }}>
-        <div style={{ display: "flex", gap: "20px", justifyContent: "center", flexWrap: "wrap" }}>
-          <a href="/privacy" style={footerLinkStyle}>Privacy Policy</a>
-          <a href="/terms" style={footerLinkStyle}>Terms of Service</a>
-          <a href="/safety" style={footerLinkStyle}>Safety Notice</a>
-          <a href="/business/claim" style={footerLinkStyle}>Business Claims</a>
-          <a href="mailto:admin@flushpin.com" style={footerLinkStyle}>Contact</a>
-        </div>
-        <p style={{ color: "#2D6A4F", fontSize: "11px", marginTop: "12px" }}>© 2026 FlushPin. All rights reserved.</p>
-      </footer>
     </main>
   );
 }
 
 const headingStyle = { fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: "20px", fontWeight: "700", color: "#0A2E1F", marginBottom: "12px" } as const;
 const linkStyle = { color: "#1D9E75", fontWeight: "600" } as const;
-const footerLinkStyle = { color: "#5DCAA5", fontSize: "13px", textDecoration: "none" } as const;
 const listStyle = { marginTop: "8px", paddingLeft: "20px", display: "flex", flexDirection: "column", gap: "8px" } as const;
 const noticeBoxStyle = { marginTop: "16px", background: "#ECFBF9", border: "1px solid #B7F0E8", borderRadius: "14px", padding: "16px", color: "#0A2E1F" } as const;

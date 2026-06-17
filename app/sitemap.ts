@@ -6,6 +6,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = new Date()
 
   const cityPages = [
+    '/restrooms/california',
+    '/restrooms/california/los-angeles',
+    '/restrooms/california/san-francisco',
+    '/restrooms/california/orange-county',
+    '/restrooms/california/san-diego',
     '/restrooms/orange-county',
     '/restrooms/orange-county/irvine',
     '/restrooms/orange-county/anaheim',

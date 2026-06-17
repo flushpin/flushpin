@@ -7,7 +7,7 @@ type LogoProps = {
 
 export default function Logo({ height = 40, href = '/' }: LogoProps) {
   const img = (
-    <Image src="/icon-512.png" alt="FlushPin" width={height} height={height} />
+    <Image src="/flushpin-logo-teal.png" alt="FlushPin" width={Math.round(height * 2.24)} height={height} style={{ width: "auto", height }} priority />
   )
 
   if (!href) return img

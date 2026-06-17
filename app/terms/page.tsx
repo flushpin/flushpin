@@ -1,167 +1,210 @@
 import type { Metadata } from 'next'
-import Image from 'next/image'
+import Logo from '../../components/Logo'
 
 export const metadata: Metadata = {
+  title: 'Terms of Service | FlushPin',
+  description: 'FlushPin terms for community-submitted restroom access information, safety, business listings, user contributions, and platform use.',
   alternates: {
     canonical: 'https://www.flushpin.com/terms',
   },
 }
 
+const listStyle = { marginTop: '8px', paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px' } as const
+const headingStyle = { fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: '20px', fontWeight: '700', color: '#0A2E1F', marginBottom: '12px' } as const
+const linkStyle = { color: '#1D9E75', fontWeight: '600' } as const
+const noticeStyle = { background: '#FFF8F0', borderRadius: '14px', padding: '24px', border: '1px solid #FED7AA' } as const
+
 export default function TermsPage() {
   return (
-    <main style={{margin:0,padding:0,fontFamily:"'Inter',system-ui,sans-serif",background:"#fff",minHeight:"100vh"}}>
-      <nav style={{background:"white",borderBottom:"1px solid #f0f0f0",padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:20}}>
-        <a href="/" style={{textDecoration:"none"}}><Image src="/icon-512.png" alt="FlushPin" width={40} height={40} /></a>
-        <a href="/" style={{color:"#555",textDecoration:"none",fontSize:"14px",fontWeight:"500"}}>← Back to home</a>
+    <main style={{ margin: 0, padding: 0, fontFamily: "'Inter',system-ui,sans-serif", background: '#fff', minHeight: '100vh' }}>
+      <nav style={{ background: 'white', borderBottom: '1px solid #f0f0f0', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 20 }}>
+        <Logo height={48} />
+        <a href="/" style={{ color: '#555', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>← Back to home</a>
       </nav>
 
-      <div style={{maxWidth:"760px",margin:"0 auto",padding:"48px 24px 80px"}}>
-        <h1 style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"clamp(28px,5vw,40px)",fontWeight:"700",color:"#0A2E1F",marginBottom:"8px"}}>Terms of Service</h1>
-        <p style={{color:"#999",fontSize:"14px",marginBottom:"40px"}}>Last updated: June 8, 2026. Effective date: June 8, 2026.</p>
+      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '48px 24px 80px' }}>
+        <h1 style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: 'clamp(28px,5vw,40px)', fontWeight: '700', color: '#0A2E1F', marginBottom: '8px' }}>Terms of Service</h1>
+        <p style={{ color: '#999', fontSize: '14px', marginBottom: '18px' }}>Last updated: June 16, 2026. Effective date: June 16, 2026.</p>
+        <div style={{ background: '#ECFBF9', border: '1px solid #B7F0E8', borderRadius: '14px', padding: '16px', color: '#0A2E1F', lineHeight: 1.7, fontSize: '14px', marginBottom: '40px' }}>
+          FlushPin provides community-submitted restroom access guidance and business-intent tools. FlushPin does not own, operate, inspect, control, or guarantee access to any restroom, business, property, or third-party location.
+        </div>
 
-        <div style={{display:"flex",flexDirection:"column",gap:"36px",color:"#444",lineHeight:"1.8",fontSize:"15px"}}>
-
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '36px', color: '#444', lineHeight: '1.8', fontSize: '15px' }}>
           <section>
-            <h2 style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"20px",fontWeight:"700",color:"#0A2E1F",marginBottom:"12px"}}>1. Acceptance of terms</h2>
-            <p>By accessing or using FlushPin ("the Service"), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service. These terms apply to all users, including visitors, registered users, and businesses.</p>
+            <h2 style={headingStyle}>1. Acceptance of terms</h2>
+            <p>By accessing or using FlushPin ("the Service"), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service. These terms apply to all users, including visitors, registered users, contributors, business owners, advertisers, and businesses.</p>
           </section>
 
           <section>
-            <h2 style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"20px",fontWeight:"700",color:"#0A2E1F",marginBottom:"12px"}}>2. Description of service</h2>
-            <p>FlushPin is a community platform that helps users find restroom access information at nearby businesses. The platform is available at www.flushpin.com and via the FlushPin mobile app. FlushPin serves as a neutral platform for community-submitted information and does not guarantee the accuracy, currency, or availability of any information displayed.</p>
+            <h2 style={headingStyle}>2. Description of service</h2>
+            <p>FlushPin is a community platform that helps users find restroom access information at nearby businesses and third-party locations. The Service is available at <strong>www.flushpin.com</strong> and may also be available through the FlushPin mobile app. FlushPin serves as a neutral platform for community-submitted information and does not guarantee the accuracy, currency, availability, safety, cleanliness, legality, or completeness of any information displayed.</p>
           </section>
 
-          <section>
-            <h2 style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"20px",fontWeight:"700",color:"#0A2E1F",marginBottom:"12px"}}>3. Community-submitted information</h2>
-            <p>FlushPin displays restroom access information submitted by members of the public. By using this Service, you acknowledge and agree that:</p>
-            <ul style={{marginTop:"8px",paddingLeft:"20px",display:"flex",flexDirection:"column",gap:"8px"}}>
-              <li>All restroom access information on FlushPin is community-submitted and may not be accurate, current, or complete</li>
-              <li>FlushPin does not verify, endorse, or guarantee any access codes, PIN codes, or restroom access policies listed on the platform</li>
-              <li>Restroom access policies are set solely by individual businesses and may change at any time without notice</li>
-              <li>Some businesses may require a purchase, reservation, or staff assistance to access their restroom, regardless of information shown on FlushPin</li>
-              <li>FlushPin is not responsible for denied access, outdated information, or any inconvenience resulting from reliance on community-submitted data</li>
-              <li>Information labeled "Community Shared" has not been verified by the business and should be used with appropriate caution</li>
+          <section style={noticeStyle}>
+            <h2 style={{ ...headingStyle, color: '#9A3412' }}>3. Important access and safety notice</h2>
+            <ul style={listStyle}>
+              <li>FlushPin is an information service only. It is not an emergency service, safety service, security service, restroom operator, property manager, or public accommodation provider.</li>
+              <li>An access code, PIN, QR scan, map listing, rating, confirmation, or "community shared" label does not guarantee permission to enter, restroom availability, safety, cleanliness, privacy, accessibility, or that a code still works.</li>
+              <li>Business rules, posted signs, staff instructions, purchase requirements, local laws, and property policies always control over anything shown on FlushPin.</li>
+              <li>If staff says access is not allowed, if a door is locked, or if an area appears private, unsafe, closed, restricted, employee-only, occupied, suspicious, or off-limits, you must not enter.</li>
+              <li>If you feel unsafe or encounter harassment, threatening behavior, assault, a medical emergency, or another urgent situation, leave the area if safe to do so and contact local emergency services, including 911 where available.</li>
             </ul>
           </section>
 
           <section>
-            <h2 style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"20px",fontWeight:"700",color:"#0A2E1F",marginBottom:"12px"}}>4. User accounts</h2>
-            <ul style={{paddingLeft:"20px",display:"flex",flexDirection:"column",gap:"8px"}}>
-              <li>You must provide accurate information when creating an account</li>
-              <li>You are responsible for maintaining the security of your account</li>
-              <li>You may not create multiple accounts or impersonate others</li>
-              <li>You must be at least 13 years old to use FlushPin</li>
+            <h2 style={headingStyle}>4. Community-submitted information</h2>
+            <p>FlushPin displays restroom access information submitted by members of the public. By using the Service, you acknowledge and agree that:</p>
+            <ul style={listStyle}>
+              <li>All restroom access information may be inaccurate, outdated, incomplete, misleading, unavailable, or changed without notice.</li>
+              <li>FlushPin does not verify, endorse, certify, warrant, or guarantee any access codes, PIN codes, QR flows, restroom access policies, cleanliness scores, ratings, accessibility notes, or business details.</li>
+              <li>Restroom access policies are set solely by individual businesses or property operators and may change at any time.</li>
+              <li>Some businesses may require a purchase, reservation, staff assistance, membership, ticket, or other condition even if not reflected in the Service.</li>
+              <li>FlushPin is not responsible for denied access, outdated information, incorrect directions, unavailable restrooms, user inconvenience, or reliance on community-submitted data.</li>
+              <li>Information labeled "Community Shared," "Verified," "Recently confirmed," "Last updated," or similar reflects community or platform signals only and should not be treated as a business guarantee.</li>
             </ul>
           </section>
 
           <section>
-            <h2 style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"20px",fontWeight:"700",color:"#0A2E1F",marginBottom:"12px"}}>5. User contributions</h2>
-            <p>When you submit access information, ratings, or feedback, you agree that:</p>
-            <ul style={{marginTop:"8px",paddingLeft:"20px",display:"flex",flexDirection:"column",gap:"8px"}}>
-              <li>The information you submit is accurate to the best of your knowledge</li>
-              <li>You will not submit false, misleading, or harmful information</li>
-              <li>You grant FlushPin a non-exclusive, royalty-free license to display and use your contributions</li>
-              <li>You will not submit private information about individuals without their consent</li>
-              <li>FlushPin may remove any contribution that violates these terms</li>
-              <li>Submitted access codes are reviewed before being publicly displayed and may be rejected or modified</li>
+            <h2 style={headingStyle}>5. User accounts</h2>
+            <ul style={listStyle}>
+              <li>You must provide accurate information when creating an account.</li>
+              <li>You are responsible for maintaining the security of your account and all activity under your account.</li>
+              <li>You may not create multiple accounts to evade moderation, manipulate ratings, or impersonate others.</li>
+              <li>You must be at least 13 years old to use FlushPin. If you are under the age of majority where you live, you may use the Service only with permission from a parent or legal guardian.</li>
             </ul>
           </section>
 
           <section>
-            <h2 style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"20px",fontWeight:"700",color:"#0A2E1F",marginBottom:"12px"}}>6. Business listings and platform liability</h2>
-            <p>Businesses listed on FlushPin may be added by community members or the FlushPin team. FlushPin operates as a neutral platform under applicable law, including Section 230 of the Communications Decency Act, and is not liable for third-party content submitted by users.</p>
-            <p style={{marginTop:"12px"}}>Business owners have the right to:</p>
-            <ul style={{marginTop:"8px",paddingLeft:"20px",display:"flex",flexDirection:"column",gap:"8px"}}>
-              <li>Claim their listing and manage their restroom access information directly</li>
-              <li>Request correction of inaccurate information</li>
-              <li>Request removal of their listing from FlushPin at any time</li>
-              <li>Mark their listing as opted out of public access sharing</li>
+            <h2 style={headingStyle}>6. User contributions and access codes</h2>
+            <p>When you submit access information, ratings, codes, photos, corrections, reports, or feedback, you agree that:</p>
+            <ul style={listStyle}>
+              <li>The information you submit is accurate to the best of your knowledge and based on lawful, permitted access.</li>
+              <li>You will not submit false, misleading, harmful, malicious, discriminatory, defamatory, private, or unlawful information.</li>
+              <li>You will not submit employee-only, staff-only, maintenance-only, private, restricted-area, stolen, hacked, bypassed, or otherwise unauthorized codes or instructions.</li>
+              <li>You will not encourage anyone to trespass, force entry, bypass locks, ignore staff instructions, or enter restricted or unsafe areas.</li>
+              <li>You grant FlushPin a worldwide, non-exclusive, royalty-free, transferable, sublicensable license to host, display, reproduce, modify, moderate, translate, analyze, and use your contributions to operate, improve, promote, and protect the Service.</li>
+              <li>FlushPin may review, edit, reject, hide, remove, label, de-rank, or preserve any contribution for safety, accuracy, legal, abuse-prevention, business-owner request, or platform-integrity reasons.</li>
             </ul>
-            <p style={{marginTop:"12px"}}>To claim, update, or request removal of a listing, visit <a href="/business/claim" style={{color:"#1D9E75",fontWeight:"600"}}>flushpin.com/business/claim</a> or contact us at <a href="mailto:admin@flushpin.com" style={{color:"#1D9E75"}}>admin@flushpin.com</a>. We will respond within 2 business days.</p>
           </section>
 
           <section>
-            <h2 style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"20px",fontWeight:"700",color:"#0A2E1F",marginBottom:"12px"}}>7. Respectful use</h2>
-            <p>When accessing restrooms found through FlushPin, users agree to:</p>
-            <ul style={{marginTop:"8px",paddingLeft:"20px",display:"flex",flexDirection:"column",gap:"8px"}}>
-              <li>Be respectful of the business, its staff, and other customers</li>
-              <li>Follow any posted restroom policies or staff instructions at all times</li>
-              <li>Not force entry, bypass locks, or access any area marked as restricted or employee-only</li>
-              <li>Understand that a purchase or other requirement may apply even if not reflected in the app</li>
-              <li>Not share access information in ways that could harm businesses or other users</li>
+            <h2 style={headingStyle}>7. Business listings, claims, and opt-out rights</h2>
+            <p>Businesses listed on FlushPin may be added by community members, public sources, third-party data, or the FlushPin team. Business owners and authorized representatives may:</p>
+            <ul style={listStyle}>
+              <li>Claim their listing and manage restroom access information directly.</li>
+              <li>Request correction of inaccurate information.</li>
+              <li>Request removal, suppression, or opt-out of public restroom access sharing.</li>
+              <li>Mark their listing as customer-only, ask-staff, temporarily unavailable, or not publicly available where appropriate.</li>
+            </ul>
+            <p style={{ marginTop: '12px' }}>To claim, update, or request removal of a listing, visit <a href="/business/claim" style={linkStyle}>flushpin.com/business/claim</a>, use <a href="/optout" style={linkStyle}>flushpin.com/optout</a>, or contact us at <a href="mailto:admin@flushpin.com" style={linkStyle}>admin@flushpin.com</a>. We aim to review business requests within 2 business days, but timing is not guaranteed.</p>
+          </section>
+
+          <section>
+            <h2 style={headingStyle}>8. Platform status and third-party content</h2>
+            <p>FlushPin operates as a neutral platform for third-party and community-submitted information. To the fullest extent permitted by applicable law, including Section 230 of the Communications Decency Act where applicable, FlushPin is not liable as the publisher or speaker of information provided by third-party users, businesses, public sources, or other information providers.</p>
+          </section>
+
+          <section>
+            <h2 style={headingStyle}>9. Respectful and lawful use</h2>
+            <p>When accessing restrooms or locations found through FlushPin, users agree to:</p>
+            <ul style={listStyle}>
+              <li>Be respectful of businesses, staff, customers, residents, visitors, and other users.</li>
+              <li>Follow posted rules, staff instructions, property policies, and applicable laws at all times.</li>
+              <li>Leave immediately if asked to leave or if access is denied.</li>
+              <li>Not force entry, bypass locks, tailgate behind others, block facilities, misuse restrooms, damage property, or enter employee-only or restricted areas.</li>
+              <li>Understand that a purchase or other condition may apply even if not reflected in the Service.</li>
+              <li>Not share access information in ways that could harm businesses, staff, property, users, or the public.</li>
             </ul>
           </section>
 
-          <section style={{background:"#FFF8F0",borderRadius:"14px",padding:"24px",border:"1px solid #FED7AA"}}>
-            <h2 style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"20px",fontWeight:"700",color:"#9A3412",marginBottom:"12px"}}>8. Third-party premises, personal safety, and user responsibility</h2>
-            <p style={{marginBottom:"12px"}}>FlushPin provides access to information about third-party locations. Users must exercise their own judgment when visiting any location found through the Service.</p>
-            <ul style={{paddingLeft:"20px",display:"flex",flexDirection:"column",gap:"10px"}}>
-              <li>FlushPin does not own, operate, manage, inspect, supervise, or control any restroom, business, property, building, staff member, customer, visitor, or third-party location listed or referenced through the Service.</li>
-              <li>FlushPin does not guarantee that any restroom or location is safe, clean, private, available, unlocked, monitored, accessible, lawful to enter, or free from inappropriate conduct by others.</li>
+          <section style={noticeStyle}>
+            <h2 style={{ ...headingStyle, color: '#9A3412' }}>10. Third-party premises, personal safety, and user responsibility</h2>
+            <p style={{ marginBottom: '12px' }}>FlushPin provides information about third-party locations. Users must exercise their own judgment when visiting any location found through the Service.</p>
+            <ul style={listStyle}>
+              <li>FlushPin does not own, operate, manage, inspect, supervise, maintain, secure, monitor, staff, or control any restroom, business, property, building, staff member, customer, visitor, or third-party location listed or referenced through the Service.</li>
+              <li>FlushPin does not guarantee that any restroom or location is safe, clean, private, available, unlocked, monitored, accessible, lawful to enter, sanitary, well-lit, supervised, or free from inappropriate conduct by others.</li>
               <li>Users are solely responsible for evaluating their surroundings, following business instructions, complying with posted rules, and deciding whether it is safe and appropriate to enter or use any restroom or location.</li>
-              <li>Users should not enter any area that appears unsafe, private, restricted, employee-only, closed, occupied, suspicious, or where access is denied by staff or signage.</li>
-              <li>If a user feels unsafe or encounters harassment, threatening behavior, assault, a medical emergency, or any other urgent situation, the user should leave the area if safe to do so and contact local emergency services (911) or appropriate authorities immediately.</li>
-              <li>To the maximum extent permitted by applicable law, FlushPin is not responsible for injuries, damages, losses, emotional distress, harassment, assault, theft, property damage, denial of access, unsafe conditions, unsanitary conditions, or other incidents arising from or related to a user's decision to visit, enter, or use any third-party restroom, business, or property.</li>
-              <li>This limitation does not affect any rights that cannot be waived under applicable law, and does not apply to FlushPin's own fraud, willful misconduct, or violations of law.</li>
+              <li>To the maximum extent permitted by law, FlushPin is not responsible for injuries, damages, losses, emotional distress, harassment, assault, theft, property damage, denial of access, unsafe conditions, unsanitary conditions, discrimination by third parties, or other incidents arising from or related to a user's decision to visit, enter, or use any third-party restroom, business, or property.</li>
+              <li>This limitation does not affect rights that cannot be waived under applicable law and does not apply to FlushPin's own fraud, willful misconduct, or violations of law.</li>
             </ul>
           </section>
 
           <section>
-            <h2 style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"20px",fontWeight:"700",color:"#0A2E1F",marginBottom:"12px"}}>9. Prohibited conduct</h2>
+            <h2 style={headingStyle}>11. Promotions, ads, QR codes, and business tools</h2>
+            <p>FlushPin may offer QR codes, business dashboards, promotions, ads, sponsored placements, offer views, analytics, and business packages. Businesses are solely responsible for the accuracy, legality, availability, and fulfillment of their offers, promotions, restroom policies, posted notices, and staff practices.</p>
+            <ul style={listStyle}>
+              <li>FlushPin does not guarantee sales, foot traffic, conversions, offer redemption, restroom availability, customer behavior, revenue increase, or any specific business outcome.</li>
+              <li>Any conversion rate, value target, scan count, offer view, projection, case study, or performance estimate is illustrative and not a promise or guarantee.</li>
+              <li>Businesses must comply with advertising, consumer protection, accessibility, privacy, employment, health, safety, and local laws applicable to their locations and offers.</li>
+              <li>FlushPin may reject, remove, pause, or modify promotions that we believe are misleading, unsafe, unlawful, discriminatory, abusive, or inconsistent with the Service.</li>
+            </ul>
+          </section>
+
+          <section>
+            <h2 style={headingStyle}>12. Moderation, abuse prevention, and audit logs</h2>
+            <p>FlushPin may log, review, preserve, and use account activity, access-code views, submissions, ratings, reports, business claim requests, opt-out requests, IP addresses, device or browser information, timestamps, and moderation actions for platform safety, abuse prevention, fraud detection, business opt-out enforcement, legal compliance, and data-quality purposes, as described in our Privacy Policy.</p>
+          </section>
+
+          <section>
+            <h2 style={headingStyle}>13. Prohibited conduct</h2>
             <p>You agree not to:</p>
-            <ul style={{marginTop:"8px",paddingLeft:"20px",display:"flex",flexDirection:"column",gap:"8px"}}>
-              <li>Submit deliberately false or misleading access information</li>
-              <li>Harass, threaten, or harm other users or businesses</li>
-              <li>Attempt to access systems or data you are not authorized to access</li>
-              <li>Use the Service for any unlawful purpose</li>
-              <li>Scrape, crawl, or copy content from the platform without permission</li>
-              <li>Manipulate ratings or reviews for competitive advantage</li>
+            <ul style={listStyle}>
+              <li>Submit deliberately false, misleading, harmful, defamatory, discriminatory, or unlawful information.</li>
+              <li>Harass, threaten, intimidate, stalk, exploit, or harm other users, businesses, employees, or members of the public.</li>
+              <li>Attempt to access systems, accounts, data, locations, locks, doors, networks, or information you are not authorized to access.</li>
+              <li>Use the Service for any unlawful, unsafe, abusive, fraudulent, or exploitative purpose.</li>
+              <li>Scrape, crawl, copy, resell, train models on, or bulk-extract content from the platform without written permission.</li>
+              <li>Manipulate ratings, reviews, reports, access confirmations, promotions, claims, or analytics.</li>
+              <li>Interfere with business operations or encourage others to disregard staff instructions or property rules.</li>
             </ul>
           </section>
 
           <section>
-            <h2 style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"20px",fontWeight:"700",color:"#0A2E1F",marginBottom:"12px"}}>10. Disclaimer of warranties</h2>
-            <p>FlushPin is provided "as is" without warranty of any kind. We do not guarantee that access codes are accurate, current, or functional. Restroom access policies are set by businesses and may change at any time. Use of information found on FlushPin is at your own risk.</p>
+            <h2 style={headingStyle}>14. Reporting, correction, and removal</h2>
+            <p>Users and businesses may report incorrect, unsafe, outdated, private, restricted, or harmful information by using available in-product reporting tools or contacting <a href="mailto:admin@flushpin.com" style={linkStyle}>admin@flushpin.com</a>. FlushPin may investigate and take action at its discretion, including editing, hiding, removing, preserving, or escalating information. Reporting does not guarantee removal or any specific outcome.</p>
           </section>
 
           <section>
-            <h2 style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"20px",fontWeight:"700",color:"#0A2E1F",marginBottom:"12px"}}>11. Limitation of liability</h2>
-            <p>To the maximum extent permitted by law, FlushPin and its operators shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the Service, including but not limited to inability to access a restroom, reliance on inaccurate access information, or data loss.</p>
+            <h2 style={headingStyle}>15. Disclaimer of warranties</h2>
+            <p>FlushPin is provided "as is" and "as available" without warranty of any kind, express or implied. We do not guarantee that the Service will be accurate, current, uninterrupted, secure, error-free, safe, available, or suitable for your needs. We do not guarantee that access codes are accurate, current, authorized, lawful to use, or functional. Use of information found on FlushPin is at your own risk.</p>
           </section>
 
           <section>
-            <h2 style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"20px",fontWeight:"700",color:"#0A2E1F",marginBottom:"12px"}}>12. Governing law</h2>
-            <p>These Terms are governed by the laws of the State of California, United States, without regard to conflict of law principles. Any disputes shall be resolved in the courts of Orange County, California.</p>
+            <h2 style={headingStyle}>16. Limitation of liability</h2>
+            <p>To the maximum extent permitted by law, FlushPin and its owners, operators, officers, employees, contractors, affiliates, service providers, and agents shall not be liable for any indirect, incidental, special, consequential, exemplary, punitive, or similar damages; lost profits; lost data; loss of goodwill; personal injury; property damage; denial of access; reliance on inaccurate information; third-party conduct; or inability to use a restroom or location, even if advised of the possibility of such damages.</p>
           </section>
 
           <section>
-            <h2 style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"20px",fontWeight:"700",color:"#0A2E1F",marginBottom:"12px"}}>13. Termination</h2>
-            <p>We reserve the right to suspend or terminate your account at any time for violation of these Terms. You may delete your account at any time by contacting us at <a href="mailto:admin@flushpin.com" style={{color:"#1D9E75"}}>admin@flushpin.com</a>.</p>
+            <h2 style={headingStyle}>17. Indemnification</h2>
+            <p>You agree to defend, indemnify, and hold harmless FlushPin and its owners, operators, officers, employees, contractors, affiliates, service providers, and agents from and against any claims, liabilities, damages, losses, costs, and expenses, including reasonable attorneys' fees, arising from or related to your use of the Service, your contributions, your violation of these Terms, your violation of law, your interaction with any business or third-party location, or your infringement or violation of any rights of another person or entity.</p>
           </section>
 
           <section>
-            <h2 style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"20px",fontWeight:"700",color:"#0A2E1F",marginBottom:"12px"}}>14. Changes to terms</h2>
-            <p>We may update these Terms at any time. We will notify users of material changes by posting a notice on the website. Continued use of the Service after changes constitutes acceptance of the new Terms.</p>
+            <h2 style={headingStyle}>18. Dispute resolution, arbitration, and class action waiver</h2>
+            <p>To the extent permitted by applicable law, you and FlushPin agree to first attempt to resolve disputes informally by contacting <a href="mailto:admin@flushpin.com" style={linkStyle}>admin@flushpin.com</a>. If a dispute cannot be resolved informally, disputes shall be resolved by binding individual arbitration in Orange County, California, unless applicable law requires otherwise. You and FlushPin waive the right to participate in a class action, class arbitration, private attorney general action, or representative proceeding to the maximum extent permitted by law. This section does not prevent either party from seeking injunctive relief for misuse of the Service, intellectual property violations, security threats, or unauthorized access.</p>
           </section>
 
           <section>
-            <h2 style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"20px",fontWeight:"700",color:"#0A2E1F",marginBottom:"12px"}}>15. Contact</h2>
-            <p><strong>FlushPin</strong><br/>Orange County, California, USA<br/>Email: <a href="mailto:admin@flushpin.com" style={{color:"#1D9E75"}}>admin@flushpin.com</a><br/>Business claims: <a href="/business/claim" style={{color:"#1D9E75"}}>flushpin.com/business/claim</a></p>
+            <h2 style={headingStyle}>19. Governing law and venue</h2>
+            <p>These Terms are governed by the laws of the State of California, United States, without regard to conflict of law principles. Subject to the dispute resolution section above, any court proceeding shall be brought in the state or federal courts located in Orange County, California, and you consent to personal jurisdiction and venue there.</p>
           </section>
 
+          <section>
+            <h2 style={headingStyle}>20. Termination</h2>
+            <p>We reserve the right to suspend, restrict, or terminate your account or access to the Service at any time if we believe you violated these Terms, created risk, abused the Service, submitted harmful information, interfered with businesses or users, or exposed FlushPin or others to legal, safety, or operational risk. You may delete your account by contacting <a href="mailto:admin@flushpin.com" style={linkStyle}>admin@flushpin.com</a>.</p>
+          </section>
+
+          <section>
+            <h2 style={headingStyle}>21. Changes to terms</h2>
+            <p>We may update these Terms at any time. We will notify users of material changes by posting a notice on the website or through the Service. Continued use of the Service after changes constitutes acceptance of the updated Terms.</p>
+          </section>
+
+          <section>
+            <h2 style={headingStyle}>22. Contact</h2>
+            <p><strong>FlushPin</strong><br />Orange County, California, USA<br />Email: <a href="mailto:admin@flushpin.com" style={linkStyle}>admin@flushpin.com</a><br />Business claims: <a href="/business/claim" style={linkStyle}>flushpin.com/business/claim</a><br />Business opt-out: <a href="/optout" style={linkStyle}>flushpin.com/optout</a></p>
+          </section>
         </div>
       </div>
-
-      <footer style={{background:"#0A2E1F",padding:"28px 20px",textAlign:"center"}}>
-        <div style={{display:"flex",gap:"20px",justifyContent:"center",flexWrap:"wrap"}}>
-          <a href="/privacy" style={{color:"#5DCAA5",fontSize:"13px",textDecoration:"none"}}>Privacy Policy</a>
-          <a href="/terms" style={{color:"#5DCAA5",fontSize:"13px",textDecoration:"none"}}>Terms of Service</a>
-          <a href="/safety" style={{color:"#5DCAA5",fontSize:"13px",textDecoration:"none"}}>Safety Notice</a>
-          <a href="/business/claim" style={{color:"#5DCAA5",fontSize:"13px",textDecoration:"none"}}>Business Claims</a>
-          <a href="mailto:admin@flushpin.com" style={{color:"#5DCAA5",fontSize:"13px",textDecoration:"none"}}>Contact</a>
-        </div>
-        <p style={{color:"#2D6A4F",fontSize:"11px",marginTop:"12px"}}>© 2026 FlushPin. All rights reserved.</p>
-      </footer>
     </main>
   )
 }

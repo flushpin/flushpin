@@ -1,25 +1,25 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
-import CounterSection from '../components/CounterSection'
+
+import { useEffect, useState } from 'react'
 import Logo from '../components/Logo'
+import { supabase } from '../lib/supabase'
 import { useLang } from '../lib/LanguageContext'
 
 const COLOR_OPTIONS = [
-  '#E74C3C','#E67E22','#F1C40F','#2ECC71','#1ABC9C',
-  '#3498DB','#9B59B6','#E91E63','#FF5722','#00BCD4',
-  '#8BC34A','#FF9800','#795548','#607D8B','#0A2E1F',
+  '#E74C3C', '#E67E22', '#F1C40F', '#2ECC71', '#1ABC9C',
+  '#3498DB', '#9B59B6', '#E91E63', '#FF5722', '#00BCD4',
+  '#8BC34A', '#FF9800', '#795548', '#607D8B', '#0A2E1F',
 ]
 
 export default function HomePage() {
   const { lang, setLang, t } = useLang()
   const [user, setUser] = useState<any>(null)
   const [showAuth, setShowAuth] = useState(false)
-  const [authMode, setAuthMode] = useState<'signin'|'signup'>('signup')
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
-  const [selectedColor, setSelectedColor] = useState('#1D9E75')
+  const [selectedColor, setSelectedColor] = useState('#0EB5AB')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
@@ -36,14 +36,15 @@ export default function HomePage() {
   }
 
   const handleSignUp = async () => {
-    if (!fullName.trim()) { setMessage('Please enter your full name.'); return }
+    if (!fullName.trim()) { setMessage(t.home.enterFullName); return }
     setLoading(true); setMessage('')
     const { error } = await supabase.auth.signUp({
-      email, password,
-      options: { data: { full_name: fullName.trim(), profile_color: selectedColor } }
+      email,
+      password,
+      options: { data: { full_name: fullName.trim(), profile_color: selectedColor } },
     })
-    if (error) setMessage(error.message.includes('already registered') ? '⚠️ This email is already registered. Please sign in.' : error.message)
-    else setMessage('✅ Check your email to confirm your account!')
+    if (error) setMessage(error.message.includes('already registered') ? t.home.emailRegistered : error.message)
+    else setMessage(t.home.checkEmail)
     setLoading(false)
   }
 
@@ -58,311 +59,217 @@ export default function HomePage() {
   const handleSignOut = async () => { await supabase.auth.signOut(); setUser(null) }
 
   const handleSearch = () => {
-    if (searchQuery.trim()) {
-      window.location.href = `/map?q=${encodeURIComponent(searchQuery.trim())}`
-    } else {
-      window.location.href = '/map'
-    }
+    if (searchQuery.trim()) window.location.href = `/map?q=${encodeURIComponent(searchQuery.trim())}`
+    else window.location.href = '/map'
   }
 
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || ''
-  const profileColor = user?.user_metadata?.profile_color || '#1D9E75'
-
-  const inputStyle = { width:'100%', padding:'13px 16px', borderRadius:'9px', border:'1px solid #e0e0e0', fontSize:'16px', fontFamily:"'Inter',system-ui,sans-serif", outline:'none', boxSizing:'border-box' as const, color:'#1a1a1a', background:'white' }
-  const labelStyle = { fontSize:'14px', fontWeight:'600' as const, color:'#444', marginBottom:'8px', display:'block' as const }
+  const profileColor = user?.user_metadata?.profile_color || '#0EB5AB'
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '13px 16px',
+    borderRadius: '9px',
+    border: '1px solid #e0e0e0',
+    fontSize: '16px',
+    fontFamily: "'Plus Jakarta Sans',system-ui,sans-serif",
+    outline: 'none',
+    boxSizing: 'border-box',
+    color: '#1a1a1a',
+    background: 'white',
+  }
+  const labelStyle: React.CSSProperties = {
+    fontSize: '14px',
+    fontWeight: 700,
+    color: '#425755',
+    marginBottom: '8px',
+    display: 'block',
+  }
 
   return (
-    <main style={{margin:0,padding:0,fontFamily:"'Inter',system-ui,sans-serif",background:"#fff",minHeight:"100vh"}}>
-
+    <main className="fp-home">
       <style>{`
-        @media (max-width: 640px) {
-          .desktop-nav { display: none !important; }
-          .mobile-menu-btn { display: block !important; }
-        }
-        @keyframes fp-appstore-pulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(14,181,171,0.45); }
-          50% { box-shadow: 0 0 0 5px rgba(14,181,171,0); }
-        }
+        @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Sora:wght@600;700;800&display=swap");
+        .fp-home{--fp-ink:#092321;--fp-muted:#5d6f6d;--fp-teal:#0eb5ab;--fp-coral:#ff6b4a;--fp-line:rgba(9,35,33,.12);margin:0;padding:0;font-family:"Plus Jakarta Sans",Inter,system-ui,sans-serif;background:#fff;min-height:100vh;color:var(--fp-ink)}
+        .fp-home *{box-sizing:border-box}.fp-nav-link:hover,.fp-footer-link:hover{color:var(--fp-teal)!important}.fp-primary:hover{transform:translateY(-1px);box-shadow:0 18px 34px rgba(14,181,171,.26)}.fp-secondary:hover{color:#d7fffb!important;border-color:rgba(14,181,171,.55)!important}
+        .fp-hero{background-image:linear-gradient(90deg,rgba(9,35,33,.94) 0%,rgba(9,35,33,.82) 44%,rgba(9,35,33,.34) 100%),url(https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=2200&q=80);background-position:center;background-size:cover;min-height:660px;padding:66px 24px 50px;position:relative;overflow:hidden}
+        .fp-hero-shell{z-index:1;grid-template-columns:minmax(0,1.02fr) minmax(360px,.78fr);align-items:center;gap:56px;width:min(1180px,100%);margin:0 auto;display:grid;position:relative}
+        .fp-hero-copy{color:#fff;max-width:660px}.fp-eyebrow{color:#d7fffb;letter-spacing:.04em;text-transform:uppercase;backdrop-filter:blur(14px);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);border-radius:999px;align-items:center;gap:10px;padding:8px 14px;font-size:13px;font-weight:800;display:inline-flex}.fp-eyebrow span{width:8px;height:8px;border-radius:50%;background:var(--fp-teal);box-shadow:0 0 0 5px rgba(14,181,171,.18)}
+        .fp-hero-title{letter-spacing:-.035em;margin:24px 0 22px;font-family:Sora,"Plus Jakarta Sans",system-ui,sans-serif;font-size:clamp(44px,6.4vw,76px);font-weight:800;line-height:.96}.fp-hero-title span{color:#7df4ea}.fp-hero-text{color:rgba(255,255,255,.84);max-width:590px;margin:0 0 30px;font-size:clamp(18px,2.4vw,22px);line-height:1.58}
+        .fp-search{background:rgba(255,255,255,.96);border-radius:18px;width:min(620px,100%);padding:8px;display:flex;box-shadow:0 26px 70px rgba(0,0,0,.28)}.fp-search input{color:#102927;background:transparent;border:0;border-radius:12px;outline:0;flex:1;min-width:0;padding:16px 18px;font-family:inherit;font-size:16px}.fp-search button{background:var(--fp-teal);color:#fff;cursor:pointer;white-space:nowrap;border:0;border-radius:12px;padding:0 24px;font-size:16px;font-weight:800}
+        .fp-cta-row{flex-wrap:wrap;align-items:center;gap:12px;margin-top:18px;display:flex}.fp-primary,.fp-secondary{border-radius:14px;justify-content:center;align-items:center;min-height:48px;padding:14px 22px;font-size:15px;font-weight:800;text-decoration:none;transition:transform .18s,box-shadow .18s,border-color .18s,color .18s;display:inline-flex}.fp-primary{background:var(--fp-teal);color:#fff;box-shadow:0 12px 24px rgba(14,181,171,.22)}.fp-secondary{color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28)}
+        .fp-hero-proof{color:rgba(255,255,255,.78);flex-wrap:wrap;gap:10px;margin-top:26px;font-size:13px;font-weight:700;display:flex}.fp-proof-pill{backdrop-filter:blur(12px);background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:8px 12px}
+        .fp-phone{backdrop-filter:blur(22px);background:linear-gradient(145deg,rgba(255,255,255,.86),rgba(255,255,255,.38));border:1px solid rgba(255,255,255,.42);border-radius:36px;justify-self:end;width:min(410px,100%);padding:14px;box-shadow:0 38px 90px rgba(0,0,0,.38)}.fp-phone-screen{background:#f6faf8;border:1px solid rgba(9,35,33,.1);border-radius:28px;min-height:520px;position:relative;overflow:hidden}.fp-map{background:linear-gradient(90deg,rgba(14,181,171,.08) 1px,transparent 1px) 0 0/56px 56px,linear-gradient(rgba(14,181,171,.08) 1px,transparent 1px) 0 0/56px 56px,radial-gradient(circle at 26% 28%,#fff1d6 0 9%,transparent 10%),radial-gradient(circle at 72% 18%,#ddf8f5 0 10%,transparent 11%),radial-gradient(circle at 78% 70%,#ffe2d6 0 12%,transparent 13%),#f5fbf8;position:absolute;inset:0}.fp-route{border:4px solid rgba(255,107,74,.5);border-color:rgba(255,107,74,.5) rgba(255,107,74,.5) transparent transparent;border-radius:60px 90px 70px 20px;width:280px;height:210px;position:absolute;top:126px;left:54px;transform:rotate(11deg)}.fp-pin{background:var(--fp-teal);border-radius:50% 50% 50% 8px;width:42px;height:42px;position:absolute;transform:rotate(-45deg);box-shadow:0 14px 26px rgba(14,181,171,.32)}.fp-pin:after{content:"";background:#fff;border-radius:50%;width:14px;height:14px;position:absolute;top:14px;left:14px}.fp-pin.one{top:150px;left:74px}.fp-pin.two{background:var(--fp-coral);top:100px;right:58px}.fp-pin.three{background:#142f2c;bottom:188px;right:92px}
+        .fp-card{background:rgba(255,255,255,.96);border:1px solid rgba(9,35,33,.08);border-radius:24px;padding:20px;position:absolute;bottom:22px;left:22px;right:22px;box-shadow:0 24px 54px rgba(9,35,33,.2)}.fp-card-top{justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:16px;display:flex}.fp-card h3{color:var(--fp-ink);letter-spacing:-.02em;margin:0 0 5px;font-size:20px}.fp-card p{color:var(--fp-muted);margin:0;font-size:13px;line-height:1.45}.fp-chip{color:#087e78;white-space:nowrap;background:#e5fbf8;border-radius:999px;padding:8px 10px;font-size:12px;font-weight:800;display:inline-flex}.fp-access-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;display:grid}.fp-access-box{background:#fbfffe;border:1px solid rgba(9,35,33,.1);border-radius:16px;padding:13px}.fp-access-label{color:var(--fp-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;font-size:11px;font-weight:800}.fp-access-value{color:var(--fp-ink);font-size:15px;font-weight:800}
+        .fp-sections{background:linear-gradient(#fff7ed 0%,#fff 38%,#f7fbfa 100%)}.fp-section{width:min(1120px,100% - 40px);margin:0 auto;padding:76px 0}.fp-section-heading{text-align:center;max-width:720px;margin:0 auto 34px}.fp-section-heading h2{letter-spacing:-.03em;color:var(--fp-ink);margin:0 0 12px;font-family:Sora,"Plus Jakarta Sans",system-ui,sans-serif;font-size:clamp(30px,4.6vw,52px);line-height:1.04}.fp-section-heading p{color:var(--fp-muted);margin:0;font-size:17px;line-height:1.65}.fp-stats{border:1px solid var(--fp-line);background:var(--fp-line);border-radius:24px;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;display:grid;overflow:hidden;box-shadow:0 22px 60px rgba(9,35,33,.08)}.fp-stat{background:#fff;min-height:150px;padding:30px}.fp-stat strong{letter-spacing:-.03em;color:var(--fp-ink);margin-bottom:10px;font-size:clamp(30px,4vw,48px);line-height:1;display:block}.fp-stat span{color:var(--fp-muted);font-size:14px;font-weight:700;line-height:1.5}
+        .fp-feature-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;display:grid}.fp-feature{border:1px solid var(--fp-line);background:rgba(255,255,255,.86);border-radius:24px;min-height:280px;padding:24px;box-shadow:0 18px 45px rgba(9,35,33,.06)}.fp-feature-visual{background:linear-gradient(135deg,#e6fbf8,#fff1e9);border:1px solid rgba(9,35,33,.08);border-radius:18px;height:116px;margin-bottom:20px;padding:14px;position:relative;overflow:hidden}.fp-feature h3{color:var(--fp-ink);letter-spacing:-.02em;margin:0 0 10px;font-size:21px}.fp-feature p{color:var(--fp-muted);margin:0;font-size:15px;line-height:1.65}.fp-mini-line{background:rgba(9,35,33,.12);border-radius:999px;height:10px;margin-bottom:10px}.fp-mini-line.med{background:rgba(14,181,171,.22)}
+        .fp-business{color:#fff;background:#092321;border-radius:28px;grid-template-columns:1fr .72fr;align-items:stretch;gap:26px;padding:34px;display:grid;position:relative;overflow:hidden}.fp-business h2{letter-spacing:-.03em;max-width:640px;margin:0 0 14px;font-family:Sora,"Plus Jakarta Sans",system-ui,sans-serif;font-size:clamp(30px,4vw,50px);line-height:1.06}.fp-business p{color:rgba(255,255,255,.74);max-width:610px;margin:0 0 22px;font-size:16px;line-height:1.7}.fp-business-panel{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-radius:22px;padding:22px}.fp-footer{color:#fff;background:#071a18;padding:56px 24px 30px}.fp-footer-grid{grid-template-columns:1.25fr .8fr .8fr;gap:34px;width:min(1120px,100%);margin:0 auto 34px;display:grid}.fp-footer h3,.fp-footer h4{margin:0 0 14px}.fp-footer p{color:rgba(255,255,255,.68);margin:0;line-height:1.65}.fp-footer a{color:rgba(255,255,255,.72);margin-bottom:10px;font-size:14px;font-weight:700;text-decoration:none;display:block}.fp-footer-bottom{color:rgba(255,255,255,.45);border-top:1px solid rgba(255,255,255,.12);flex-wrap:wrap;justify-content:space-between;gap:16px;width:min(1120px,100%);margin:0 auto;padding-top:24px;font-size:13px;display:flex}
+        @media (max-width:900px){.fp-hero{min-height:auto;padding:58px 20px}.fp-hero-shell,.fp-business,.fp-footer-grid{grid-template-columns:1fr}.fp-phone{justify-self:start;max-width:390px}.fp-feature-grid,.fp-stats{grid-template-columns:1fr}}@media (max-width:640px){.desktop-nav{display:none!important}.mobile-menu-btn{display:block!important}.fp-hero{padding:42px 20px 38px}.fp-hero-title{font-size:clamp(38px,12vw,52px)}.fp-hero-text{margin-bottom:24px;font-size:17px;line-height:1.52}.fp-phone{display:none!important}.fp-search{flex-direction:column}.fp-search button{min-height:50px}.fp-section{width:min(100% - 28px,1120px);padding:58px 0}.fp-business{padding:24px}}
       `}</style>
 
-      <nav style={{background:"white",borderBottom:"1px solid #f0f0f0",padding:"16px 20px",position:"sticky",top:0,zIndex:20}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <Logo height={36} />
-
-          <div style={{display:"flex",gap:"10px",alignItems:"center"}} className="desktop-nav">
-            <div style={{display:"flex",background:"#f5f5f5",borderRadius:"8px",padding:"3px"}}>
-              <button onClick={()=>setLang('en')} style={{padding:"6px 12px",borderRadius:"6px",border:"none",fontSize:"13px",fontWeight:"700",cursor:"pointer",background:lang==='en'?"white":"transparent",color:lang==='en'?"#0A2E1F":"#999"}}>🇺🇸</button>
-              <button onClick={()=>setLang('es')} style={{padding:"6px 12px",borderRadius:"6px",border:"none",fontSize:"13px",fontWeight:"700",cursor:"pointer",background:lang==='es'?"white":"transparent",color:lang==='es'?"#0A2E1F":"#999"}}>🇲🇽</button>
+      <nav style={{ background: 'white', borderBottom: '1px solid #f0f0f0', padding: '16px 20px', position: 'sticky', top: 0, zIndex: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Logo height={58} />
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }} className="desktop-nav">
+            <div style={{ display: 'flex', background: '#f5f5f5', borderRadius: '8px', padding: '3px' }}>
+              <button onClick={() => setLang('en')} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', fontSize: '13px', fontWeight: 700, cursor: 'pointer', background: lang === 'en' ? 'white' : 'transparent', color: lang === 'en' ? '#0A2E1F' : '#999' }}>🇺🇸</button>
+              <button onClick={() => setLang('es')} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', fontSize: '13px', fontWeight: 700, cursor: 'pointer', background: lang === 'es' ? 'white' : 'transparent', color: lang === 'es' ? '#0A2E1F' : '#999' }}>🇲🇽</button>
             </div>
-            <a href="/business" style={{color:"#555",textDecoration:"none",fontSize:"15px",fontWeight:"500"}}>{t.forBusinesses}</a>
+            <a className="fp-nav-link" href="/business" style={{ color: '#425755', textDecoration: 'none', fontSize: '15px', fontWeight: 750 }}>{t.forBusinesses}</a>
             {user ? (
-              <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
-                <div style={{width:"28px",height:"28px",borderRadius:"50%",background:profileColor,flexShrink:0}}/>
-                <span style={{fontSize:"15px",color:"#0A2E1F",fontWeight:"600"}}>{displayName}</span>
-                <button onClick={handleSignOut} style={{background:"#f5f5f5",border:"none",padding:"9px 16px",borderRadius:"8px",fontSize:"14px",fontWeight:"600",cursor:"pointer",color:"#555"}}>{t.signOut}</button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: profileColor, flexShrink: 0 }} />
+                <span style={{ fontSize: '15px', color: '#0A2E1F', fontWeight: 700 }}>{displayName}</span>
+                <button onClick={handleSignOut} style={{ background: '#f5f5f5', border: 'none', padding: '9px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', color: '#555' }}>{t.signOut}</button>
               </div>
             ) : (
-              <div style={{display:"flex",gap:"8px"}}>
-                <button onClick={()=>{setShowAuth(true);setAuthMode('signin');setMessage('')}} style={{background:"white",color:"#0A2E1F",padding:"10px 20px",borderRadius:"9px",border:"1.5px solid #e0e0e0",fontSize:"15px",fontWeight:"600",cursor:"pointer"}}>{t.signIn}</button>
-                <button onClick={()=>{setShowAuth(true);setAuthMode('signup');setMessage('')}} style={{background:"#1D9E75",color:"white",padding:"10px 20px",borderRadius:"9px",border:"none",fontSize:"15px",fontWeight:"600",cursor:"pointer"}}>{t.signUp}</button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button onClick={() => { setShowAuth(true); setAuthMode('signin'); setMessage('') }} style={{ background: 'white', color: '#0A2E1F', padding: '10px 20px', borderRadius: '9px', border: '1.5px solid #e0e0e0', fontSize: '15px', fontWeight: 700, cursor: 'pointer' }}>{t.signIn}</button>
+                <button onClick={() => { setShowAuth(true); setAuthMode('signup'); setMessage('') }} style={{ background: '#0EB5AB', color: 'white', padding: '10px 20px', borderRadius: '9px', border: 'none', fontSize: '15px', fontWeight: 800, cursor: 'pointer' }}>{t.signUp}</button>
               </div>
             )}
-            <a href="/map" style={{background:"#0A2E1F",color:"white",padding:"10px 20px",borderRadius:"9px",textDecoration:"none",fontSize:"15px",fontWeight:"600"}}>{t.findRestroom}</a>
+            <a href="/map" style={{ background: '#092321', color: 'white', padding: '10px 20px', borderRadius: '9px', textDecoration: 'none', fontSize: '15px', fontWeight: 800 }}>{t.findRestroom}</a>
           </div>
-
-          <button onClick={()=>setMenuOpen(!menuOpen)} style={{background:"none",border:"none",cursor:"pointer",padding:"6px",display:"none"}} className="mobile-menu-btn">
-            <div style={{width:"24px",height:"2px",background:"#0A2E1F",marginBottom:"6px",borderRadius:"2px"}}/>
-            <div style={{width:"24px",height:"2px",background:"#0A2E1F",marginBottom:"6px",borderRadius:"2px"}}/>
-            <div style={{width:"24px",height:"2px",background:"#0A2E1F",borderRadius:"2px"}}/>
+          <button onClick={() => setMenuOpen(!menuOpen)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', display: 'none' }} className="mobile-menu-btn">
+            <div style={{ width: '24px', height: '2px', background: '#0A2E1F', marginBottom: '6px', borderRadius: '2px' }} />
+            <div style={{ width: '24px', height: '2px', background: '#0A2E1F', marginBottom: '6px', borderRadius: '2px' }} />
+            <div style={{ width: '24px', height: '2px', background: '#0A2E1F', borderRadius: '2px' }} />
           </button>
         </div>
-
         {menuOpen && (
-          <div style={{borderTop:"1px solid #f0f0f0",paddingTop:"16px",marginTop:"16px",display:"flex",flexDirection:"column",gap:"12px"}}>
-            <div style={{display:"flex",gap:"8px",alignItems:"center"}}>
-              <span style={{fontSize:"14px",color:"#555",fontWeight:"500"}}>Language:</span>
-              <div style={{display:"flex",background:"#f5f5f5",borderRadius:"8px",padding:"3px"}}>
-                <button onClick={()=>setLang('en')} style={{padding:"6px 14px",borderRadius:"6px",border:"none",fontSize:"13px",fontWeight:"700",cursor:"pointer",background:lang==='en'?"white":"transparent",color:lang==='en'?"#0A2E1F":"#999"}}>🇺🇸</button>
-                <button onClick={()=>setLang('es')} style={{padding:"6px 14px",borderRadius:"6px",border:"none",fontSize:"13px",fontWeight:"700",cursor:"pointer",background:lang==='es'?"white":"transparent",color:lang==='es'?"#0A2E1F":"#999"}}>🇲🇽</button>
-              </div>
-            </div>
-            {user ? (
-              <>
-                <div style={{display:"flex",alignItems:"center",gap:"10px",padding:"4px 0"}}>
-                  <div style={{width:"28px",height:"28px",borderRadius:"50%",background:profileColor}}/>
-                  <span style={{fontSize:"15px",color:"#0A2E1F",fontWeight:"600"}}>{displayName}</span>
-                </div>
-                <button onClick={handleSignOut} style={{background:"#f5f5f5",border:"none",padding:"13px",borderRadius:"9px",fontSize:"15px",fontWeight:"600",cursor:"pointer",color:"#555",textAlign:"left"}}>{t.signOut}</button>
-              </>
-            ) : (
-              <>
-                <button onClick={()=>{setShowAuth(true);setAuthMode('signin');setMessage('');setMenuOpen(false)}} style={{background:"white",color:"#0A2E1F",padding:"13px",borderRadius:"9px",border:"1.5px solid #e0e0e0",fontSize:"15px",fontWeight:"600",cursor:"pointer"}}>{t.signIn}</button>
-                <button onClick={()=>{setShowAuth(true);setAuthMode('signup');setMessage('');setMenuOpen(false)}} style={{background:"#1D9E75",color:"white",padding:"13px",borderRadius:"9px",border:"none",fontSize:"15px",fontWeight:"600",cursor:"pointer"}}>{t.signUp}</button>
-              </>
-            )}
-            <a href="/business" onClick={()=>setMenuOpen(false)} style={{color:"#555",textDecoration:"none",fontSize:"15px",fontWeight:"500",padding:"4px 0"}}>{t.forBusinesses}</a>
-            <a href="/map" onClick={()=>setMenuOpen(false)} style={{background:"#0A2E1F",color:"white",padding:"13px",borderRadius:"9px",textDecoration:"none",fontSize:"15px",fontWeight:"600",textAlign:"center"}}>{t.findRestroom}</a>
+          <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '16px', marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <a href="/business" onClick={() => setMenuOpen(false)} style={{ color: '#425755', textDecoration: 'none', fontSize: '15px', fontWeight: 700 }}>{t.forBusinesses}</a>
+            <a href="/map" onClick={() => setMenuOpen(false)} style={{ background: '#092321', color: 'white', padding: '13px', borderRadius: '9px', textDecoration: 'none', fontSize: '15px', fontWeight: 800, textAlign: 'center' }}>{t.findRestroom}</a>
           </div>
         )}
       </nav>
 
-      {!user && (
-        <div style={{background:"#E1F5EE",borderBottom:"1px solid #9FE1CB",padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"10px"}}>
-          <p style={{margin:0,fontSize:"15px",color:"#0F6E56",fontWeight:"500"}}>🚽 {t.bannerText}</p>
-          <button onClick={()=>{setShowAuth(true);setAuthMode('signup')}} style={{background:"#1D9E75",color:"white",border:"none",padding:"10px 20px",borderRadius:"8px",fontSize:"15px",fontWeight:"700",cursor:"pointer",whiteSpace:"nowrap"}}>{t.joinFree}</button>
-        </div>
-      )}
-
-      {user && (
-        <div style={{background:"#E1F5EE",borderBottom:"1px solid #9FE1CB",padding:"14px 20px",display:"flex",alignItems:"center",gap:"10px"}}>
-          <div style={{width:"10px",height:"10px",borderRadius:"50%",background:profileColor}}/>
-          <p style={{margin:0,fontSize:"15px",color:"#0F6E56",fontWeight:"600"}}>{t.welcomeBack}, {displayName}! {t.thankYou}</p>
-        </div>
-      )}
-
-      <section style={{textAlign:"center",padding:"70px 20px 60px",background:"linear-gradient(180deg,#f0faf6 0%,#fff 100%)"}}>
-        <div style={{display:"inline-block",background:"#E1F5EE",color:"#0F6E56",fontSize:"14px",padding:"7px 20px",borderRadius:"20px",marginBottom:"24px",fontWeight:"600"}}>{t.badge}</div>
-        <h1 style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"clamp(36px,7vw,56px)",fontWeight:"700",color:"#0A2E1F",lineHeight:"1.15",marginBottom:"16px",letterSpacing:"-1.5px"}}>
-          {t.heroTitle1}<br/><span style={{color:"#1D9E75"}}>{t.heroTitle2}</span>
-        </h1>
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            background: '#0B1F1D',
-            border: '1px solid #0EB5AB',
-            color: 'white',
-            fontSize: '13px',
-            padding: '6px 16px',
-            borderRadius: '100px',
-            margin: '0 auto 20px',
-          }}
-        >
-          <span
-            style={{
-              width: '7px',
-              height: '7px',
-              borderRadius: '50%',
-              background: '#0EB5AB',
-              flexShrink: 0,
-              animation: 'fp-appstore-pulse 1.4s ease-in-out infinite',
-            }}
-          />
-          {t.appStoreSoon}
-        </div>
-        <p style={{fontSize:"clamp(17px,3vw,20px)",color:"#666",maxWidth:"500px",margin:"0 auto 40px",lineHeight:"1.7"}}>{t.heroDesc}</p>
-
-        <div style={{maxWidth:"560px",margin:"0 auto 32px",display:"flex",gap:"0",boxShadow:"0 4px 20px rgba(0,0,0,0.1)",borderRadius:"14px",overflow:"hidden",border:"2px solid #1D9E75"}}>
-          <input
-            type="text"
-            placeholder={lang==='es'?"Busca Starbucks, Walmart, McDonald's...":"Search Starbucks, Walmart, McDonald's..."}
-            value={searchQuery}
-            onChange={e=>setSearchQuery(e.target.value)}
-            onKeyDown={e=>e.key==='Enter'&&handleSearch()}
-            style={{flex:1,padding:"18px 20px",fontSize:"17px",border:"none",outline:"none",fontFamily:"'Inter',system-ui,sans-serif",color:"#1a1a1a",background:"white"}}
-          />
-          <button onClick={handleSearch} style={{background:"#1D9E75",color:"white",border:"none",padding:"18px 28px",fontSize:"17px",fontWeight:"700",cursor:"pointer",whiteSpace:"nowrap"}}>
-            🔍 {lang==='es'?'Buscar':'Find'}
-          </button>
-        </div>
-
-        <div style={{display:"flex",gap:"12px",justifyContent:"center",flexWrap:"wrap"}}>
-          <a href="/map" style={{background:"#1D9E75",color:"white",padding:"15px 34px",borderRadius:"11px",textDecoration:"none",fontSize:"17px",fontWeight:"700"}}>{t.findBtn}</a>
-          <a href="/business" style={{background:"white",color:"#0A2E1F",padding:"15px 34px",borderRadius:"11px",textDecoration:"none",fontSize:"17px",border:"1.5px solid #e0e0e0",fontWeight:"600"}}>{t.businessBtn}</a>
-        </div>
-      </section>
-
-      <CounterSection/>
-
-
-
-      <section style={{padding:"0 20px 60px",maxWidth:"920px",margin:"0 auto"}}>
-        <h2 style={{textAlign:"center",fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"clamp(26px,5vw,34px)",fontWeight:"700",color:"#0A2E1F",marginBottom:"10px",letterSpacing:"-1px"}}>
-          {lang==='es'?'Todo lo que necesitas en el mapa.':'Everything you need on the map.'}
-        </h2>
-        <p style={{textAlign:"center",color:"#999",marginBottom:"36px",fontSize:"16px"}}>{t.footerSlogan}</p>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:"14px"}}>
-          {[
-            {icon:"🔑",title:lang==='es'?'Encuentra acceso':'Find access',desc:lang==='es'?'Información de acceso al baño de negocios cercanos.':'Restroom access information for nearby businesses.'},
-            {icon:"⭐",title:lang==='es'?'Puntuación de limpieza':'Cleanliness score',desc:lang==='es'?'Calificaciones reales de personas que estuvieron ahí.':'Real ratings from real people who were just there.'},
-            {icon:"📍",title:lang==='es'?'Vista de mapa':'Map view',desc:lang==='es'?'Filtra por distancia, calificación y accesibilidad.':'Filter by distance, rating, and accessibility.'},
-            {icon:"🚨",title:lang==='es'?'Modo urgente':'Urgent mode',desc:lang==='es'?'¿Lo necesitas ya? Encuentra el baño verificado más cercano.':'Need one now? Get the nearest verified restroom fast.'},
-          ].map((f,i)=>(
-            <div key={i} style={{background:"#f8f8f8",borderRadius:"14px",padding:"24px",border:"1px solid #eee"}}>
-              <div style={{fontSize:"30px",marginBottom:"12px"}}>{f.icon}</div>
-              <div style={{fontSize:"16px",fontWeight:"700",color:"#0A2E1F",marginBottom:"8px"}}>{f.title}</div>
-              <div style={{fontSize:"14px",color:"#888",lineHeight:"1.6"}}>{f.desc}</div>
+      <section className="fp-hero">
+        <div className="fp-hero-shell">
+          <div className="fp-hero-copy">
+            <div className="fp-eyebrow"><span />{t.badge}</div>
+            <h1 className="fp-hero-title">{t.home.heroTitleMain} <span>{t.home.heroTitleAccent}</span></h1>
+            <p className="fp-hero-text">{t.home.heroDesc}</p>
+            <div className="fp-search">
+              <input type="text" placeholder={t.home.searchPlaceholder} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()} />
+              <button onClick={handleSearch}>{t.home.findNearby}</button>
             </div>
-          ))}
-        </div>
-      </section>
-
-      <section style={{padding:"0 20px 60px",maxWidth:"920px",margin:"0 auto"}}>
-        <div style={{background:"#0A2E1F",borderRadius:"18px",padding:"32px 28px"}}>
-          <div style={{display:"flex",alignItems:"flex-start",gap:"16px",marginBottom:"20px",flexWrap:"wrap"}}>
-            <div style={{fontSize:"36px",flexShrink:0}}>⚖️</div>
-            <div style={{flex:1,minWidth:"200px"}}>
-              <div style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"22px",fontWeight:"700",color:"white",marginBottom:"10px"}}>
-                {lang==='es'?'¿Eres dueño de un negocio?':'Are you a business owner?'}
+            <div className="fp-cta-row">
+              <a className="fp-primary" href="/map">{t.findBtn}</a>
+              {!user && <button className="fp-secondary" onClick={() => { setShowAuth(true); setAuthMode('signup') }} style={{ cursor: 'pointer' }}>{t.joinFree}</button>}
+            </div>
+            <div className="fp-hero-proof">
+              <span className="fp-proof-pill">{t.home.proofAccess}</span>
+              <span className="fp-proof-pill">{t.home.proofBuilt}</span>
+              <span className="fp-proof-pill">{t.home.proofMap}</span>
+            </div>
+          </div>
+          <div className="fp-phone" aria-label="FlushPin map preview">
+            <div className="fp-phone-screen">
+              <div className="fp-map" />
+              <div className="fp-route" />
+              <div className="fp-pin one" />
+              <div className="fp-pin two" />
+              <div className="fp-pin three" />
+              <div className="fp-card">
+                <div className="fp-card-top">
+                  <div>
+                    <h3>{t.home.cardPlace}</h3>
+                    <p>{t.home.cardDistance}</p>
+                  </div>
+                  <span className="fp-chip">{t.home.verified}</span>
+                </div>
+                <div className="fp-access-grid">
+                  <div className="fp-access-box"><div className="fp-access-label">{t.home.access}</div><div className="fp-access-value">{t.home.askStaffValue}</div></div>
+                  <div className="fp-access-box"><div className="fp-access-label">{t.home.cleanliness}</div><div className="fp-access-value">4.8 / 5</div></div>
+                  <div className="fp-access-box"><div className="fp-access-label">{t.home.policy}</div><div className="fp-access-value">{t.home.customers}</div></div>
+                  <div className="fp-access-box"><div className="fp-access-label">{t.home.confidence}</div><div className="fp-access-value">{t.home.high}</div></div>
+                </div>
               </div>
-              <div style={{fontSize:"15px",color:"#9FE1CB",lineHeight:"1.8",marginBottom:"8px"}}>
-                {lang==='es'
-                  ?'FlushPin es una plataforma comunitaria. Si prefieres que tu negocio no aparezca en nuestra lista, respetamos tu decisión al instante.'
-                  :'FlushPin is a community platform that helps people find nearby restroom access. If you prefer your business not to be listed, we fully respect that decision.'
-                }
-              </div>
-              <div style={{fontSize:"15px",color:"#9FE1CB",lineHeight:"1.8",marginBottom:"16px"}}>
-                {lang==='es'
-                  ?'Al completar el formulario, tu negocio aparecerá marcado como "Baño no disponible al público" — documentado con tu nombre como representante autorizado.'
-                  :'By completing our opt-out form, your business will be marked as "Restroom not available to the public" — documented with your name and title as authorized representative.'
-                }
-              </div>
-              <div style={{background:"rgba(255,255,255,0.07)",borderRadius:"10px",padding:"16px",marginBottom:"20px",border:"1px solid rgba(255,255,255,0.1)"}}>
-                <p style={{fontSize:"14px",color:"#9FE1CB",margin:0,lineHeight:"1.7"}}>
-                  {lang==='es'
-                    ?'📋 Su solicitud queda registrada oficialmente como evidencia de su decisión voluntaria.'
-                    :'📋 Your request is officially logged as evidence of your voluntary decision — protecting both you and FlushPin legally.'
-                  }
-                </p>
-              </div>
-              <a href="/optout" style={{display:"inline-flex",alignItems:"center",gap:"8px",background:"#1D9E75",color:"white",padding:"13px 26px",borderRadius:"10px",textDecoration:"none",fontSize:"15px",fontWeight:"700"}}>
-                {lang==='es'?'Solicitar exclusión →':'Request opt-out →'}
-              </a>
             </div>
           </div>
         </div>
       </section>
 
-      <section style={{padding:"0 20px 60px",maxWidth:"920px",margin:"0 auto",textAlign:"center"}}>
-        <p style={{fontSize:"13px",fontWeight:"600",color:"#bbb",marginBottom:"12px",letterSpacing:"1px"}}>
-          {lang==='es'?'COMENZANDO EN CALIFORNIA':'STARTING IN CALIFORNIA'}
-        </p>
-        <div style={{display:"flex",gap:"8px",flexWrap:"wrap",justifyContent:"center"}}>
-          {["Beverly Hills","Newport Beach","Malibu","Palo Alto","Santa Barbara","La Jolla","Bel Air","Laguna Beach","Carmel","Rancho Santa Fe"].map((c,i)=>(
-            <span key={i} style={{background:"#E1F5EE",color:"#0F6E56",border:"1px solid #9FE1CB",borderRadius:"20px",fontSize:"14px",padding:"7px 18px",fontWeight:i<3?"600":"400"}}>{c}</span>
-          ))}
-        </div>
-      </section>
-
-      <footer style={{background:"#0A2E1F",padding:"40px 20px",textAlign:"center"}}>
-        <p style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"22px",fontWeight:"800",color:"white",letterSpacing:"-0.5px",marginBottom:"6px"}}>FlushPin</p>
-        <p style={{fontSize:"13px",color:"#5DCAA5",marginBottom:"4px",fontWeight:"500"}}>Find it. Rate it. Flush it.</p>
-        <p style={{fontSize:"13px",color:"#5DCAA5",marginBottom:"20px"}}>Irvine, California · flushpin.com</p>
-        <div style={{display:"flex",gap:"20px",justifyContent:"center",flexWrap:"wrap",marginBottom:"16px"}}>
-          <a href="/privacy" style={{color:"#5DCAA5",fontSize:"13px",textDecoration:"none",fontWeight:"500"}}>{t.privacy}</a>
-          <a href="/terms" style={{color:"#5DCAA5",fontSize:"13px",textDecoration:"none",fontWeight:"500"}}>{t.terms}</a>
-          <a href="/contact" style={{color:"#5DCAA5",fontSize:"13px",textDecoration:"none",fontWeight:"500"}}>{t.contact}</a>
-        </div>
-        <p style={{color:"#2D6A4F",fontSize:"12px"}}>© 2026 FlushPin. All rights reserved.</p>
-      </footer>
+      <div className="fp-sections">
+        <section className="fp-section">
+          <div className="fp-stats">
+            <div className="fp-stat"><strong>69,795+</strong><span>{t.home.statVenues}</span></div>
+            <div className="fp-stat"><strong>251+</strong><span>{t.home.statCities}</span></div>
+            <div className="fp-stat"><strong>4 types</strong><span>{t.home.statTypes}</span></div>
+          </div>
+        </section>
+        <section className="fp-section" style={{ paddingTop: 0 }}>
+          <div className="fp-section-heading">
+            <h2>{t.home.sectionTitle}</h2>
+            <p>{t.home.sectionSub}</p>
+          </div>
+          <div className="fp-feature-grid">
+            {t.home.features.map(([title, desc, color]) => (
+              <div className="fp-feature" key={title}>
+                <div className="fp-feature-visual">
+                  <div className="fp-mini-line" style={{ width: '92%' }} />
+                  <div className="fp-mini-line med" style={{ width: '70%' }} />
+                  <div className="fp-mini-line" style={{ width: '48%' }} />
+                  <div style={{ position: 'absolute', right: 18, bottom: 16, width: 42, height: 42, borderRadius: '50% 50% 50% 8px', transform: 'rotate(-45deg)', background: color, boxShadow: '0 12px 24px rgba(9,35,33,.15)' }} />
+                </div>
+                <h3>{title}</h3>
+                <p>{desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+        <section className="fp-section" style={{ paddingTop: 0 }}>
+          <div className="fp-business">
+            <div>
+              <h2>{t.home.businessTitle}</h2>
+              <p>{t.home.businessDesc}</p>
+              <div className="fp-cta-row">
+                <a className="fp-primary" href="/business">{t.forBusinesses}</a>
+                <a className="fp-secondary" href="/contact">{t.home.contactFlushPin}</a>
+              </div>
+            </div>
+            <div className="fp-business-panel">
+              <div className="fp-access-label" style={{ color: '#7DF4EA' }}>{t.home.dashboardPreview}</div>
+              <div style={{ height: 10, borderRadius: 999, background: 'rgba(255,255,255,.18)', margin: '18px 0 12px', width: '86%' }} />
+              <div style={{ height: 10, borderRadius: 999, background: 'rgba(14,181,171,.42)', marginBottom: 12, width: '64%' }} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 24 }}>
+                <div style={{ border: '1px solid rgba(255,255,255,.14)', borderRadius: 16, padding: 14 }}><strong style={{ display: 'block', fontSize: 24, marginBottom: 4 }}>{t.home.claim}</strong><span style={{ color: 'rgba(255,255,255,.64)', fontSize: 13 }}>{t.home.manageDetails}</span></div>
+                <div style={{ border: '1px solid rgba(255,255,255,.14)', borderRadius: 16, padding: 14 }}><strong style={{ display: 'block', fontSize: 24, marginBottom: 4 }}>{t.home.promote}</strong><span style={{ color: 'rgba(255,255,255,.64)', fontSize: 13 }}>{t.home.reachUsers}</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
 
       {showAuth && (
-        <div onClick={()=>{setShowAuth(false);setMessage('')}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:100,display:"flex",alignItems:"center",justifyContent:"center",padding:"16px"}}>
-          <div onClick={e=>e.stopPropagation()} style={{background:"white",borderRadius:"20px",padding:"30px 26px",width:"100%",maxWidth:"400px",maxHeight:"90vh",overflowY:"auto"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"22px"}}>
-              <h2 style={{margin:0,fontSize:"22px",fontWeight:"700",color:"#0A2E1F"}}>{authMode==='signup'?t.joinFlushPin:t.welcomeBack}</h2>
-              <button onClick={()=>{setShowAuth(false);setMessage('')}} style={{background:"none",border:"none",fontSize:"26px",cursor:"pointer",color:"#999"}}>✕</button>
+        <div onClick={() => { setShowAuth(false); setMessage('') }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'white', borderRadius: '20px', padding: '30px 26px', width: '100%', maxWidth: '400px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '22px' }}>
+              <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 800, color: '#0A2E1F' }}>{authMode === 'signup' ? t.joinFlushPin : t.welcomeBack}</h2>
+              <button onClick={() => { setShowAuth(false); setMessage('') }} style={{ background: 'none', border: 'none', fontSize: '26px', cursor: 'pointer', color: '#999' }}>{t.home.close}</button>
             </div>
-
-            <div style={{display:"flex",background:"#f5f5f5",borderRadius:"10px",padding:"4px",marginBottom:"20px"}}>
-              <button onClick={()=>{setAuthMode('signup');setMessage('')}} style={{flex:1,padding:"10px",borderRadius:"8px",border:"none",fontSize:"15px",fontWeight:"600",cursor:"pointer",background:authMode==='signup'?"white":"transparent",color:authMode==='signup'?"#0A2E1F":"#666",boxShadow:authMode==='signup'?"0 1px 4px rgba(0,0,0,0.1)":"none"}}>{t.signUp}</button>
-              <button onClick={()=>{setAuthMode('signin');setMessage('')}} style={{flex:1,padding:"10px",borderRadius:"8px",border:"none",fontSize:"15px",fontWeight:"600",cursor:"pointer",background:authMode==='signin'?"white":"transparent",color:authMode==='signin'?"#0A2E1F":"#666",boxShadow:authMode==='signin'?"0 1px 4px rgba(0,0,0,0.1)":"none"}}>{t.signIn}</button>
-            </div>
-
-            <button onClick={handleGoogleSignIn} style={{width:"100%",background:"white",color:"#333",border:"1.5px solid #e0e0e0",padding:"13px",borderRadius:"10px",fontSize:"15px",fontWeight:"600",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:"10px",marginBottom:"16px"}}>
-              <svg width="18" height="18" viewBox="0 0 18 18">
-                <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
-                <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
-                <path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/>
-                <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
-              </svg>
-              {t.continueGoogle}
-            </button>
-
-            <div style={{display:"flex",alignItems:"center",gap:"12px",marginBottom:"16px"}}>
-              <div style={{flex:1,height:"1px",background:"#f0f0f0"}}/>
-              <span style={{fontSize:"13px",color:"#bbb"}}>or</span>
-              <div style={{flex:1,height:"1px",background:"#f0f0f0"}}/>
-            </div>
-
-            <div style={{display:"flex",flexDirection:"column",gap:"16px"}}>
-              {authMode==='signup' && (
+            <button onClick={handleGoogleSignIn} style={{ width: '100%', background: 'white', color: '#333', border: '1.5px solid #e0e0e0', padding: '13px', borderRadius: '10px', fontSize: '15px', fontWeight: 700, cursor: 'pointer', marginBottom: '16px' }}>{t.continueGoogle}</button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {authMode === 'signup' && (
                 <>
+                  <div><label style={labelStyle}>{t.fullName}</label><input style={inputStyle} placeholder="Jane Smith" value={fullName} onChange={e => setFullName(e.target.value)} /></div>
                   <div>
-                    <label style={labelStyle}>{t.fullName}</label>
-                    <input style={inputStyle} placeholder="Jane Smith" value={fullName} onChange={e=>setFullName(e.target.value)}/>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>{t.profileColor}</label>
-                    <p style={{fontSize:"13px",color:"#999",margin:"0 0 8px"}}>{t.colorDesc}</p>
-                    <div style={{display:"flex",flexWrap:"wrap",gap:"8px"}}>
-                      {COLOR_OPTIONS.map(color=>(
-                        <div key={color} onClick={()=>setSelectedColor(color)} style={{width:"30px",height:"30px",borderRadius:"50%",background:color,cursor:"pointer",border:selectedColor===color?"3px solid #0A2E1F":"3px solid transparent",boxSizing:"border-box",transform:selectedColor===color?"scale(1.15)":"scale(1)"}}/>
-                      ))}
+                    <label style={labelStyle}>{t.home.profileColor}</label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {COLOR_OPTIONS.map(color => <div key={color} onClick={() => setSelectedColor(color)} style={{ width: 30, height: 30, borderRadius: '50%', background: color, cursor: 'pointer', border: selectedColor === color ? '3px solid #0A2E1F' : '3px solid transparent' }} />)}
                     </div>
                   </div>
                 </>
               )}
-              <div>
-                <label style={labelStyle}>{t.email}</label>
-                <input style={inputStyle} type="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)}/>
-              </div>
-              <div>
-                <label style={labelStyle}>{t.password}</label>
-                <input style={inputStyle} type="password" placeholder={t.passwordPlaceholder} value={password} onChange={e=>setPassword(e.target.value)}/>
-              </div>
-              {message && <p style={{fontSize:"14px",color:message.startsWith('✅')?'#1D9E75':message.startsWith('⚠️')?'#D97706':'#DC2626',margin:0,fontWeight:"500"}}>{message}</p>}
-              <button onClick={authMode==='signup'?handleSignUp:handleSignIn} disabled={loading} style={{background:"#1D9E75",color:"white",border:"none",padding:"16px",borderRadius:"10px",fontSize:"17px",fontWeight:"700",cursor:"pointer",opacity:loading?0.7:1}}>
-                {loading?'...':(authMode==='signup'?t.createAccount:t.signIn)}
-              </button>
-              {authMode==='signin' && <button onClick={()=>setAuthMode('signup')} style={{background:"none",border:"none",color:"#1D9E75",fontSize:"14px",fontWeight:"600",cursor:"pointer",padding:0}}>{t.forgotAccount}</button>}
-              {authMode==='signup' && <p style={{fontSize:"13px",color:"#888",margin:0,textAlign:"center",lineHeight:"1.6"}}>{t.disclaimer}</p>}
+              <div><label style={labelStyle}>{t.email}</label><input style={inputStyle} type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} /></div>
+              <div><label style={labelStyle}>{t.password}</label><input style={inputStyle} type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} /></div>
+              {message && <p style={{ fontSize: '14px', color: message.includes('Check') ? '#0EB5AB' : '#DC2626', margin: 0, fontWeight: 700 }}>{message}</p>}
+              <button onClick={authMode === 'signup' ? handleSignUp : handleSignIn} disabled={loading} style={{ background: '#0EB5AB', color: 'white', border: 'none', padding: '16px', borderRadius: '10px', fontSize: '17px', fontWeight: 800, cursor: 'pointer', opacity: loading ? 0.7 : 1 }}>{loading ? '...' : (authMode === 'signup' ? t.createAccount : t.signIn)}</button>
+              <button onClick={() => setAuthMode(authMode === 'signup' ? 'signin' : 'signup')} style={{ background: 'none', border: 'none', color: '#0EB5AB', fontSize: '14px', fontWeight: 800, cursor: 'pointer', padding: 0 }}>{authMode === 'signup' ? t.home.alreadyHaveAccount : t.home.needAccount}</button>
             </div>
           </div>
         </div>
       )}
-
     </main>
   )
 }

@@ -201,15 +201,6 @@ export default function OptOutPage() {
         )}
       </div>
 
-      <footer style={{background:"#0A2E1F",padding:"28px 20px",textAlign:"center"}}>
-        <div style={{display:"flex",gap:"20px",justifyContent:"center",flexWrap:"wrap"}}>
-          <a href="/privacy" style={{color:"#5DCAA5",fontSize:"13px",textDecoration:"none"}}>Privacy Policy</a>
-          <a href="/terms" style={{color:"#5DCAA5",fontSize:"13px",textDecoration:"none"}}>Terms of Service</a>
-          <a href="/contact" style={{color:"#5DCAA5",fontSize:"13px",textDecoration:"none"}}>Contact</a>
-        </div>
-        <p style={{color:"#2D6A4F",fontSize:"11px",marginTop:"12px"}}>© 2025 FlushPin. All rights reserved.</p>
-      </footer>
-
     </main>
   )
 }

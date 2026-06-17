@@ -19,7 +19,6 @@ const nextConfig: NextConfig = {
       { source: '/bathroom-near-me', destination: '/map', permanent: true },
       { source: '/restroom-access-codes', destination: '/map', permanent: true },
       { source: '/about-flushpin-ai', destination: '/', permanent: true },
-      { source: '/restrooms/california', destination: '/map', permanent: true },
       { source: '/restrooms/irvine', destination: '/restrooms/orange-county/irvine', permanent: true },
       { source: '/restrooms/anaheim', destination: '/restrooms/orange-county/anaheim', permanent: true },
       { source: '/restrooms/los-angeles', destination: '/map', permanent: true },

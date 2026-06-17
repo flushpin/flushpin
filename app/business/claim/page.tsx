@@ -234,16 +234,6 @@ export default function ClaimPage() {
         )}
       </div>
 
-      <footer style={{background:"#0A2E1F",padding:"28px 20px",textAlign:"center"}}>
-        <div style={{fontSize:"13px",color:"#5DCAA5",marginBottom:"12px"}}>FlushPin — Business Owner Portal</div>
-        <div style={{display:"flex",gap:"20px",justifyContent:"center",flexWrap:"wrap",marginBottom:"12px"}}>
-          <a href="/privacy" style={{color:"#5DCAA5",fontSize:"13px",textDecoration:"none"}}>Privacy Policy</a>
-          <a href="/terms" style={{color:"#5DCAA5",fontSize:"13px",textDecoration:"none"}}>Terms of Service</a>
-          <a href="/contact" style={{color:"#5DCAA5",fontSize:"13px",textDecoration:"none"}}>Contact</a>
-        </div>
-        <p style={{color:"#2D6A4F",fontSize:"11px",margin:0}}>© {new Date().getFullYear()} FlushPin. All rights reserved.</p>
-      </footer>
-
     </main>
   )
 }

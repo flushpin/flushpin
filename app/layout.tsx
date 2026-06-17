@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { LanguageProvider } from '../lib/LanguageContext'
+import ConditionalFooter from '../components/ConditionalFooter'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.flushpin.com'),
@@ -12,11 +13,11 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   icons: {
     icon: [
-      { url: '/favicon-48.png', sizes: '48x48', type: 'image/png' },
-      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+      { url: '/flushpin-logo-teal.png', sizes: '48x48', type: 'image/png' },
+      { url: '/flushpin-logo-teal.png', sizes: '192x192', type: 'image/png' },
+      { url: '/flushpin-logo-teal.png', sizes: '512x512', type: 'image/png' },
     ],
-    apple: '/apple-touch-icon.png',
+    apple: '/flushpin-logo-teal.png',
   },
   openGraph: {
     title: 'FlushPin — Restroom Intelligence',
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <LanguageProvider>{children}</LanguageProvider>
+        <ConditionalFooter />
       </body>
     </html>
   )
