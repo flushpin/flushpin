@@ -13,7 +13,7 @@ const BAD_WORDS = [
   'orospu', 'yarrak', 'sikis', 'bok', 'amk',
 ]
 
-type TabKey = 'overview' | 'live' | 'pins' | 'flagged' | 'optout' | 'logs'
+type TabKey = 'overview' | 'users' | 'restrooms' | 'campaigns' | 'live' | 'pins' | 'flagged' | 'optout' | 'quality' | 'logs'
 
 type DashboardData = {
   metrics: DashboardMetrics
@@ -146,6 +146,8 @@ export default function AdminDashboard() {
   const [businessClaims, setBusinessClaims] = useState<BusinessClaimsQueue | null>(null)
   const [businessClaimsLoading, setBusinessClaimsLoading] = useState(false)
   const [businessClaimsError, setBusinessClaimsError] = useState<string | null>(null)
+  const [campaignCreativePreview, setCampaignCreativePreview] = useState<string | null>(null)
+  const [campaignCreativeName, setCampaignCreativeName] = useState<string>('')
 
   const loadBusinessClaims = async () => {
     setBusinessClaimsLoading(true)
@@ -323,6 +325,21 @@ export default function AdminDashboard() {
 
   const pinsBadge = (moderation?.summary.pendingCount ?? 0) + (moderation?.summary.duplicateGroupCount ?? 0)
 
+  const handleCampaignCreativeSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    if (!['image/png', 'image/jpeg'].includes(file.type)) {
+      alert('Campaign creative must be a PNG or JPG image.')
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Keep campaign creatives under 2 MB for fast mobile loading.')
+      return
+    }
+    setCampaignCreativeName(file.name)
+    setCampaignCreativePreview(URL.createObjectURL(file))
+  }
+
   const shellStyle: React.CSSProperties = {
     minHeight: '100vh',
     background: adminTheme.bg,
@@ -412,11 +429,15 @@ export default function AdminDashboard() {
   ]
 
   const tabs: Array<{ key: TabKey; label: string; badge?: number }> = [
-    { key: 'overview', label: 'Overview' },
+    { key: 'overview', label: 'Command Center' },
+    { key: 'users', label: 'Users' },
+    { key: 'restrooms', label: 'Restrooms' },
+    { key: 'campaigns', label: 'Campaign Studio' },
     { key: 'live', label: 'Live Map', badge: liveActivity?.summary.recentViews || undefined },
-    { key: 'pins', label: 'Pins', badge: pinsBadge || undefined },
-    { key: 'flagged', label: 'Flagged', badge: metrics.flaggedPending },
-    { key: 'optout', label: 'Business Claims', badge: businessClaims?.summary.totalPending || data.optouts.filter((o) => o.status === 'pending').length || undefined },
+    { key: 'pins', label: 'Access Codes', badge: pinsBadge || undefined },
+    { key: 'flagged', label: 'Reports', badge: metrics.flaggedPending },
+    { key: 'optout', label: 'Business Requests', badge: businessClaims?.summary.totalPending || data.optouts.filter((o) => o.status === 'pending').length || undefined },
+    { key: 'quality', label: 'Data Quality', badge: moderation?.summary.duplicateGroupCount || undefined },
     { key: 'logs', label: 'Logs' },
   ]
 
@@ -442,7 +463,7 @@ export default function AdminDashboard() {
           <div style={{ fontFamily: adminTheme.fontDisplay, fontSize: 20, fontWeight: 700, color: adminTheme.teal }}>
             flushpin admin
           </div>
-          <div style={{ fontSize: 12, color: adminTheme.textMuted, marginTop: 2 }}>Operations dashboard</div>
+          <div style={{ fontSize: 12, color: adminTheme.textMuted, marginTop: 2 }}>California restroom access, business requests, campaigns, and data health</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button
@@ -565,6 +586,38 @@ export default function AdminDashboard() {
               ))}
             </section>
 
+            <section style={{ ...cardStyle(), padding: 22 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                <div>
+                  <h2 style={{ margin: 0, fontFamily: adminTheme.fontDisplay, fontSize: 22, fontWeight: 800 }}>
+                    Today’s operating brief
+                  </h2>
+                  <p style={{ margin: '8px 0 0', color: adminTheme.textMuted, fontSize: 13, lineHeight: 1.5, maxWidth: 680 }}>
+                    Start here each morning: growth, restroom demand, business risk, campaign readiness, and the data cleanup queue.
+                  </p>
+                </div>
+                <div style={{ color: adminTheme.teal, fontSize: 12, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase' }}>
+                  California-first
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 12, marginTop: 18 }}>
+                {[
+                  ['Members', `${metrics.newMembersToday.toLocaleString()} new today`, `${metrics.totalMembers.toLocaleString()} total accounts`],
+                  ['Restroom demand', `${metrics.pinViewsToday.toLocaleString()} code views today`, `${metrics.totalPinViews.toLocaleString()} lifetime code views`],
+                  ['Business risk', `${data.optouts.filter((o) => o.status === 'pending').length.toLocaleString()} pending opt-outs`, 'Review before public conflict grows'],
+                  ['Revenue queue', `${businessClaims?.summary.pendingClaims ?? 0} pending claims`, 'Convert business interest into Gold calls'],
+                  ['Campaigns', 'Upload-ready workflow', '1080 x 1920 mobile creative, 4-second reveal'],
+                  ['Data health', `${pinsBadge.toLocaleString()} pin / duplicate tasks`, 'Clean duplicates before statewide seeding'],
+                ].map(([title, value, note]) => (
+                  <div key={title} style={{ background: adminTheme.bg, border: `1px solid ${adminTheme.cardBorder}`, borderRadius: 14, padding: 16 }}>
+                    <div style={{ color: adminTheme.textMuted, fontSize: 11, textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 800 }}>{title}</div>
+                    <div style={{ color: adminTheme.text, fontSize: 18, fontWeight: 800, marginTop: 8, fontFamily: adminTheme.fontDisplay }}>{value}</div>
+                    <div style={{ color: adminTheme.textMuted, fontSize: 12, marginTop: 6, lineHeight: 1.4 }}>{note}</div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
             <section
               style={{
                 display: 'grid',
@@ -657,6 +710,162 @@ export default function AdminDashboard() {
                     ))
                   )}
                 </div>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {activeTab === 'users' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <section style={{ ...cardStyle(), padding: 22 }}>
+              <h2 style={{ margin: 0, fontFamily: adminTheme.fontDisplay, fontSize: 22, fontWeight: 800 }}>Member intelligence</h2>
+              <p style={{ margin: '8px 0 0', color: adminTheme.textMuted, fontSize: 13, lineHeight: 1.5, maxWidth: 760 }}>
+                This is the daily view for signups, active users, contribution quality, and future trust scoring. Auth totals already come from Supabase service role.
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12, marginTop: 18 }}>
+                {[
+                  ['Total members', metrics.totalMembers.toLocaleString()],
+                  ['New today', metrics.newMembersToday.toLocaleString()],
+                  ['Code views/user', metrics.totalMembers ? (metrics.totalPinViews / metrics.totalMembers).toFixed(1) : '0.0'],
+                  ['Anonymous demand', 'Track next'],
+                ].map(([label, value]) => (
+                  <div key={label} style={{ background: adminTheme.bg, border: `1px solid ${adminTheme.cardBorder}`, borderRadius: 14, padding: 16 }}>
+                    <div style={{ fontFamily: adminTheme.fontDisplay, color: adminTheme.teal, fontSize: 26, fontWeight: 800 }}>{value}</div>
+                    <div style={{ color: adminTheme.textMuted, fontSize: 12, marginTop: 6 }}>{label}</div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+              <div style={{ ...cardStyle(), padding: 20 }}>
+                <h3 style={{ margin: '0 0 14px', fontFamily: adminTheme.fontDisplay, fontSize: 16 }}>What the final users table should show</h3>
+                {['Name and email', 'Signup date and last active time', 'Searches, code views, and submitted codes', 'Trusted contributor score', 'Flag / ban / admin note controls'].map((item) => (
+                  <div key={item} style={{ padding: '10px 0', borderTop: `1px solid ${adminTheme.cardBorder}`, color: adminTheme.textSoft, fontSize: 13 }}>{item}</div>
+                ))}
+              </div>
+              <div style={{ ...cardStyle(), padding: 20 }}>
+                <h3 style={{ margin: '0 0 14px', fontFamily: adminTheme.fontDisplay, fontSize: 16 }}>Privacy guardrails</h3>
+                {['Show operational behavior, not creepy surveillance', 'Mask sensitive identifiers where possible', 'Keep admin actions in logs', 'Use role-based admin access before team expansion'].map((item) => (
+                  <div key={item} style={{ padding: '10px 0', borderTop: `1px solid ${adminTheme.cardBorder}`, color: adminTheme.textSoft, fontSize: 13 }}>{item}</div>
+                ))}
+              </div>
+            </section>
+          </div>
+        )}
+
+        {activeTab === 'restrooms' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <section style={{ ...cardStyle(), padding: 22 }}>
+              <h2 style={{ margin: 0, fontFamily: adminTheme.fontDisplay, fontSize: 22, fontWeight: 800 }}>Restroom operations</h2>
+              <p style={{ margin: '8px 0 0', color: adminTheme.textMuted, fontSize: 13, lineHeight: 1.5, maxWidth: 760 }}>
+                The working list for places, access type, current code, verification status, source, claim state, and opt-out state.
+              </p>
+            </section>
+            <div style={{ ...cardStyle(), padding: 20, overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead>
+                  <tr style={{ color: adminTheme.textMuted, textAlign: 'left' }}>
+                    <th style={{ padding: '8px 6px' }}>Venue</th>
+                    <th style={{ padding: '8px 6px' }}>Address</th>
+                    <th style={{ padding: '8px 6px' }}>Code</th>
+                    <th style={{ padding: '8px 6px' }}>Added</th>
+                    <th style={{ padding: '8px 6px' }}>Next action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {metrics.recentRestrooms.map((row) => (
+                    <tr key={row.id} style={{ borderTop: `1px solid ${adminTheme.cardBorder}` }}>
+                      <td style={{ padding: '12px 6px', color: adminTheme.textSoft, fontWeight: 700 }}>{row.name || 'Unknown'}</td>
+                      <td style={{ padding: '12px 6px', color: adminTheme.textMuted }}>{row.address || '—'}</td>
+                      <td style={{ padding: '12px 6px', color: adminTheme.teal, fontFamily: 'monospace' }}>{row.pin || '—'}</td>
+                      <td style={{ padding: '12px 6px', color: adminTheme.textMuted, whiteSpace: 'nowrap' }}>{row.created_at ? new Date(row.created_at).toLocaleDateString() : '—'}</td>
+                      <td style={{ padding: '12px 6px', color: adminTheme.warning }}>verify source + duplicate</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 14 }}>
+              {['Code stale > 30 days', 'Business claimed', 'Opt-out requested', 'Duplicate nearby venue', 'Missing address', 'Google enrichment candidate'].map((label) => (
+                <div key={label} style={{ ...cardStyle(), padding: 16 }}>
+                  <div style={{ color: adminTheme.teal, fontWeight: 800, fontSize: 13 }}>{label}</div>
+                  <div style={{ color: adminTheme.textMuted, fontSize: 12, marginTop: 8, lineHeight: 1.4 }}>Filter-ready bucket for the next API/schema pass.</div>
+                </div>
+              ))}
+            </section>
+          </div>
+        )}
+
+        {activeTab === 'campaigns' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <section style={{ ...cardStyle(), padding: 22 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+                <div>
+                  <h2 style={{ margin: 0, fontFamily: adminTheme.fontDisplay, fontSize: 22, fontWeight: 800 }}>Campaign Studio</h2>
+                  <p style={{ margin: '8px 0 0', color: adminTheme.textMuted, fontSize: 13, lineHeight: 1.5, maxWidth: 760 }}>
+                    Upload the mobile ad a business wants shown after a QR scan. The visitor sees it for 4 seconds, then receives access instructions.
+                  </p>
+                </div>
+                <div style={{ background: adminTheme.tealMuted, color: adminTheme.teal, border: `1px solid ${adminTheme.cardBorder}`, borderRadius: 999, padding: '8px 12px', height: 18, fontSize: 11, fontWeight: 900, letterSpacing: '.08em', textTransform: 'uppercase' }}>
+                  Gold package core
+                </div>
+              </div>
+            </section>
+
+            <section style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 1fr) minmax(260px, 360px)', gap: 16, alignItems: 'start' }}>
+              <div style={{ ...cardStyle(), padding: 20 }}>
+                <h3 style={{ margin: '0 0 16px', fontFamily: adminTheme.fontDisplay, fontSize: 17 }}>Create campaign draft</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 12 }}>
+                  {['Business / location', 'Campaign name', 'Offer title', 'Start date', 'End date', 'CTA text'].map((label) => (
+                    <label key={label} style={{ display: 'flex', flexDirection: 'column', gap: 6, color: adminTheme.textMuted, fontSize: 12, fontWeight: 700 }}>
+                      {label}
+                      <input placeholder={label} style={{ background: adminTheme.bg, border: `1px solid ${adminTheme.cardBorder}`, borderRadius: 10, padding: 12, color: adminTheme.text, fontFamily: adminTheme.fontBody }} />
+                    </label>
+                  ))}
+                </div>
+                <label style={{ display: 'block', marginTop: 14, color: adminTheme.textMuted, fontSize: 12, fontWeight: 700 }}>
+                  Campaign creative PNG/JPG
+                  <input type="file" accept="image/png,image/jpeg" onChange={handleCampaignCreativeSelect} style={{ display: 'block', width: '100%', marginTop: 8, background: adminTheme.bg, border: `1px dashed ${adminTheme.cardBorder}`, borderRadius: 12, padding: 14, color: adminTheme.textSoft }} />
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginTop: 14 }}>
+                  {['1080 x 1920 px', '9:16 vertical', 'PNG or JPG', 'Max 2 MB', '160 px safe top/bottom', 'Admin approval before live'].map((rule) => (
+                    <div key={rule} style={{ background: adminTheme.bg, border: `1px solid ${adminTheme.cardBorder}`, borderRadius: 10, padding: 10, color: adminTheme.textSoft, fontSize: 12 }}>{rule}</div>
+                  ))}
+                </div>
+                <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <button type="button" style={btnStyle('primary')}>Save draft later</button>
+                  <button type="button" style={btnStyle('ghost')}>Generate QR after schema</button>
+                </div>
+              </div>
+
+              <div style={{ ...cardStyle(), padding: 18 }}>
+                <h3 style={{ margin: '0 0 12px', fontFamily: adminTheme.fontDisplay, fontSize: 16 }}>Mobile preview</h3>
+                <div style={{ borderRadius: 28, background: '#050807', border: '8px solid #0f1d1b', aspectRatio: '9 / 16', overflow: 'hidden', position: 'relative', boxShadow: '0 22px 60px rgba(0,0,0,.3)' }}>
+                  {campaignCreativePreview ? (
+                    <img src={campaignCreativePreview} alt="Campaign preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ height: '100%', display: 'grid', placeItems: 'center', textAlign: 'center', padding: 24, color: adminTheme.textMuted }}>
+                      Upload a 1080 x 1920 creative to preview the 4-second access ad.
+                    </div>
+                  )}
+                  <div style={{ position: 'absolute', left: 14, right: 14, bottom: 14, background: 'rgba(3,17,15,.86)', border: '1px solid rgba(255,255,255,.16)', borderRadius: 16, padding: 12 }}>
+                    <div style={{ color: '#7DF4EA', fontSize: 11, fontWeight: 900, letterSpacing: '.08em', textTransform: 'uppercase' }}>Access opens in 4</div>
+                    <div style={{ color: '#fff', fontWeight: 800, marginTop: 4 }}>{campaignCreativeName || 'Corner Bakery campaign'}</div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section style={{ ...cardStyle(), padding: 20 }}>
+              <h3 style={{ margin: '0 0 14px', fontFamily: adminTheme.fontDisplay, fontSize: 17 }}>Campaign lifecycle</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+                {['Upload creative', 'Pending review', 'Approve campaign', 'QR scan shows ad', '4-second completion', 'Access code reveal', 'Analytics report'].map((step, index) => (
+                  <div key={step} style={{ background: adminTheme.bg, border: `1px solid ${adminTheme.cardBorder}`, borderRadius: 12, padding: 14 }}>
+                    <div style={{ color: adminTheme.teal, fontSize: 12, fontWeight: 900 }}>0{index + 1}</div>
+                    <div style={{ color: adminTheme.textSoft, marginTop: 8, fontWeight: 800, fontSize: 13 }}>{step}</div>
+                  </div>
+                ))}
               </div>
             </section>
           </div>
@@ -1127,6 +1336,41 @@ export default function AdminDashboard() {
                 )}
               </>
             )}
+          </div>
+        )}
+
+        {activeTab === 'quality' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <section style={{ ...cardStyle(), padding: 22 }}>
+              <h2 style={{ margin: 0, fontFamily: adminTheme.fontDisplay, fontSize: 22, fontWeight: 800 }}>Data Quality Command Center</h2>
+              <p style={{ margin: '8px 0 0', color: adminTheme.textMuted, fontSize: 13, lineHeight: 1.5, maxWidth: 760 }}>
+                This is the safety layer before California-wide OSM/Overture seeding and future Google enrichment for paid businesses.
+              </p>
+            </section>
+            <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 14 }}>
+              {[
+                ['Duplicate risk', `${moderation?.summary.duplicateGroupCount ?? 0} groups loaded`, 'Same name/address or nearby venues must be merged before bulk imports.'],
+                ['Pending code work', `${moderation?.summary.pendingCount ?? 0} submissions`, 'Approve good access info, reject bad data, log every action.'],
+                ['Source strategy', 'OSM + Overture + paid Google', 'Keep source_external_id and source separate so Google can enrich paid accounts later.'],
+                ['Opt-out safety', `${data.optouts.filter((o) => o.status === 'pending').length} pending`, 'Business removal requests should soft-hide public access, not destroy audit history.'],
+                ['Campaign data', 'Schema needed', 'business_campaigns, campaign_creatives, campaign_events, qr_codes.'],
+                ['Admin audit', `${data.logs.length} recent logs`, 'Every destructive action needs admin_logs traceability.'],
+              ].map(([title, value, note]) => (
+                <div key={title} style={{ ...cardStyle(), padding: 18 }}>
+                  <div style={{ color: adminTheme.textMuted, fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', fontWeight: 900 }}>{title}</div>
+                  <div style={{ color: adminTheme.teal, fontFamily: adminTheme.fontDisplay, fontSize: 24, fontWeight: 800, marginTop: 8 }}>{value}</div>
+                  <p style={{ color: adminTheme.textMuted, fontSize: 12, lineHeight: 1.5, margin: '8px 0 0' }}>{note}</p>
+                </div>
+              ))}
+            </section>
+            <section style={{ ...cardStyle(), padding: 20 }}>
+              <h3 style={{ margin: '0 0 14px', fontFamily: adminTheme.fontDisplay, fontSize: 17 }}>Required next database tables</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
+                {['business_accounts', 'business_locations', 'business_campaigns', 'campaign_creatives', 'qr_codes', 'campaign_events', 'admin_roles', 'restroom_source_links'].map((table) => (
+                  <div key={table} style={{ background: adminTheme.bg, border: `1px solid ${adminTheme.cardBorder}`, borderRadius: 10, padding: 12, color: adminTheme.textSoft, fontFamily: 'monospace', fontSize: 12 }}>{table}</div>
+                ))}
+              </div>
+            </section>
           </div>
         )}
 
