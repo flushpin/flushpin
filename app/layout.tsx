@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { LanguageProvider } from '../lib/LanguageContext'
 import ConditionalFooter from '../components/ConditionalFooter'
+import { APP_STORE_ID } from '../lib/site'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.flushpin.com'),
@@ -25,6 +26,9 @@ export const metadata: Metadata = {
     url: 'https://www.flushpin.com',
     siteName: 'FlushPin',
     type: 'website',
+  },
+  other: {
+    'apple-itunes-app': `app-id=${APP_STORE_ID}, app-argument=https://www.flushpin.com`,
   },
 }
 

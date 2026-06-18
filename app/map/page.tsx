@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import RatingModal from '../../components/RatingModal'
 import Logo from '../../components/Logo'
+import AppStoreLink from '../../components/AppStoreLink'
 import PromoModal from '../../components/PromoModal'
 import { useLang } from '../../lib/LanguageContext'
 import {
@@ -490,7 +491,8 @@ export default function FindPage() {
     <div style={{minHeight:'100vh',background:'#f8f9fa',fontFamily:"'Inter',system-ui,sans-serif"}}>
       <nav style={{background:'white',borderBottom:'1px solid #f0f0f0',padding:'12px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',position:'sticky',top:0,zIndex:10}}>
         <Logo height={32} />
-        <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
+        <div style={{display:'flex',gap:'8px',alignItems:'center',flexWrap:'wrap'}}>
+          <AppStoreLink width={108} height={32} />
           <div style={{display:'flex',background:'#f5f5f5',borderRadius:'8px',padding:'3px'}}>
             <button onClick={()=>setLang('en')} style={{padding:'5px 12px',borderRadius:'6px',border:'none',fontSize:'14px',cursor:'pointer',background:lang==='en'?'white':'transparent'}}>🇺🇸</button>
             <button onClick={()=>setLang('es')} style={{padding:'5px 12px',borderRadius:'6px',border:'none',fontSize:'14px',cursor:'pointer',background:lang==='es'?'white':'transparent'}}>🇲🇽</button>
