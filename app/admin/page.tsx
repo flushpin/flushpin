@@ -75,6 +75,33 @@ type BusinessClaimsQueue = {
   }
 }
 
+type CampaignQueue = {
+  campaigns: any[]
+  locations: any[]
+  summary: {
+    totalCampaigns: number
+    activeCampaigns: number
+    pendingReview: number
+    scans7d: number
+    completedViews7d: number
+    accessReveals7d: number
+  }
+  warnings: string[]
+}
+
+type AdminUsersPayload = {
+  users: any[]
+  summary: {
+    totalMembers: number
+    newToday: number
+    confirmedEmails: number
+    googleMembers: number
+    emailMembers: number
+  }
+  newestUser: any | null
+  loadedAt: string
+}
+
 function claimTypeLabel(type: string) {
   if (type === 'removal') return '🗑️ Removal — hide PIN / listing'
   if (type === 'update') return '✏️ Update access info'
@@ -147,7 +174,152 @@ export default function AdminDashboard() {
   const [businessClaimsLoading, setBusinessClaimsLoading] = useState(false)
   const [businessClaimsError, setBusinessClaimsError] = useState<string | null>(null)
   const [campaignCreativePreview, setCampaignCreativePreview] = useState<string | null>(null)
+  const [campaignCreativeFile, setCampaignCreativeFile] = useState<File | null>(null)
   const [campaignCreativeName, setCampaignCreativeName] = useState<string>('')
+  const [campaigns, setCampaigns] = useState<CampaignQueue | null>(null)
+  const [campaignsLoading, setCampaignsLoading] = useState(false)
+  const [campaignsError, setCampaignsError] = useState<string | null>(null)
+  const [campaignSaveBusy, setCampaignSaveBusy] = useState(false)
+  const [campaignForm, setCampaignForm] = useState({
+    business_name: '',
+    location_name: '',
+    campaign_name: '',
+    offer_title: '',
+    offer_description: '',
+    cta_text: '',
+    destination_url: '',
+    starts_at: '',
+    ends_at: '',
+    contact_name: '',
+    contact_email: '',
+    contact_phone: '',
+    address: '',
+    city: '',
+    restroom_id: '',
+  })
+  const [adminUsers, setAdminUsers] = useState<AdminUsersPayload | null>(null)
+  const [adminUsersLoading, setAdminUsersLoading] = useState(false)
+  const [adminUsersError, setAdminUsersError] = useState<string | null>(null)
+  const [memberNotification, setMemberNotification] = useState<string | null>(null)
+  const [lastSeenMemberCount, setLastSeenMemberCount] = useState<number | null>(null)
+
+  const updateCampaignForm = (key: keyof typeof campaignForm, value: string) => {
+    setCampaignForm((current) => ({ ...current, [key]: value }))
+  }
+
+  const loadAdminUsers = async (notify = false) => {
+    setAdminUsersLoading(true)
+    setAdminUsersError(null)
+    try {
+      const res = await fetch('/admin/users')
+      const json = await res.json().catch(() => null)
+      if (!res.ok) {
+        setAdminUsersError(json?.error || `Users unavailable (HTTP ${res.status})`)
+        setAdminUsers(null)
+        return
+      }
+      setAdminUsers(json)
+
+      const totalMembers = json?.summary?.totalMembers ?? 0
+      if (notify && lastSeenMemberCount != null && totalMembers > lastSeenMemberCount) {
+        const newest = json?.newestUser
+        const label = newest?.email ? `${newest.name} · ${newest.email}` : 'New FlushPin member'
+        const message = `New member joined: ${label}`
+        setMemberNotification(message)
+        if (typeof window !== 'undefined' && 'Notification' in window) {
+          if (Notification.permission === 'granted') {
+            new Notification('FlushPin new member', { body: label })
+          } else if (Notification.permission === 'default') {
+            Notification.requestPermission().then((permission) => {
+              if (permission === 'granted') new Notification('FlushPin new member', { body: label })
+            })
+          }
+        }
+      }
+      setLastSeenMemberCount(totalMembers)
+    } finally {
+      setAdminUsersLoading(false)
+    }
+  }
+
+  const loadCampaigns = async () => {
+    setCampaignsLoading(true)
+    setCampaignsError(null)
+    try {
+      const res = await fetch('/admin/campaigns')
+      const json = await res.json().catch(() => null)
+      if (!res.ok) {
+        setCampaignsError(json?.error || `Campaigns unavailable (HTTP ${res.status})`)
+        setCampaigns(null)
+        return
+      }
+      setCampaigns(json)
+    } finally {
+      setCampaignsLoading(false)
+    }
+  }
+
+  const saveCampaignDraft = async () => {
+    if (!campaignCreativeFile) {
+      alert('Upload a PNG or JPG creative first.')
+      return
+    }
+    setCampaignSaveBusy(true)
+    setCampaignsError(null)
+    try {
+      const form = new FormData()
+      Object.entries(campaignForm).forEach(([key, value]) => form.append(key, value))
+      form.append('creative', campaignCreativeFile)
+      const res = await fetch('/admin/campaigns', { method: 'POST', body: form })
+      const json = await res.json().catch(() => null)
+      if (!res.ok) {
+        setCampaignsError(json?.error || 'Campaign save failed')
+        return
+      }
+      setCampaignForm({
+        business_name: '',
+        location_name: '',
+        campaign_name: '',
+        offer_title: '',
+        offer_description: '',
+        cta_text: '',
+        destination_url: '',
+        starts_at: '',
+        ends_at: '',
+        contact_name: '',
+        contact_email: '',
+        contact_phone: '',
+        address: '',
+        city: '',
+        restroom_id: '',
+      })
+      setCampaignCreativeFile(null)
+      setCampaignCreativeName('')
+      setCampaignCreativePreview(null)
+      await loadCampaigns()
+    } finally {
+      setCampaignSaveBusy(false)
+    }
+  }
+
+  const updateCampaignStatus = async (campaignId: string, status: string) => {
+    setActionBusy(`campaign-${campaignId}-${status}`)
+    try {
+      const res = await fetch('/admin/campaigns', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ campaignId, status }),
+      })
+      const json = await res.json().catch(() => null)
+      if (!res.ok) {
+        alert(json?.error || 'Campaign action failed')
+        return
+      }
+      await loadCampaigns()
+    } finally {
+      setActionBusy(null)
+    }
+  }
 
   const loadBusinessClaims = async () => {
     setBusinessClaimsLoading(true)
@@ -250,6 +422,18 @@ export default function AdminDashboard() {
     loadBusinessClaims()
   }, [loggedIn, activeTab])
 
+  useEffect(() => {
+    if (!loggedIn || activeTab !== 'campaigns') return
+    loadCampaigns()
+  }, [loggedIn, activeTab])
+
+  useEffect(() => {
+    if (!loggedIn || activeTab !== 'users') return
+    loadAdminUsers(false)
+    const interval = setInterval(() => loadAdminUsers(true), 60_000)
+    return () => clearInterval(interval)
+  }, [loggedIn, activeTab, lastSeenMemberCount])
+
   const loadData = async () => {
     setLoading(true)
 
@@ -336,6 +520,7 @@ export default function AdminDashboard() {
       alert('Keep campaign creatives under 2 MB for fast mobile loading.')
       return
     }
+    setCampaignCreativeFile(file)
     setCampaignCreativeName(file.name)
     setCampaignCreativePreview(URL.createObjectURL(file))
   }
@@ -432,7 +617,7 @@ export default function AdminDashboard() {
     { key: 'overview', label: 'Command Center' },
     { key: 'users', label: 'Users' },
     { key: 'restrooms', label: 'Restrooms' },
-    { key: 'campaigns', label: 'Campaign Studio' },
+    { key: 'campaigns', label: 'Campaign Studio', badge: campaigns?.summary.pendingReview || undefined },
     { key: 'live', label: 'Live Map', badge: liveActivity?.summary.recentViews || undefined },
     { key: 'pins', label: 'Access Codes', badge: pinsBadge || undefined },
     { key: 'flagged', label: 'Reports', badge: metrics.flaggedPending },
@@ -718,16 +903,35 @@ export default function AdminDashboard() {
         {activeTab === 'users' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <section style={{ ...cardStyle(), padding: 22 }}>
-              <h2 style={{ margin: 0, fontFamily: adminTheme.fontDisplay, fontSize: 22, fontWeight: 800 }}>Member intelligence</h2>
-              <p style={{ margin: '8px 0 0', color: adminTheme.textMuted, fontSize: 13, lineHeight: 1.5, maxWidth: 760 }}>
-                This is the daily view for signups, active users, contribution quality, and future trust scoring. Auth totals already come from Supabase service role.
-              </p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                <div>
+                  <h2 style={{ margin: 0, fontFamily: adminTheme.fontDisplay, fontSize: 22, fontWeight: 800 }}>Member intelligence</h2>
+                  <p style={{ margin: '8px 0 0', color: adminTheme.textMuted, fontSize: 13, lineHeight: 1.5, maxWidth: 760 }}>
+                    Detailed member names, emails, signup dates, providers, email confirmation, and last sign-in. This refreshes every 60 seconds while the tab is open.
+                  </p>
+                </div>
+                <button type="button" onClick={() => loadAdminUsers(false)} disabled={adminUsersLoading} style={btnStyle('ghost')}>
+                  {adminUsersLoading ? 'Refreshing…' : 'Refresh users'}
+                </button>
+              </div>
+              {memberNotification ? (
+                <div style={{ marginTop: 16, background: adminTheme.tealMuted, border: `1px solid ${adminTheme.cardBorder}`, borderRadius: 12, padding: 12, color: adminTheme.teal, fontWeight: 800, fontSize: 13 }}>
+                  {memberNotification}
+                </div>
+              ) : null}
+              {adminUsersError ? (
+                <div style={{ marginTop: 16, background: 'rgba(248, 113, 113, 0.12)', border: '1px solid rgba(248, 113, 113, 0.35)', borderRadius: 12, padding: 12, color: adminTheme.danger, fontSize: 13 }}>
+                  {adminUsersError}
+                </div>
+              ) : null}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12, marginTop: 18 }}>
                 {[
-                  ['Total members', metrics.totalMembers.toLocaleString()],
-                  ['New today', metrics.newMembersToday.toLocaleString()],
+                  ['Total members', (adminUsers?.summary.totalMembers ?? metrics.totalMembers).toLocaleString()],
+                  ['New today', (adminUsers?.summary.newToday ?? metrics.newMembersToday).toLocaleString()],
+                  ['Confirmed emails', (adminUsers?.summary.confirmedEmails ?? 0).toLocaleString()],
+                  ['Google members', (adminUsers?.summary.googleMembers ?? 0).toLocaleString()],
+                  ['Email members', (adminUsers?.summary.emailMembers ?? 0).toLocaleString()],
                   ['Code views/user', metrics.totalMembers ? (metrics.totalPinViews / metrics.totalMembers).toFixed(1) : '0.0'],
-                  ['Anonymous demand', 'Track next'],
                 ].map(([label, value]) => (
                   <div key={label} style={{ background: adminTheme.bg, border: `1px solid ${adminTheme.cardBorder}`, borderRadius: 14, padding: 16 }}>
                     <div style={{ fontFamily: adminTheme.fontDisplay, color: adminTheme.teal, fontSize: 26, fontWeight: 800 }}>{value}</div>
@@ -737,19 +941,47 @@ export default function AdminDashboard() {
               </div>
             </section>
 
-            <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
-              <div style={{ ...cardStyle(), padding: 20 }}>
-                <h3 style={{ margin: '0 0 14px', fontFamily: adminTheme.fontDisplay, fontSize: 16 }}>What the final users table should show</h3>
-                {['Name and email', 'Signup date and last active time', 'Searches, code views, and submitted codes', 'Trusted contributor score', 'Flag / ban / admin note controls'].map((item) => (
-                  <div key={item} style={{ padding: '10px 0', borderTop: `1px solid ${adminTheme.cardBorder}`, color: adminTheme.textSoft, fontSize: 13 }}>{item}</div>
-                ))}
-              </div>
-              <div style={{ ...cardStyle(), padding: 20 }}>
-                <h3 style={{ margin: '0 0 14px', fontFamily: adminTheme.fontDisplay, fontSize: 16 }}>Privacy guardrails</h3>
-                {['Show operational behavior, not creepy surveillance', 'Mask sensitive identifiers where possible', 'Keep admin actions in logs', 'Use role-based admin access before team expansion'].map((item) => (
-                  <div key={item} style={{ padding: '10px 0', borderTop: `1px solid ${adminTheme.cardBorder}`, color: adminTheme.textSoft, fontSize: 13 }}>{item}</div>
-                ))}
-              </div>
+            <section style={{ ...cardStyle(), padding: 20, overflowX: 'auto' }}>
+              <h3 style={{ margin: '0 0 14px', fontFamily: adminTheme.fontDisplay, fontSize: 16 }}>Members</h3>
+              {adminUsersLoading && !adminUsers ? (
+                <div style={{ color: adminTheme.textMuted, fontSize: 13 }}>Loading members…</div>
+              ) : (adminUsers?.users.length ?? 0) === 0 ? (
+                <div style={{ color: adminTheme.textMuted, fontSize: 13 }}>No members loaded. Service role is required for this table.</div>
+              ) : (
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ color: adminTheme.textMuted, textAlign: 'left' }}>
+                      <th style={{ padding: '8px 6px' }}>Name</th>
+                      <th style={{ padding: '8px 6px' }}>Email</th>
+                      <th style={{ padding: '8px 6px' }}>Provider</th>
+                      <th style={{ padding: '8px 6px' }}>Confirmed</th>
+                      <th style={{ padding: '8px 6px' }}>Joined</th>
+                      <th style={{ padding: '8px 6px' }}>Last sign-in</th>
+                      <th style={{ padding: '8px 6px' }}>User ID</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {adminUsers?.users.map((user) => (
+                      <tr key={user.id} style={{ borderTop: `1px solid ${adminTheme.cardBorder}` }}>
+                        <td style={{ padding: '12px 6px', color: adminTheme.textSoft, fontWeight: 800 }}>{user.name || 'Unknown'}</td>
+                        <td style={{ padding: '12px 6px', color: adminTheme.teal }}>{user.email || '—'}</td>
+                        <td style={{ padding: '12px 6px', color: adminTheme.textMuted }}>{user.provider || '—'}</td>
+                        <td style={{ padding: '12px 6px', color: user.email_confirmed_at ? adminTheme.teal : adminTheme.warning }}>{user.email_confirmed_at ? 'Yes' : 'No'}</td>
+                        <td style={{ padding: '12px 6px', color: adminTheme.textMuted, whiteSpace: 'nowrap' }}>{user.created_at ? new Date(user.created_at).toLocaleString() : '—'}</td>
+                        <td style={{ padding: '12px 6px', color: adminTheme.textMuted, whiteSpace: 'nowrap' }}>{user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : 'Never'}</td>
+                        <td style={{ padding: '12px 6px', color: adminTheme.textMuted, fontFamily: 'monospace', fontSize: 11 }}>{String(user.id).slice(0, 8)}…</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </section>
+
+            <section style={{ ...cardStyle(), padding: 20 }}>
+              <h3 style={{ margin: '0 0 14px', fontFamily: adminTheme.fontDisplay, fontSize: 16 }}>Notification rules</h3>
+              {['Users tab polls every 60 seconds while open', 'New member count increase triggers an in-admin alert', 'Browser notification is requested only from this admin session', 'Future version can send email/SMS via a server notification table'].map((item) => (
+                <div key={item} style={{ padding: '10px 0', borderTop: `1px solid ${adminTheme.cardBorder}`, color: adminTheme.textSoft, fontSize: 13 }}>{item}</div>
+              ))}
             </section>
           </div>
         )}
@@ -813,17 +1045,75 @@ export default function AdminDashboard() {
               </div>
             </section>
 
+            {campaignsError ? (
+              <div style={{ ...cardStyle(), padding: 16, borderColor: 'rgba(248, 113, 113, 0.35)', color: adminTheme.danger, fontSize: 13 }}>
+                {campaignsError}
+              </div>
+            ) : null}
+
+            <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+              {[
+                ['Campaigns', campaigns?.summary.totalCampaigns ?? 0],
+                ['Active', campaigns?.summary.activeCampaigns ?? 0],
+                ['Pending review', campaigns?.summary.pendingReview ?? 0],
+                ['QR scans 7d', campaigns?.summary.scans7d ?? 0],
+                ['Completed views 7d', campaigns?.summary.completedViews7d ?? 0],
+                ['Access reveals 7d', campaigns?.summary.accessReveals7d ?? 0],
+              ].map(([label, value]) => (
+                <div key={label} style={{ ...cardStyle(), padding: 16 }}>
+                  <div style={{ fontFamily: adminTheme.fontDisplay, color: adminTheme.teal, fontSize: 26, fontWeight: 800 }}>{Number(value).toLocaleString()}</div>
+                  <div style={{ color: adminTheme.textMuted, fontSize: 12, marginTop: 6 }}>{label}</div>
+                </div>
+              ))}
+            </section>
+
             <section style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 1fr) minmax(260px, 360px)', gap: 16, alignItems: 'start' }}>
               <div style={{ ...cardStyle(), padding: 20 }}>
                 <h3 style={{ margin: '0 0 16px', fontFamily: adminTheme.fontDisplay, fontSize: 17 }}>Create campaign draft</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 12 }}>
-                  {['Business / location', 'Campaign name', 'Offer title', 'Start date', 'End date', 'CTA text'].map((label) => (
-                    <label key={label} style={{ display: 'flex', flexDirection: 'column', gap: 6, color: adminTheme.textMuted, fontSize: 12, fontWeight: 700 }}>
+                  {[
+                    ['business_name', 'Business name'],
+                    ['location_name', 'Location name'],
+                    ['campaign_name', 'Campaign name'],
+                    ['offer_title', 'Offer title'],
+                    ['starts_at', 'Start date'],
+                    ['ends_at', 'End date'],
+                    ['cta_text', 'CTA text'],
+                    ['city', 'City'],
+                    ['restroom_id', 'Restroom ID'],
+                    ['contact_email', 'Contact email'],
+                  ].map(([key, label]) => (
+                    <label key={key} style={{ display: 'flex', flexDirection: 'column', gap: 6, color: adminTheme.textMuted, fontSize: 12, fontWeight: 700 }}>
                       {label}
-                      <input placeholder={label} style={{ background: adminTheme.bg, border: `1px solid ${adminTheme.cardBorder}`, borderRadius: 10, padding: 12, color: adminTheme.text, fontFamily: adminTheme.fontBody }} />
+                      <input
+                        type={key.includes('date') || key.endsWith('_at') ? 'datetime-local' : 'text'}
+                        value={campaignForm[key as keyof typeof campaignForm]}
+                        onChange={(event) => updateCampaignForm(key as keyof typeof campaignForm, event.target.value)}
+                        placeholder={label}
+                        style={{ background: adminTheme.bg, border: `1px solid ${adminTheme.cardBorder}`, borderRadius: 10, padding: 12, color: adminTheme.text, fontFamily: adminTheme.fontBody }}
+                      />
                     </label>
                   ))}
                 </div>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 12, color: adminTheme.textMuted, fontSize: 12, fontWeight: 700 }}>
+                  Offer description
+                  <textarea
+                    value={campaignForm.offer_description}
+                    onChange={(event) => updateCampaignForm('offer_description', event.target.value)}
+                    placeholder="Today: add drip coffee for $1 with any croissant."
+                    rows={3}
+                    style={{ background: adminTheme.bg, border: `1px solid ${adminTheme.cardBorder}`, borderRadius: 10, padding: 12, color: adminTheme.text, fontFamily: adminTheme.fontBody, resize: 'vertical' }}
+                  />
+                </label>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 12, color: adminTheme.textMuted, fontSize: 12, fontWeight: 700 }}>
+                  Destination URL
+                  <input
+                    value={campaignForm.destination_url}
+                    onChange={(event) => updateCampaignForm('destination_url', event.target.value)}
+                    placeholder="https://example.com/offer"
+                    style={{ background: adminTheme.bg, border: `1px solid ${adminTheme.cardBorder}`, borderRadius: 10, padding: 12, color: adminTheme.text, fontFamily: adminTheme.fontBody }}
+                  />
+                </label>
                 <label style={{ display: 'block', marginTop: 14, color: adminTheme.textMuted, fontSize: 12, fontWeight: 700 }}>
                   Campaign creative PNG/JPG
                   <input type="file" accept="image/png,image/jpeg" onChange={handleCampaignCreativeSelect} style={{ display: 'block', width: '100%', marginTop: 8, background: adminTheme.bg, border: `1px dashed ${adminTheme.cardBorder}`, borderRadius: 12, padding: 14, color: adminTheme.textSoft }} />
@@ -834,8 +1124,12 @@ export default function AdminDashboard() {
                   ))}
                 </div>
                 <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                  <button type="button" style={btnStyle('primary')}>Save draft later</button>
-                  <button type="button" style={btnStyle('ghost')}>Generate QR after schema</button>
+                  <button type="button" onClick={saveCampaignDraft} disabled={campaignSaveBusy} style={{ ...btnStyle('primary'), opacity: campaignSaveBusy ? 0.65 : 1 }}>
+                    {campaignSaveBusy ? 'Saving…' : 'Save draft for review'}
+                  </button>
+                  <button type="button" onClick={loadCampaigns} disabled={campaignsLoading} style={btnStyle('ghost')}>
+                    {campaignsLoading ? 'Refreshing…' : 'Refresh campaigns'}
+                  </button>
                 </div>
               </div>
 
@@ -851,10 +1145,43 @@ export default function AdminDashboard() {
                   )}
                   <div style={{ position: 'absolute', left: 14, right: 14, bottom: 14, background: 'rgba(3,17,15,.86)', border: '1px solid rgba(255,255,255,.16)', borderRadius: 16, padding: 12 }}>
                     <div style={{ color: '#7DF4EA', fontSize: 11, fontWeight: 900, letterSpacing: '.08em', textTransform: 'uppercase' }}>Access opens in 4</div>
-                    <div style={{ color: '#fff', fontWeight: 800, marginTop: 4 }}>{campaignCreativeName || 'Corner Bakery campaign'}</div>
+                    <div style={{ color: '#fff', fontWeight: 800, marginTop: 4 }}>{campaignCreativeName || campaignForm.campaign_name || 'Corner Bakery campaign'}</div>
+                    <div style={{ color: 'rgba(255,255,255,.68)', fontSize: 12, marginTop: 4 }}>{campaignForm.offer_title || 'Guest sees your offer before the restroom code.'}</div>
                   </div>
                 </div>
               </div>
+            </section>
+
+            <section style={{ ...cardStyle(), padding: 20 }}>
+              <h3 style={{ margin: '0 0 14px', fontFamily: adminTheme.fontDisplay, fontSize: 17 }}>Campaign review queue</h3>
+              {campaignsLoading ? (
+                <div style={{ color: adminTheme.textMuted, fontSize: 13 }}>Loading campaigns…</div>
+              ) : (campaigns?.campaigns.length ?? 0) === 0 ? (
+                <div style={{ color: adminTheme.textMuted, fontSize: 13 }}>No campaigns yet. Create the first draft above after running the migration.</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {campaigns?.campaigns.map((campaign: any) => {
+                    const creative = Array.isArray(campaign.campaign_creatives) ? campaign.campaign_creatives[0] : null
+                    return (
+                      <div key={campaign.id} style={{ background: adminTheme.bg, border: `1px solid ${adminTheme.cardBorder}`, borderRadius: 12, padding: 14, display: 'grid', gridTemplateColumns: '64px minmax(0, 1fr) auto', gap: 12, alignItems: 'center' }}>
+                        <div style={{ width: 48, height: 72, borderRadius: 10, overflow: 'hidden', background: adminTheme.card }}>
+                          {creative?.public_url ? <img src={creative.public_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
+                        </div>
+                        <div>
+                          <div style={{ color: adminTheme.textSoft, fontWeight: 800 }}>{campaign.name}</div>
+                          <div style={{ color: adminTheme.textMuted, fontSize: 12, marginTop: 3 }}>{campaign.business_locations?.business_name || 'Unknown business'} · {campaign.status}</div>
+                          <div style={{ color: adminTheme.textMuted, fontSize: 12, marginTop: 3 }}>{campaign.offer_title || 'No offer title yet'}</div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                          <button type="button" disabled={!!actionBusy} onClick={() => updateCampaignStatus(campaign.id, 'active')} style={btnStyle('ghost')}>Approve</button>
+                          <button type="button" disabled={!!actionBusy} onClick={() => updateCampaignStatus(campaign.id, 'paused')} style={btnStyle('ghost')}>Pause</button>
+                          <button type="button" disabled={!!actionBusy} onClick={() => updateCampaignStatus(campaign.id, 'rejected')} style={btnStyle('danger')}>Reject</button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </section>
 
             <section style={{ ...cardStyle(), padding: 20 }}>
