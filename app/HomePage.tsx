@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Logo from '../components/Logo'
+import AppStoreLink from '../components/AppStoreLink'
 import { supabase } from '../lib/supabase'
 import { useLang } from '../lib/LanguageContext'
 
@@ -121,6 +122,7 @@ export default function HomePage() {
               <button onClick={() => setLang('es')} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', fontSize: '13px', fontWeight: 700, cursor: 'pointer', background: lang === 'es' ? 'white' : 'transparent', color: lang === 'es' ? '#0A2E1F' : '#999' }}>🇲🇽</button>
             </div>
             <a className="fp-nav-link" href="/business" style={{ color: '#425755', textDecoration: 'none', fontSize: '15px', fontWeight: 750 }}>{t.forBusinesses}</a>
+            <AppStoreLink width={118} height={35} />
             {user ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: profileColor, flexShrink: 0 }} />
@@ -144,6 +146,7 @@ export default function HomePage() {
         {menuOpen && (
           <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '16px', marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <a href="/business" onClick={() => setMenuOpen(false)} style={{ color: '#425755', textDecoration: 'none', fontSize: '15px', fontWeight: 700 }}>{t.forBusinesses}</a>
+            <AppStoreLink width={130} height={39} />
             <a href="/map" onClick={() => setMenuOpen(false)} style={{ background: '#092321', color: 'white', padding: '13px', borderRadius: '9px', textDecoration: 'none', fontSize: '15px', fontWeight: 800, textAlign: 'center' }}>{t.findRestroom}</a>
           </div>
         )}
@@ -163,10 +166,17 @@ export default function HomePage() {
               <a className="fp-primary" href="/map">{t.findBtn}</a>
               {!user && <button className="fp-secondary" onClick={() => { setShowAuth(true); setAuthMode('signup') }} style={{ cursor: 'pointer' }}>{t.joinFree}</button>}
             </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginTop: 16 }}>
+              <AppStoreLink width={152} height={46} />
+              <div>
+                <div style={{ color: '#fff', fontSize: 14, fontWeight: 800 }}>{t.downloadIos}</div>
+                <div style={{ color: 'rgba(255,255,255,0.72)', fontSize: 12, fontWeight: 600, marginTop: 2 }}>{t.downloadIosSub}</div>
+              </div>
+            </div>
             <div className="fp-hero-proof">
+              <span className="fp-proof-pill">{t.home.proofIosApp}</span>
               <span className="fp-proof-pill">{t.home.proofAccess}</span>
               <span className="fp-proof-pill">{t.home.proofBuilt}</span>
-              <span className="fp-proof-pill">{t.home.proofMap}</span>
             </div>
           </div>
           <div className="fp-phone" aria-label="FlushPin map preview">

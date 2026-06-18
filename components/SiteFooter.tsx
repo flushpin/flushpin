@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useLang } from '../lib/LanguageContext'
+import AppStoreLink from './AppStoreLink'
 
 const footerGroups = { en: [
   {
@@ -221,6 +222,9 @@ export default function SiteFooter() {
                 ? 'Con base en Irvine, California. Ayudamos a las personas a encontrar acceso a baños y a los negocios locales a entender y convertir tráfico real.'
                 : 'Irvine, California based. Helping people find restroom access while helping local shops understand and convert real foot traffic.'}
             </p>
+            <div style={{ marginTop: 18 }}>
+              <AppStoreLink width={140} height={42} />
+            </div>
           </div>
 
           {groups.map(group => (
