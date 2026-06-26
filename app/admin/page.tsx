@@ -5,9 +5,6 @@ import AdminBarChart from './components/AdminBarChart'
 import LiveActivityMap from './components/LiveActivityMap'
 import { adminTheme, type DashboardMetrics, type LiveActivityPayload } from './theme'
 
-const ADMIN_USER = 'admin@flushpin.com'
-const ADMIN_PASS = 'Exxa2020@'
-
 const BAD_WORDS = [
   'fuck', 'shit', 'bitch', 'nigga', 'nigger', 'negro', 'faggot', 'retard', 'spic', 'chink', 'rape', 'bomb',
   'orospu', 'yarrak', 'sikis', 'bok', 'amk',
@@ -130,13 +127,10 @@ function btnStyle(variant: 'primary' | 'ghost' | 'danger' = 'ghost'): React.CSSP
 }
 
 export default function AdminDashboard() {
-  const [loggedIn, setLoggedIn] = useState(false)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState<TabKey>('overview')
   const [data, setData] = useState<DashboardData | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [liveActivity, setLiveActivity] = useState<LiveActivityPayload | null>(null)
   const [liveLoading, setLiveLoading] = useState(false)
   const [moderation, setModeration] = useState<ModerationQueue | null>(null)
@@ -232,86 +226,90 @@ export default function AdminDashboard() {
   }
 
   useEffect(() => {
-    if (!loggedIn || activeTab !== 'live') return
+    if (activeTab !== 'live') return
     loadLiveActivity()
     const interval = setInterval(loadLiveActivity, 60_000)
     return () => clearInterval(interval)
-  }, [loggedIn, activeTab])
+  }, [activeTab])
 
   useEffect(() => {
-    if (!loggedIn || activeTab !== 'pins') return
+    if (activeTab !== 'pins') return
     loadModeration()
-  }, [loggedIn, activeTab])
+  }, [activeTab])
 
   useEffect(() => {
-    if (!loggedIn || activeTab !== 'optout') return
+    if (activeTab !== 'optout') return
     loadBusinessClaims()
-  }, [loggedIn, activeTab])
+  }, [activeTab])
+
+  useEffect(() => {
+    loadData()
+  }, [])
 
   const loadData = async () => {
     setLoading(true)
+    setLoadError(null)
 
-    const { createBrowserClient } = await import('@supabase/ssr')
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string,
-    )
+    try {
+      const { createBrowserClient } = await import('@supabase/ssr')
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string,
+      )
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
 
-    const metricsRes = await fetch(`/admin/data?todayStart=${encodeURIComponent(today.toISOString())}`)
-    const metricsJson = metricsRes.ok ? await metricsRes.json() : await metricsRes.json().catch(() => null)
-    const metricsError = metricsRes.ok
-      ? null
-      : (metricsJson?.error as string | undefined) ||
-        `Admin metrics unavailable (HTTP ${metricsRes.status}). Add SUPABASE_SERVICE_ROLE_KEY on Vercel.`
+      const metricsRes = await fetch(`/admin/data?todayStart=${encodeURIComponent(today.toISOString())}`)
+      const metricsJson = metricsRes.ok ? await metricsRes.json() : await metricsRes.json().catch(() => null)
+      const metricsError = metricsRes.ok
+        ? null
+        : (metricsJson?.error as string | undefined) ||
+          `Admin metrics unavailable (HTTP ${metricsRes.status}). Check SUPABASE_SERVICE_ROLE_KEY on Vercel.`
 
-    const metrics: DashboardMetrics = metricsRes.ok && metricsJson
-      ? metricsJson
-      : {
-          totalRestrooms: 0,
-          totalMembers: 0,
-          newMembersToday: 0,
-          pinViewsToday: 0,
-          totalPinViews: 0,
-          flaggedPending: 0,
-          pinViewsByDay: [],
-          restroomsByDay: [],
-          recentRestrooms: [],
-          recentAdminLogs: [],
-        }
+      const metrics: DashboardMetrics = metricsRes.ok && metricsJson
+        ? metricsJson
+        : {
+            totalRestrooms: 0,
+            totalMembers: 0,
+            newMembersToday: 0,
+            pinViewsToday: 0,
+            totalPinViews: 0,
+            flaggedPending: 0,
+            pinViewsByDay: [],
+            restroomsByDay: [],
+            recentRestrooms: [],
+            recentAdminLogs: [],
+          }
 
-    const [{ count: restroomCount }, { data: optouts }, { data: flagged }, { data: logs }] = await Promise.all([
-      supabase.from('restroom').select('*', { count: 'exact', head: true }),
-      supabase.from('optout_requests').select('*'),
-      supabase.from('flagged_content').select('*').eq('status', 'pending'),
-      supabase.from('admin_logs').select('*').order('created_at', { ascending: false }).limit(50),
-    ])
+      const [optoutsResult, flaggedResult, logsResult] = await Promise.all([
+        supabase.from('optout_requests').select('*'),
+        supabase.from('flagged_content').select('*').eq('status', 'pending'),
+        supabase.from('admin_logs').select('*').order('created_at', { ascending: false }).limit(50),
+      ])
 
-    if (!metricsRes.ok) {
-      metrics.totalRestrooms = restroomCount ?? 0
-      metrics.flaggedPending = flagged?.length ?? 0
-    }
+      const optouts = optoutsResult.data ?? []
+      const flagged = flaggedResult.data ?? []
+      const logs = logsResult.data ?? []
 
-    setData({
-      metrics,
-      metricsError,
-      optouts: optouts || [],
-      flagged: flagged || [],
-      logs: logs || [],
-      supabase,
-    })
-    setLoading(false)
-  }
+      if (!metricsRes.ok) {
+        metrics.flaggedPending = flagged.length
+      }
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (email === ADMIN_USER && password === ADMIN_PASS) {
-      setLoggedIn(true)
-      loadData()
-    } else {
-      setError('Wrong email or password.')
+      setData({
+        metrics,
+        metricsError,
+        optouts,
+        flagged,
+        logs,
+        supabase,
+      })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load admin dashboard'
+      setLoadError(message)
+      setData(null)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -330,72 +328,24 @@ export default function AdminDashboard() {
     fontFamily: adminTheme.fontBody,
   }
 
-  if (!loggedIn) {
+  if (loading && !data) {
     return (
-      <div style={{ ...shellStyle, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <div style={{ width: '100%', maxWidth: 420 }}>
-          <div style={{ textAlign: 'center', marginBottom: 32 }}>
-            <div style={{ fontFamily: adminTheme.fontDisplay, fontSize: 28, fontWeight: 700, color: adminTheme.teal }}>
-              flushpin
-            </div>
-            <div style={{ fontSize: 14, color: adminTheme.textMuted, marginTop: 8 }}>Admin Console</div>
-          </div>
-
-          <form onSubmit={handleLogin} style={{ ...cardStyle(), padding: 28 }}>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 12, color: adminTheme.textMuted, marginBottom: 8 }}>Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@flushpin.com"
-                style={{
-                  width: '100%',
-                  background: adminTheme.bg,
-                  border: `1px solid ${adminTheme.cardBorder}`,
-                  borderRadius: 10,
-                  padding: 12,
-                  color: adminTheme.text,
-                  fontSize: 14,
-                  boxSizing: 'border-box',
-                  fontFamily: adminTheme.fontBody,
-                }}
-              />
-            </div>
-            <div style={{ marginBottom: 20 }}>
-              <label style={{ display: 'block', fontSize: 12, color: adminTheme.textMuted, marginBottom: 8 }}>Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                style={{
-                  width: '100%',
-                  background: adminTheme.bg,
-                  border: `1px solid ${adminTheme.cardBorder}`,
-                  borderRadius: 10,
-                  padding: 12,
-                  color: adminTheme.text,
-                  fontSize: 14,
-                  boxSizing: 'border-box',
-                  fontFamily: adminTheme.fontBody,
-                }}
-              />
-            </div>
-            {error ? (
-              <div style={{ color: adminTheme.danger, fontSize: 13, marginBottom: 16, textAlign: 'center' }}>{error}</div>
-            ) : null}
-            <button type="submit" style={{ ...btnStyle('primary'), width: '100%' }}>Sign In</button>
-          </form>
-        </div>
+      <div style={{ ...shellStyle, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}>
+        <div style={{ color: adminTheme.teal, fontSize: 16, fontFamily: adminTheme.fontDisplay }}>Loading dashboard…</div>
+        {loadError ? (
+          <div style={{ color: adminTheme.danger, fontSize: 13, maxWidth: 420, textAlign: 'center' }}>{loadError}</div>
+        ) : null}
       </div>
     )
   }
 
-  if (loading || !data) {
+  if (!data) {
     return (
-      <div style={{ ...shellStyle, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ color: adminTheme.teal, fontSize: 16, fontFamily: adminTheme.fontDisplay }}>Loading dashboard…</div>
+      <div style={{ ...shellStyle, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16, padding: 24 }}>
+        <div style={{ color: adminTheme.danger, fontSize: 15, textAlign: 'center' }}>
+          {loadError || 'Could not load admin dashboard.'}
+        </div>
+        <button type="button" onClick={() => loadData()} style={btnStyle('primary')}>Retry</button>
       </div>
     )
   }
@@ -457,7 +407,6 @@ export default function AdminDashboard() {
           >
             Refresh
           </button>
-          <button type="button" onClick={() => setLoggedIn(false)} style={btnStyle('danger')}>Logout</button>
         </div>
       </header>
 
