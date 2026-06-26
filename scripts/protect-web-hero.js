@@ -23,8 +23,8 @@ const checks = [
       'fp-ipad',
       'fp-ipad-dashboard',
       'FlushPin Business on iPad',
-      'Restroom revenue dashboard',
-      'A business owner sees scans, offers, codes, and repeat demand in one place.',
+      'Restroom-to-customer dashboard',
+      'A shop owner sees restroom requests, offers, code reveals, and repeat demand in one place.',
     ],
     forbidden: [
       'Corner Bakery campaign',

@@ -1207,12 +1207,12 @@ const businessPageHtml = `<style>
       <section class="fp-hero">
         <div class="fp-hero-shell">
           <div>
-            <div class="fp-eyebrow">Restroom intent marketing for local shops</div>
-            <h1>Show an offer before the code. <span>Measure who comes back.</span></h1>
+            <div class="fp-eyebrow">Turn restroom questions into customers</div>
+            <h1>Someone asks for the restroom. <span>Show them one reason to buy.</span></h1>
             <p>
-              FlushPin turns a restroom request into a clean customer moment: the guest scans your QR,
-              sees a short offer, unlocks the restroom code, and your dashboard records the scan,
-              campaign, hour, and return pattern.
+              FlushPin gives your shop a simple QR flow: the guest scans, sees one short offer,
+              gets the restroom code, and you see whether that moment created a visit, a sale,
+              or a repeat customer.
             </p>
             <div class="fp-cta-row">
               <a class="fp-button fp-button-primary" href="mailto:hello@flushpin.com?subject=FlushPin%20Business%20Call&body=Hi%20FlushPin%2C%0A%0AI%20would%20like%20to%20set%20a%20short%20meeting.%20My%20shop%20name%20is%3A%0AMy%20best%20days%2Ftimes%20are%3A%0A">Tell us when you are available</a>
@@ -1220,8 +1220,8 @@ const businessPageHtml = `<style>
             </div>
             <div class="fp-proof">
               <span>QR at the counter or restroom door</span>
-              <span>Offer view before code reveal</span>
-              <span>Owner analytics after every scan</span>
+              <span>One respectful offer before the code</span>
+              <span>Simple proof after every scan</span>
             </div>
           </div>
 
@@ -1231,7 +1231,7 @@ const businessPageHtml = `<style>
                 <div class="fp-cockpit-top">
                   <div>
                     <span class="fp-cockpit-kicker">FlushPin Business on iPad</span>
-                    <h3>Restroom revenue dashboard</h3>
+                    <h3>Restroom-to-customer dashboard</h3>
                   </div>
                   <span class="fp-live-pill">Today</span>
                 </div>
@@ -1239,24 +1239,24 @@ const businessPageHtml = `<style>
                 <div class="fp-conversion-flow" aria-label="QR offer code flow">
                   <div class="fp-flow-step">
                     <strong>1</strong>
-                    <span>Guest scans your restroom QR</span>
+                    <span>Guest needs restroom access</span>
                   </div>
                   <div class="fp-flow-step">
                     <strong>2</strong>
-                    <span>Your offer appears first</span>
+                    <span>Your offer appears once</span>
                   </div>
                   <div class="fp-flow-step">
                     <strong>3</strong>
-                    <span>Code opens and data is saved</span>
+                    <span>Code opens, result is tracked</span>
                   </div>
                 </div>
 
                 <div class="fp-ipad-dashboard">
                   <div>
                     <div class="fp-offer-module">
-                      <small>Campaign before restroom access</small>
-                      <h4>Free cookie with any latte</h4>
-                      <p>Turn a quick restroom stop into a counter visit without adding pressure on staff.</p>
+                      <small>Offer before code</small>
+                      <h4>Buy any latte, get a cookie</h4>
+                      <p>A clear, friendly offer shown at the exact moment someone is already in your shop.</p>
                       <div class="fp-code-reveal">
                         <div>
                           <span>Restroom code unlocked</span>
@@ -1267,7 +1267,7 @@ const businessPageHtml = `<style>
                     </div>
                     <div class="fp-revenue-note">
                       <b>$</b>
-                      Access requests become measurable customer intent, not a blind operating cost.
+                      The restroom question becomes a trackable customer moment.
                     </div>
                   </div>
 
@@ -1275,15 +1275,15 @@ const businessPageHtml = `<style>
                     <div class="fp-owner-metrics" aria-label="Owner metrics">
                       <div class="fp-owner-metric">
                         <strong>186</strong>
-                        <span>QR scans today</span>
+                        <span>people asked today</span>
                       </div>
                       <div class="fp-owner-metric">
                         <strong>42</strong>
-                        <span>offer views</span>
+                        <span>saw the offer</span>
                       </div>
                       <div class="fp-owner-metric">
                         <strong>18</strong>
-                        <span>repeat visitors</span>
+                        <span>came back</span>
                       </div>
                     </div>
                     <div class="fp-traffic-chart" aria-label="Peak restroom traffic chart">
@@ -1301,7 +1301,7 @@ const businessPageHtml = `<style>
                 </div>
               </div>
             </div>
-            <div class="fp-ipad-caption">A business owner sees scans, offers, codes, and repeat demand in one place.</div>
+            <div class="fp-ipad-caption">A shop owner sees restroom requests, offers, code reveals, and repeat demand in one place.</div>
           </aside>
         </div>
       </section>
@@ -1332,8 +1332,7 @@ const businessPageHtml = `<style>
           <article class="fp-stat">
             <strong>+12%</strong>
             <span>
-              FlushPin's Gold target: help shops turn QR restroom traffic into more campaign-driven value
-              through offers, scans, and analytics.
+              Gold target: help shops turn restroom questions into offer views, redemptions, and repeat visits.
             </span>
           </article>
         </div>
@@ -1341,11 +1340,10 @@ const businessPageHtml = `<style>
 
       <section class="fp-section" id="model">
         <div class="fp-section-heading">
-          <h2>The business page should sell one simple idea.</h2>
+          <h2>One simple idea: if they ask, they are already close.</h2>
           <p>
-            A person asking for a restroom code is already inside or right outside the shop. FlushPin turns
-            that moment into a clean data loop: QR scan, short campaign view, password access, and analytics
-            the owner can actually use.
+            A person asking for the restroom is not a random online click. They are nearby, inside,
+            or at your counter. FlushPin helps you answer politely and show one offer before the code.
           </p>
         </div>
 
@@ -1356,10 +1354,9 @@ const businessPageHtml = `<style>
               <div class="fp-mini-line teal"></div>
               <div class="fp-mini-line short"></div>
             </div>
-            <h3>Access becomes controlled</h3>
+            <h3>Staff stops repeating codes</h3>
             <p>
-              Put a QR sticker near the counter or restroom door. Staff can point to the sticker instead of
-              repeating the code all day.
+              Put the QR near the counter or restroom door. Staff can point once, and the guest gets the current rule.
             </p>
           </article>
 
@@ -1369,10 +1366,9 @@ const businessPageHtml = `<style>
               <div class="fp-mini-line teal" style="width: 92%"></div>
               <div class="fp-mini-line short" style="width: 62%"></div>
             </div>
-            <h3>Offers fit the moment</h3>
+            <h3>The offer is short and respectful</h3>
             <p>
-              Before the code appears, the guest sees a short coffee, pastry, sandwich, water, or comeback
-              coupon campaign.
+              No spam wall. No long ad. Just one useful offer: coffee, pastry, water, sandwich, or a comeback coupon.
             </p>
           </article>
 
@@ -1382,10 +1378,9 @@ const businessPageHtml = `<style>
               <div class="fp-mini-line teal" style="width: 84%"></div>
               <div class="fp-mini-line short" style="width: 72%"></div>
             </div>
-            <h3>Analytics stays practical</h3>
+            <h3>You see what worked</h3>
             <p>
-              The owner sees scans by day, peak hours, campaign views, offer performance, and whether restroom
-              traffic is creating measurable value.
+              See how many people scanned, which hours were busy, which offer was viewed, and whether people came back.
             </p>
           </article>
         </div>
@@ -1393,42 +1388,42 @@ const businessPageHtml = `<style>
 
       <section class="fp-section" id="packages">
         <div class="fp-section-heading">
-          <h2>Two packages. One clear business model.</h2>
+          <h2>Two memberships. Easy choice.</h2>
           <p>
-            Free gets a shop listed. Gold turns restroom traffic into a measurable campaign channel for
-            $49 per shop per month. Businesses with 10 or more locations get custom pricing.
+            Free keeps your public listing accurate. Gold turns restroom requests into a simple local offer system
+            for $49 per shop per month. Ten or more locations get custom pricing.
           </p>
         </div>
 
         <div class="fp-package-grid">
           <article class="fp-package">
-            <div class="fp-package-kicker">Entry package</div>
-            <h3>Free</h3>
+            <div class="fp-package-kicker">Control your listing</div>
+            <h3>Free Listing</h3>
             <div class="fp-price">$0 <small>/ shop</small></div>
-            <p class="fp-package-note">For small shops that want basic visibility and control over incorrect restroom information.</p>
+            <p class="fp-package-note">For shops that want correct restroom information without running offers.</p>
             <ul>
-              <li>Basic listing visibility</li>
-              <li>Request corrections for wrong access details</li>
-              <li>Public restroom policy note</li>
-              <li>No QR campaign sticker</li>
-              <li>No password reveal workflow</li>
-              <li>No analytics dashboard</li>
+              <li>Claim or correct your public listing</li>
+              <li>Show your restroom rule clearly</li>
+              <li>Reduce wrong community information</li>
+              <li>Good for open, closed, or ask-staff policies</li>
+              <li>No QR offer flow</li>
+              <li>No conversion dashboard</li>
             </ul>
             <a class="fp-button fp-button-secondary" style="color: var(--fp-ink); border-color: var(--fp-line)" href="mailto:hello@flushpin.com?subject=FlushPin%20Community%20Plan">Ask about free listing</a>
           </article>
 
           <article class="fp-package fp-package-platinum">
-            <div class="fp-package-kicker">Paid growth package</div>
-            <h3>Gold</h3>
+            <div class="fp-package-kicker">Convert restroom traffic</div>
+            <h3>Gold QR</h3>
             <div class="fp-price">$49 <small>/ shop / month</small></div>
-            <p class="fp-package-note">For shops that want QR access, campaign views, and a data dashboard.</p>
+            <p class="fp-package-note">For shops that want to turn restroom questions into customers and repeat visits.</p>
             <ul>
-              <li>QR sticker for restroom door, counter, or receipt area</li>
-              <li>Guest sees a short campaign before the code</li>
-              <li>Password reveal without staff repeating it every time</li>
-              <li>Dashboard for scans, usage rate, peak hours, and campaign views</li>
-              <li>Daily value target: help turn restroom traffic into 12% more campaign-driven shop benefit</li>
-              <li>Offer ideas for coffee, pastry, sandwich, water, or comeback coupons</li>
+              <li>QR sticker for counter, receipt area, or restroom door</li>
+              <li>One short offer before the code appears</li>
+              <li>Restroom code reveal without staff repeating it</li>
+              <li>Dashboard for scans, offer views, peak hours, and repeat demand</li>
+              <li>Offer templates for coffee, pastry, sandwich, water, or return coupons</li>
+              <li>Respectful ad policy: one offer, clear wording, no pressure</li>
               <li>Custom pricing for 10+ shop operators</li>
             </ul>
             <a class="fp-button" href="mailto:hello@flushpin.com?subject=FlushPin%20Gold%20Meeting&body=Hi%20FlushPin%2C%0A%0AI%20am%20interested%20in%20Gold.%20Please%20call%20me%20to%20set%20a%20meeting.%0A%0AShop%20name%3A%0ANumber%20of%20locations%3A%0ABest%20days%2Ftimes%3A%0APhone%3A%0A">Have FlushPin call me</a>
@@ -1439,12 +1434,11 @@ const businessPageHtml = `<style>
       <section class="fp-section">
         <div class="fp-panel">
           <div>
-            <h2>Restroom traffic is data. Gold turns it into action.</h2>
+            <h2>This is not restroom advertising. It is restroom intent.</h2>
             <p>
-              In Los Angeles, San Francisco, and other dense cities, restroom access can become a daily
-              operational headache for small shops. FlushPin turns that pressure into a calmer workflow:
-              scan the QR, view a short campaign, reveal the code, and send the scan into an owner dashboard
-              that shows when restroom traffic happens and which offer deserves attention.
+              Traditional ads guess who might care. FlushPin starts when someone is already at your business
+              and needs a small favor. You answer the restroom question, show one useful offer, reveal the code,
+              and learn which moments can become customers.
             </p>
             <div class="fp-cta-row">
               <a class="fp-button fp-button-primary" href="mailto:hello@flushpin.com?subject=FlushPin%20Business%20Meeting">Tell us your availability</a>
@@ -1452,7 +1446,7 @@ const businessPageHtml = `<style>
             </div>
           </div>
           <aside class="fp-dashboard" aria-label="Dashboard preview">
-            <div class="fp-dashboard-label">Gold analytics preview</div>
+            <div class="fp-dashboard-label">Gold conversion preview</div>
             <div class="fp-dashboard-bars">
               <span style="width: 92%"></span>
               <span></span>
@@ -1461,19 +1455,19 @@ const businessPageHtml = `<style>
             <div class="fp-dashboard-metrics">
               <div class="fp-dashboard-metric">
                 <strong>184</strong>
-                <span>Monthly QR scans</span>
+                <span>Restroom requests</span>
               </div>
               <div class="fp-dashboard-metric">
                 <strong>37%</strong>
-                <span>Offer view rate</span>
+                <span>Saw the offer</span>
               </div>
               <div class="fp-dashboard-metric">
                 <strong>2-5p</strong>
-                <span>Peak demand</span>
+                <span>Busiest window</span>
               </div>
               <div class="fp-dashboard-metric">
                 <strong>+12%</strong>
-                <span>Daily value target</span>
+                <span>Conversion target</span>
               </div>
             </div>
           </aside>
@@ -1482,28 +1476,28 @@ const businessPageHtml = `<style>
 
       <section class="fp-section">
         <div class="fp-section-heading">
-          <h2>How the moment works.</h2>
+          <h2>How the customer moment works.</h2>
           <p>
-            The product story should be concrete enough that a bakery owner understands it in ten seconds.
+            Simple enough for a busy cafe owner, bakery owner, or restaurant manager to understand in ten seconds.
           </p>
         </div>
 
         <div class="fp-flow">
           <article class="fp-flow-card">
-            <h3>Customer scans or searches</h3>
-            <p>A parent, driver, shopper, tourist, or delivery worker needs fast restroom guidance.</p>
+            <h3>They need the restroom</h3>
+            <p>A parent, driver, shopper, tourist, or delivery worker is already nearby and wants a clear answer.</p>
           </article>
           <article class="fp-flow-card">
             <h3>Your rule is clear</h3>
-            <p>The owner sets whether access is customer-only, ask-staff, QR code, or temporarily unavailable.</p>
+            <p>Set customer-only, ask-staff, QR code, no public restroom, or temporary changes in plain language.</p>
           </article>
           <article class="fp-flow-card">
-            <h3>Offer appears first</h3>
-            <p>The user sees a respectful croissant, coffee, sandwich, or return-visit offer before the code.</p>
+            <h3>One offer appears</h3>
+            <p>The guest sees one short offer before the code: useful, local, and easy to ignore if they are in a hurry.</p>
           </article>
           <article class="fp-flow-card">
-            <h3>Owner reads the data</h3>
-            <p>Scans, offer views, peak hours, and campaign performance become visible in one admin view.</p>
+            <h3>You learn what happened</h3>
+            <p>Scans, offer views, code reveals, peak hours, and repeat demand become visible in one owner view.</p>
           </article>
         </div>
       </section>
@@ -1547,11 +1541,11 @@ const businessPageHtml = `<style>
 
       <section class="fp-final">
         <div class="fp-final-inner">
-          <h2>The restroom code can become a measurable local campaign.</h2>
+          <h2>The restroom question can become a customer moment.</h2>
           <p>
-            FlushPin makes the exchange simple: a guest scans, sees a short offer, receives the code, and
-            the shop learns from the data. The goal is to help small businesses capture more value from
-            restroom traffic without making staff or guests feel uncomfortable.
+            FlushPin keeps the exchange respectful: scan, see one offer, get the code, and let the shop learn
+            from the result. The goal is not to bother people. The goal is to turn an everyday question into
+            a fair chance to earn a customer.
           </p>
           <div class="fp-cta-row" style="justify-content: center">
             <a class="fp-button fp-button-primary" href="mailto:hello@flushpin.com?subject=FlushPin%20Business%20Call&body=Hi%20FlushPin%2C%0A%0APlease%20contact%20me%20to%20set%20a%20meeting.%0A%0AShop%20name%3A%0ABest%20days%2Ftimes%3A%0APhone%3A%0A">Tell us when to call you</a>
