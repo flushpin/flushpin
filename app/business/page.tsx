@@ -81,16 +81,28 @@ const businessPageHtml = `<style>
       .fp-nav-links {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
+        padding: 6px;
+        border: 1px solid rgba(9, 35, 33, 0.1);
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 8px 22px rgba(9, 35, 33, 0.04);
       }
 
       .fp-nav-links a {
-        border-radius: 9px;
-        padding: 10px 16px;
+        border-radius: 10px;
+        padding: 10px 14px;
         color: #425755;
         font-size: 15px;
-        font-weight: 750;
+        font-weight: 800;
         text-decoration: none;
+        white-space: nowrap;
+      }
+
+      .fp-nav-divider {
+        width: 1px;
+        height: 28px;
+        background: rgba(9, 35, 33, 0.14);
       }
 
       .fp-nav-links a:hover {
@@ -238,121 +250,323 @@ const businessPageHtml = `<style>
 
       .fp-intent-card {
         justify-self: end;
-        width: min(420px, 100%);
-        border: 1px solid rgba(255, 255, 255, 0.42);
-        border-radius: 36px;
+        width: min(540px, 100%);
+        perspective: 1200px;
+      }
+
+      .fp-ipad {
+        position: relative;
+        border: 1px solid rgba(255, 255, 255, 0.56);
+        border-radius: 34px;
         padding: 14px;
-        background: linear-gradient(145deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.38));
-        backdrop-filter: blur(22px);
-        box-shadow: 0 38px 90px rgba(0, 0, 0, 0.38);
+        background:
+          linear-gradient(145deg, rgba(252, 255, 254, 0.98), rgba(178, 190, 188, 0.92));
+        box-shadow:
+          0 42px 90px rgba(0, 0, 0, 0.42),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.62);
+        transform: rotate(-2deg);
+      }
+
+      .fp-ipad::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 7px;
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: #243331;
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.28);
+        transform: translateY(-50%);
+        z-index: 2;
+      }
+
+      .fp-ipad::after {
+        content: "";
+        position: absolute;
+        inset: 10px;
+        border-radius: 27px;
+        pointer-events: none;
+        box-shadow: inset 0 0 0 1px rgba(9, 35, 33, 0.08);
       }
 
       .fp-intent-screen {
-        min-height: 540px;
+        min-height: 520px;
         overflow: hidden;
         position: relative;
         border: 1px solid rgba(9, 35, 33, 0.1);
-        border-radius: 28px;
-        background:
-          linear-gradient(90deg, rgba(14, 181, 171, 0.08) 1px, transparent 1px) 0 0 / 56px 56px,
-          linear-gradient(rgba(14, 181, 171, 0.08) 1px, transparent 1px) 0 0 / 56px 56px,
-          #f6faf8;
-      }
-
-      .fp-map-pin {
-        position: absolute;
-        width: 42px;
-        height: 42px;
-        border-radius: 50% 50% 50% 8px;
-        transform: rotate(-45deg);
-        background: var(--fp-teal);
-        box-shadow: 0 14px 26px rgba(14, 181, 171, 0.32);
-      }
-
-      .fp-map-pin::after {
-        content: "";
-        position: absolute;
-        top: 14px;
-        left: 14px;
-        width: 14px;
-        height: 14px;
-        border-radius: 50%;
-        background: #fff;
-      }
-
-      .fp-map-pin.one {
-        top: 88px;
-        left: 72px;
-      }
-
-      .fp-map-pin.two {
-        top: 152px;
-        right: 62px;
-        background: var(--fp-coral);
-      }
-
-      .fp-map-pin.three {
-        right: 106px;
-        bottom: 188px;
-        background: var(--fp-ink);
-      }
-
-      .fp-offer-sheet {
-        position: absolute;
-        left: 22px;
-        right: 22px;
-        bottom: 22px;
-        border: 1px solid rgba(9, 35, 33, 0.08);
         border-radius: 24px;
-        padding: 20px;
-        background: rgba(255, 255, 255, 0.96);
-        box-shadow: 0 24px 54px rgba(9, 35, 33, 0.2);
+        padding: 18px;
+        background:
+          radial-gradient(circle at 88% 6%, rgba(255, 107, 74, 0.18), transparent 26%),
+          linear-gradient(180deg, #f8fffd 0%, #eefbf8 100%);
       }
 
-      .fp-offer-sheet small {
+      .fp-cockpit-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 18px;
+      }
+
+      .fp-cockpit-kicker {
         display: block;
-        color: var(--fp-muted);
+        color: var(--fp-teal-dark);
         font-size: 11px;
-        font-weight: 800;
-        letter-spacing: 0.04em;
+        font-weight: 900;
+        letter-spacing: 0.08em;
         text-transform: uppercase;
       }
 
-      .fp-offer-sheet h3 {
-        margin: 8px 0 5px;
+      .fp-cockpit-top h3 {
+        margin: 5px 0 0;
         color: var(--fp-ink);
-        font-size: 21px;
-        letter-spacing: -0.02em;
+        font-size: 23px;
+        letter-spacing: -0.03em;
       }
 
-      .fp-offer-sheet p {
-        margin: 0;
-        color: var(--fp-muted);
-        font-size: 13px;
-        line-height: 1.45;
+      .fp-live-pill {
+        flex: 0 0 auto;
+        border: 1px solid rgba(14, 181, 171, 0.22);
+        border-radius: 999px;
+        padding: 8px 11px;
+        color: var(--fp-teal-dark);
+        background: rgba(229, 251, 248, 0.9);
+        font-size: 12px;
+        font-weight: 900;
       }
 
-      .fp-offer-box {
-        margin-top: 16px;
-        border: 1px solid #c8ede9;
-        border-radius: 16px;
-        padding: 14px;
-        background: var(--fp-teal-wash);
+      .fp-conversion-flow {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 9px;
+        margin-bottom: 14px;
       }
 
-      .fp-offer-box strong {
+      .fp-flow-step {
+        min-height: 92px;
+        border: 1px solid rgba(9, 35, 33, 0.08);
+        border-radius: 17px;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.86);
+        box-shadow: 0 14px 32px rgba(9, 35, 33, 0.07);
+      }
+
+      .fp-flow-step strong {
+        display: block;
+        width: 32px;
+        height: 32px;
+        margin-bottom: 9px;
+        border-radius: 11px;
+        color: #fff;
+        background: var(--fp-teal);
+        font-size: 18px;
+        line-height: 32px;
+        text-align: center;
+      }
+
+      .fp-flow-step:nth-child(2) strong {
+        background: var(--fp-coral);
+      }
+
+      .fp-flow-step:nth-child(3) strong {
+        background: var(--fp-ink);
+      }
+
+      .fp-flow-step span {
         display: block;
         color: var(--fp-ink);
-        font-size: 16px;
+        font-size: 13px;
+        font-weight: 900;
+        line-height: 1.28;
+      }
+
+      .fp-offer-module {
+        border: 1px solid rgba(14, 181, 171, 0.18);
+        border-radius: 22px;
+        padding: 18px;
+        background: #fff;
+        box-shadow: 0 22px 48px rgba(9, 35, 33, 0.12);
+      }
+
+      .fp-ipad-dashboard {
+        display: grid;
+        grid-template-columns: 1.05fr 0.78fr;
+        gap: 12px;
+        align-items: stretch;
+      }
+
+      .fp-offer-module small {
+        display: block;
+        color: var(--fp-muted);
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .fp-offer-module h4 {
+        margin: 8px 0 6px;
+        color: var(--fp-ink);
+        font-size: 22px;
+        letter-spacing: -0.03em;
+      }
+
+      .fp-offer-module p {
+        margin: 0 0 14px;
+        color: var(--fp-muted);
+        font-size: 13px;
+        line-height: 1.48;
+      }
+
+      .fp-code-reveal {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border-radius: 16px;
+        padding: 14px;
+        color: #fff;
+        background: linear-gradient(135deg, #092321, #0b4a43);
+      }
+
+      .fp-code-reveal span {
+        display: block;
+        color: rgba(255, 255, 255, 0.68);
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+      }
+
+      .fp-code-reveal strong {
+        display: block;
+        margin-top: 3px;
+        font-size: 23px;
+        letter-spacing: 0.08em;
+      }
+
+      .fp-code-reveal em {
+        border-radius: 999px;
+        padding: 8px 10px;
+        color: #06211e;
+        background: #7df4ea;
+        font-size: 12px;
+        font-style: normal;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      .fp-owner-metrics {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .fp-owner-metric {
+        border: 1px solid rgba(9, 35, 33, 0.08);
+        border-radius: 16px;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.78);
+      }
+
+      .fp-owner-metric strong {
+        display: block;
+        color: var(--fp-ink);
+        font-size: 24px;
+        letter-spacing: -0.04em;
+        line-height: 1;
+      }
+
+      .fp-owner-metric span {
+        display: block;
+        margin-top: 7px;
+        color: var(--fp-muted);
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.28;
+      }
+
+      .fp-revenue-note {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 15px;
+        border: 1px solid rgba(255, 107, 74, 0.2);
+        border-radius: 18px;
+        padding: 13px;
+        color: var(--fp-ink);
+        background: #fff7ed;
+        font-size: 13px;
+        font-weight: 900;
         line-height: 1.35;
       }
 
-      .fp-offer-box span {
+      .fp-traffic-chart {
+        margin-top: 11px;
+        border: 1px solid rgba(9, 35, 33, 0.08);
+        border-radius: 18px;
+        padding: 13px;
+        background: rgba(255, 255, 255, 0.8);
+      }
+
+      .fp-traffic-chart span {
         display: block;
-        margin-top: 5px;
-        color: var(--fp-teal-dark);
-        font-size: 12px;
-        font-weight: 800;
+        margin-bottom: 10px;
+        color: var(--fp-muted);
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .fp-bars {
+        display: flex;
+        align-items: end;
+        gap: 7px;
+        height: 78px;
+      }
+
+      .fp-bars i {
+        display: block;
+        flex: 1;
+        min-width: 8px;
+        border-radius: 999px 999px 6px 6px;
+        background: rgba(14, 181, 171, 0.22);
+      }
+
+      .fp-bars i:nth-child(1) { height: 24%; }
+      .fp-bars i:nth-child(2) { height: 38%; }
+      .fp-bars i:nth-child(3) { height: 52%; }
+      .fp-bars i:nth-child(4) { height: 82%; background: var(--fp-teal); }
+      .fp-bars i:nth-child(5) { height: 68%; background: rgba(255, 107, 74, 0.72); }
+      .fp-bars i:nth-child(6) { height: 44%; }
+
+      .fp-ipad-caption {
+        margin: 14px auto 0;
+        width: fit-content;
+        max-width: 92%;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 999px;
+        padding: 8px 12px;
+        color: rgba(255, 255, 255, 0.82);
+        background: rgba(9, 35, 33, 0.54);
+        backdrop-filter: blur(14px);
+        font-size: 13px;
+        font-weight: 850;
+        text-align: center;
+      }
+
+      .fp-revenue-note b {
+        display: grid;
+        flex: 0 0 auto;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border-radius: 12px;
+        color: #fff;
+        background: var(--fp-coral);
       }
 
       .fp-section {
@@ -897,7 +1111,32 @@ const businessPageHtml = `<style>
           height: 52px;
         }
 
-        .fp-nav-links a:not(.fp-dark-link) {
+        .fp-nav {
+          padding: 12px 14px;
+        }
+
+        .fp-nav-inner {
+          gap: 12px;
+        }
+
+        .fp-nav-links {
+          max-width: calc(100vw - 116px);
+          overflow-x: auto;
+          scrollbar-width: none;
+          gap: 6px;
+          padding: 5px;
+        }
+
+        .fp-nav-links::-webkit-scrollbar {
+          display: none;
+        }
+
+        .fp-nav-links a {
+          font-size: 13px;
+          padding: 9px 11px;
+        }
+
+        .fp-nav-divider {
           display: none;
         }
 
@@ -956,9 +1195,11 @@ const businessPageHtml = `<style>
             <img src="/flushpin-logo-teal.png" alt="FlushPin" height="58" style="height:58px;width:auto;display:block" />
           </a>
           <div class="fp-nav-links">
-            <a href="https://www.flushpin.com/map">Find a Restroom</a>
+            <a class="fp-dark-link" href="https://www.flushpin.com/map">Find a Restroom</a>
+            <a href="https://www.flushpin.com/events">🎟️ Events</a>
             <a href="#sources">Sources</a>
-            <a class="fp-dark-link" href="mailto:hello@flushpin.com?subject=FlushPin%20Business%20Call">Set a meeting</a>
+            <span class="fp-nav-divider" aria-hidden="true"></span>
+            <a href="mailto:hello@flushpin.com?subject=FlushPin%20Business%20Call">Set a meeting</a>
           </div>
         </div>
       </nav>
@@ -966,39 +1207,101 @@ const businessPageHtml = `<style>
       <section class="fp-hero">
         <div class="fp-hero-shell">
           <div>
-            <div class="fp-eyebrow">Data analytics for local restroom traffic</div>
-            <h1>Turn restroom scans into <span>daily sales signals.</span></h1>
+            <div class="fp-eyebrow">Restroom intent marketing for local shops</div>
+            <h1>Show an offer before the code. <span>Measure who comes back.</span></h1>
             <p>
-              FlushPin helps neighborhood cafes, bakeries, and small restaurants manage restroom access
-              with a QR workflow: the guest sees a short offer for a few seconds, gets the current code,
-              and the owner reads the data behind every scan, hour, campaign, and repeat pattern.
+              FlushPin turns a restroom request into a clean customer moment: the guest scans your QR,
+              sees a short offer, unlocks the restroom code, and your dashboard records the scan,
+              campaign, hour, and return pattern.
             </p>
             <div class="fp-cta-row">
               <a class="fp-button fp-button-primary" href="mailto:hello@flushpin.com?subject=FlushPin%20Business%20Call&body=Hi%20FlushPin%2C%0A%0AI%20would%20like%20to%20set%20a%20short%20meeting.%20My%20shop%20name%20is%3A%0AMy%20best%20days%2Ftimes%20are%3A%0A">Tell us when you are available</a>
               <a class="fp-button fp-button-secondary" href="#packages">See packages</a>
             </div>
             <div class="fp-proof">
-              <span>QR restroom sticker</span>
-              <span>Short offer before code reveal</span>
-              <span>Data dashboard for owners</span>
+              <span>QR at the counter or restroom door</span>
+              <span>Offer view before code reveal</span>
+              <span>Owner analytics after every scan</span>
             </div>
           </div>
 
-          <aside class="fp-intent-card" aria-label="Business offer preview">
-            <div class="fp-intent-screen">
-              <div class="fp-map-pin one"></div>
-              <div class="fp-map-pin two"></div>
-              <div class="fp-map-pin three"></div>
-              <div class="fp-offer-sheet">
-                <small>Restroom access available</small>
-                <h3>Corner Bakery campaign</h3>
-                <p>Guest watches a short offer, then receives the current restroom code.</p>
-                <div class="fp-offer-box">
-                  <strong>Today: add drip coffee for $1 with any croissant.</strong>
-                  <span>Scan logged into the owner dashboard</span>
+          <aside class="fp-intent-card" aria-label="Business conversion dashboard preview">
+            <div class="fp-ipad">
+              <div class="fp-intent-screen">
+                <div class="fp-cockpit-top">
+                  <div>
+                    <span class="fp-cockpit-kicker">FlushPin Business on iPad</span>
+                    <h3>Restroom revenue dashboard</h3>
+                  </div>
+                  <span class="fp-live-pill">Today</span>
+                </div>
+
+                <div class="fp-conversion-flow" aria-label="QR offer code flow">
+                  <div class="fp-flow-step">
+                    <strong>1</strong>
+                    <span>Guest scans your restroom QR</span>
+                  </div>
+                  <div class="fp-flow-step">
+                    <strong>2</strong>
+                    <span>Your offer appears first</span>
+                  </div>
+                  <div class="fp-flow-step">
+                    <strong>3</strong>
+                    <span>Code opens and data is saved</span>
+                  </div>
+                </div>
+
+                <div class="fp-ipad-dashboard">
+                  <div>
+                    <div class="fp-offer-module">
+                      <small>Campaign before restroom access</small>
+                      <h4>Free cookie with any latte</h4>
+                      <p>Turn a quick restroom stop into a counter visit without adding pressure on staff.</p>
+                      <div class="fp-code-reveal">
+                        <div>
+                          <span>Restroom code unlocked</span>
+                          <strong>2486</strong>
+                        </div>
+                        <em>Offer viewed</em>
+                      </div>
+                    </div>
+                    <div class="fp-revenue-note">
+                      <b>$</b>
+                      Access requests become measurable customer intent, not a blind operating cost.
+                    </div>
+                  </div>
+
+                  <div>
+                    <div class="fp-owner-metrics" aria-label="Owner metrics">
+                      <div class="fp-owner-metric">
+                        <strong>186</strong>
+                        <span>QR scans today</span>
+                      </div>
+                      <div class="fp-owner-metric">
+                        <strong>42</strong>
+                        <span>offer views</span>
+                      </div>
+                      <div class="fp-owner-metric">
+                        <strong>18</strong>
+                        <span>repeat visitors</span>
+                      </div>
+                    </div>
+                    <div class="fp-traffic-chart" aria-label="Peak restroom traffic chart">
+                      <span>Peak demand</span>
+                      <div class="fp-bars">
+                        <i></i>
+                        <i></i>
+                        <i></i>
+                        <i></i>
+                        <i></i>
+                        <i></i>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
+            <div class="fp-ipad-caption">A business owner sees scans, offers, codes, and repeat demand in one place.</div>
           </aside>
         </div>
       </section>

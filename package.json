@@ -4,10 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/protect-web-hero.js",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "seed:restrooms": "tsx scripts/seed-restrooms.ts",
+    "seed:ca-chains": "tsx scripts/seed-restrooms.ts --region ca-i5 --brands-only --brands \"Starbucks,McDonald's,Chipotle\"",
     "enrich:restrooms": "tsx scripts/enrich-restrooms.ts",
     "dedupe:restrooms": "tsx scripts/dedupe-restrooms.ts"
   },

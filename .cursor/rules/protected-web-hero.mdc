@@ -1,0 +1,13 @@
+---
+description: Protect approved FlushPin web hero screens
+alwaysApply: true
+---
+
+# Protected FlushPin web hero screens
+
+Do not modify these areas unless John explicitly approves that exact change in the current conversation:
+
+- `app/HomePage.tsx` iPhone app screenshot hero using `public/flushpin-app-home-screen.png`
+- `app/business/page.tsx` iPad business dashboard hero using `fp-ipad` / `fp-ipad-dashboard`
+
+The build guard `scripts/protect-web-hero.js` enforces these markers. Do not bypass, remove, weaken, or skip that guard without John's explicit approval.
