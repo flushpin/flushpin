@@ -138,6 +138,8 @@ export async function GET(request: NextRequest) {
       flaggedRes,
       recentRestroomsRes,
       recentLogsRes,
+      optoutsRes,
+      flaggedListRes,
       pinViewRows,
       restroomRows,
     ] = await Promise.all([
@@ -151,7 +153,14 @@ export async function GET(request: NextRequest) {
         .select('id, name, address, pin, created_at')
         .order('created_at', { ascending: false })
         .limit(10),
-      supabase.from('admin_logs').select('*').order('created_at', { ascending: false }).limit(10),
+      supabase.from('admin_logs').select('*').order('created_at', { ascending: false }).limit(50),
+      supabase.from('optout_requests').select('*').order('created_at', { ascending: false }).limit(200),
+      supabase
+        .from('flagged_content')
+        .select('*')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(100),
       fetchPinViewsSince(supabase, weekStart),
       fetchRestroomCreatedSince(supabase, weekStart),
     ])
@@ -167,6 +176,14 @@ export async function GET(request: NextRequest) {
       restroomsByDay: countByDay(restroomRows, dayKeys),
       recentRestrooms: recentRestroomsRes.data ?? [],
       recentAdminLogs: recentLogsRes.data ?? [],
+      optouts: optoutsRes.error ? [] : (optoutsRes.data ?? []),
+      flagged: flaggedListRes.error ? [] : (flaggedListRes.data ?? []),
+      logs: recentLogsRes.error ? [] : (recentLogsRes.data ?? []),
+      warnings: [
+        optoutsRes.error ? `optout_requests: ${optoutsRes.error.message}` : null,
+        flaggedListRes.error ? `flagged_content: ${flaggedListRes.error.message}` : null,
+        recentLogsRes.error ? `admin_logs: ${recentLogsRes.error.message}` : null,
+      ].filter(Boolean),
     })
   } catch (err) {
     let message = err instanceof Error ? err.message : 'Failed to load admin dashboard data'

@@ -6,7 +6,29 @@ import LiveActivityMap from './components/LiveActivityMap'
 import { adminTheme, type DashboardMetrics, type LiveActivityPayload } from './theme'
 
 const ADMIN_USER = 'admin@flushpin.com'
-const ADMIN_PASS = 'Exxa2020@'
+const ADMIN_PASS = 'Exxa2020!'
+/** Older deploys / quick gate used this single password */
+const LEGACY_ADMIN_PASS = 'flush2026'
+
+function normalizeAdminEmail(value: string) {
+  return value.trim().toLowerCase()
+}
+
+function isValidAdminLogin(email: string, password: string) {
+  const normalizedEmail = normalizeAdminEmail(email)
+  const normalizedPassword = password.trim()
+
+  if (normalizedEmail === ADMIN_USER && normalizedPassword === ADMIN_PASS) {
+    return true
+  }
+
+  // Legacy password-only gate (no email required)
+  if (normalizedPassword === LEGACY_ADMIN_PASS) {
+    return true
+  }
+
+  return false
+}
 
 const BAD_WORDS = [
   'fuck', 'shit', 'bitch', 'nigga', 'nigger', 'negro', 'faggot', 'retard', 'spic', 'chink', 'rape', 'bomb',
@@ -21,7 +43,6 @@ type DashboardData = {
   optouts: any[]
   flagged: any[]
   logs: any[]
-  supabase: any
 }
 
 type ModerationSubmission = {
@@ -406,6 +427,13 @@ export default function AdminDashboard() {
   }
 
   useEffect(() => {
+    if (sessionStorage.getItem('fp_admin') === '1') {
+      setLoggedIn(true)
+      loadData()
+    }
+  }, [])
+
+  useEffect(() => {
     if (!loggedIn || activeTab !== 'live') return
     loadLiveActivity()
     const interval = setInterval(loadLiveActivity, 60_000)
@@ -436,75 +464,81 @@ export default function AdminDashboard() {
 
   const loadData = async () => {
     setLoading(true)
-
-    const { createBrowserClient } = await import('@supabase/ssr')
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string,
-    )
-
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-
-    const metricsRes = await fetch(`/admin/data?todayStart=${encodeURIComponent(today.toISOString())}`)
-    const metricsJson = metricsRes.ok ? await metricsRes.json() : await metricsRes.json().catch(() => null)
-    const metricsError = metricsRes.ok
-      ? null
-      : (metricsJson?.error as string | undefined) ||
-        `Admin metrics unavailable (HTTP ${metricsRes.status}). Add SUPABASE_SERVICE_ROLE_KEY on Vercel.`
-
-    const metrics: DashboardMetrics = metricsRes.ok && metricsJson
-      ? metricsJson
-      : {
-          totalRestrooms: 0,
-          totalMembers: 0,
-          newMembersToday: 0,
-          pinViewsToday: 0,
-          totalPinViews: 0,
-          flaggedPending: 0,
-          pinViewsByDay: [],
-          restroomsByDay: [],
-          recentRestrooms: [],
-          recentAdminLogs: [],
-        }
-
-    const [{ count: restroomCount }, { data: optouts }, { data: flagged }, { data: logs }] = await Promise.all([
-      supabase.from('restroom').select('*', { count: 'exact', head: true }),
-      supabase.from('optout_requests').select('*'),
-      supabase.from('flagged_content').select('*').eq('status', 'pending'),
-      supabase.from('admin_logs').select('*').order('created_at', { ascending: false }).limit(50),
-    ])
-
-    if (!metricsRes.ok) {
-      metrics.totalRestrooms = restroomCount ?? 0
-      metrics.flaggedPending = flagged?.length ?? 0
+    const emptyMetrics: DashboardMetrics = {
+      totalRestrooms: 0,
+      totalMembers: 0,
+      newMembersToday: 0,
+      pinViewsToday: 0,
+      totalPinViews: 0,
+      flaggedPending: 0,
+      pinViewsByDay: [],
+      restroomsByDay: [],
+      recentRestrooms: [],
+      recentAdminLogs: [],
     }
 
-    setData({
-      metrics,
-      metricsError,
-      optouts: optouts || [],
-      flagged: flagged || [],
-      logs: logs || [],
-      supabase,
-    })
-    setLoading(false)
+    try {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      const metricsRes = await fetch(`/admin/data?todayStart=${encodeURIComponent(today.toISOString())}`)
+      const metricsJson = metricsRes.ok ? await metricsRes.json() : await metricsRes.json().catch(() => null)
+      const metricsError = metricsRes.ok
+        ? null
+        : (metricsJson?.error as string | undefined) ||
+          `Admin metrics unavailable (HTTP ${metricsRes.status}). Add SUPABASE_SERVICE_ROLE_KEY on Vercel.`
+
+      const metrics: DashboardMetrics = metricsRes.ok && metricsJson ? metricsJson : emptyMetrics
+
+      setData({
+        metrics,
+        metricsError,
+        optouts: metricsJson?.optouts || [],
+        flagged: metricsJson?.flagged || [],
+        logs: metricsJson?.logs || metricsJson?.recentAdminLogs || [],
+      })
+    } catch (err) {
+      setData({
+        metrics: emptyMetrics,
+        metricsError: err instanceof Error ? err.message : 'Failed to load admin dashboard',
+        optouts: [],
+        flagged: [],
+        logs: [],
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
-    if (email === ADMIN_USER && password === ADMIN_PASS) {
+    setError('')
+    if (isValidAdminLogin(email, password)) {
+      sessionStorage.setItem('fp_admin', '1')
       setLoggedIn(true)
       loadData()
     } else {
-      setError('Wrong email or password.')
+      setError('Wrong email or password. Use admin@flushpin.com and your admin password.')
     }
   }
 
-  const handleAction = async (table: string, id: string, update: Record<string, unknown>) => {
-    if (!data) return
-    await data.supabase.from(table).update(update).eq('id', id)
-    loadData()
+  const handleFlaggedAction = async (id: string | number, status: 'approved' | 'rejected') => {
+    setActionBusy(String(id))
+    try {
+      const res = await fetch('/admin/flagged', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
+      })
+      const json = await res.json().catch(() => null)
+      if (!res.ok) {
+        alert(json?.error || 'Action failed')
+        return
+      }
+      await loadData()
+    } finally {
+      setActionBusy(null)
+    }
   }
 
   const pinsBadge = (moderation?.summary.pendingCount ?? 0) + (moderation?.summary.duplicateGroupCount ?? 0)
@@ -663,7 +697,7 @@ export default function AdminDashboard() {
           >
             Refresh
           </button>
-          <button type="button" onClick={() => setLoggedIn(false)} style={btnStyle('danger')}>Logout</button>
+          <button type="button" onClick={() => { sessionStorage.removeItem('fp_admin'); setLoggedIn(false) }} style={btnStyle('danger')}>Logout</button>
         </div>
       </header>
 
@@ -1488,14 +1522,14 @@ export default function AdminDashboard() {
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button
                       type="button"
-                      onClick={() => handleAction('flagged_content', item.id, { status: 'approved', reviewed_by: 'admin', reviewed_at: new Date().toISOString() })}
+                      onClick={() => handleFlaggedAction(item.id, 'approved')}
                       style={btnStyle('ghost')}
                     >
                       Allow
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleAction('flagged_content', item.id, { status: 'rejected', reviewed_by: 'admin', reviewed_at: new Date().toISOString() })}
+                      onClick={() => handleFlaggedAction(item.id, 'rejected')}
                       style={btnStyle('danger')}
                     >
                       Remove

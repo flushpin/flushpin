@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getServiceClient } from '@/lib/supabaseService'
 
 export const dynamic = 'force-dynamic'
 
@@ -7,22 +7,14 @@ const PAGE_SIZE = 1000
 const DEFAULT_HOURS = 24
 const RECENT_MINUTES = 60
 
-function getServiceClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) return null
-  return createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
-}
-
 type RestroomRow = { id: number | string; lat: number | null; lng: number | null; name: string | null; address: string | null }
 
 export async function GET(request: NextRequest) {
-  const supabase = getServiceClient()
-  if (!supabase) {
-    return NextResponse.json({ error: 'SUPABASE_SERVICE_ROLE_KEY is not configured.' }, { status: 503 })
+  const service = getServiceClient()
+  if (!service.client) {
+    return NextResponse.json({ error: service.error }, { status: service.status })
   }
+  const supabase = service.client
 
   const hoursParam = Number(request.nextUrl.searchParams.get('hours'))
   const hours = Number.isFinite(hoursParam) && hoursParam > 0 ? Math.min(hoursParam, 168) : DEFAULT_HOURS
