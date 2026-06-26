@@ -1309,30 +1309,31 @@ const businessPageHtml = `<style>
       <section class="fp-section" aria-label="Retail restroom opportunity">
         <div class="fp-stat-grid">
           <article class="fp-stat">
-            <strong>$1M</strong>
+            <strong>1 in 2</strong>
             <span>
-              LA's Runyon Canyon restroom project became a public debate because access is expensive,
-              emotional, and local. <a href="https://www.sfgate.com/la/article/runyon-canyon-bathroom-22253324.php">SFGATE</a>
+              NIDDK says researchers estimate about half of women experience urinary incontinence.
+              Restroom access is a real daily need, not a small convenience. <a href="https://www.niddk.nih.gov/health-information/urologic-diseases/bladder-control-problems/definition-facts">NIDDK</a>
             </span>
           </article>
           <article class="fp-stat">
-            <strong>$1.7M</strong>
+            <strong>1 in 3</strong>
             <span>
-              San Francisco's Noe Valley toilet estimate turned one restroom into national news before
-              costs were reduced. <a href="https://www.theguardian.com/us-news/2024/apr/22/san-francisco-public-toilet-bathroom-opens">The Guardian</a>
+              NIDDK reports as many as one in three men over 65 may accidentally lose urine.
+              A clear access flow helps people avoid an awkward counter conversation. <a href="https://www.niddk.nih.gov/health-information/urologic-diseases/bladder-control-problems/definition-facts">NIDDK</a>
             </span>
           </article>
           <article class="fp-stat">
-            <strong>Code</strong>
+            <strong>IBD</strong>
             <span>
-              Customer-only bathrooms, keypads, and counter keys are becoming normal in urban retail.
-              FlushPin makes that gate measurable. <a href="https://www.theatlantic.com/ideas/2026/04/fare-gate-society-bart/686868/">The Atlantic</a>
+              Crohn's disease and ulcerative colitis are forms of inflammatory bowel disease that affect
+              the GI tract and everyday life. Access can feel urgent and private. <a href="https://www.crohnscolitisfoundation.org/patientsandcaregivers/what-is-ibd">Crohn's & Colitis Foundation</a>
             </span>
           </article>
           <article class="fp-stat">
-            <strong>+12%</strong>
+            <strong>1 offer</strong>
             <span>
-              Gold target: help shops turn restroom questions into offer views, redemptions, and repeat visits.
+              Stop making guests ask for a code in front of the coffee line. Let them scan, see one respectful
+              offer, get the code, and give your shop a chance to earn the visit.
             </span>
           </article>
         </div>
@@ -1504,37 +1505,38 @@ const businessPageHtml = `<style>
 
       <section class="fp-section" id="sources">
         <div class="fp-section-heading">
-          <h2>What shop owners are already seeing.</h2>
+          <h2>Why this moment deserves respect.</h2>
           <p>
-            This is not a distant policy story. It is a daily retail problem: cities struggle to build
-            public restrooms, shops add codes and customer-only rules, and every scan can become a local offer.
+            Many people who ask for a restroom are not browsing casually. Some are managing urgency,
+            medical conditions, age, pregnancy, travel, kids, or anxiety. FlushPin helps businesses answer
+            clearly without turning a private need into a public conversation.
           </p>
         </div>
 
         <div class="fp-source-grid">
           <article class="fp-source-card">
-            <strong>At Runyon Canyon's $1M LA bathrooms, the anger is overflowing</strong>
+            <strong>Bladder control problems can affect daily life</strong>
             <p>
-              LA restroom access is not a quiet back-office issue; it creates neighborhood debate, cost pressure,
-              and daily demand. For nearby shops, that demand can become a tracked QR moment instead of a random interruption.
+              NIDDK explains that bladder control problems can make people avoid normal activities and may
+              cause embarrassment before they can get to a toilet. A QR code lets a shop help without a scene.
             </p>
-            <a href="https://www.sfgate.com/la/article/runyon-canyon-bathroom-22253324.php">Read on SFGATE</a>
+            <a href="https://www.niddk.nih.gov/health-information/urologic-diseases/bladder-control-problems/definition-facts">Read NIDDK</a>
           </article>
           <article class="fp-source-card">
-            <strong>Relief as San Francisco public toilet finally opens - and not for $1.7m after all</strong>
+            <strong>IBD is not just a policy issue; it is a daily life issue</strong>
             <p>
-              One public restroom estimate became a citywide story. When public supply is slow and expensive,
-              local businesses become the practical place where access decisions happen.
+              The Crohn's & Colitis Foundation describes IBD as chronic inflammation of the GI tract and says
+              it affects a person's whole life. Clear restroom rules can make a business feel humane.
             </p>
-            <a href="https://www.theguardian.com/us-news/2024/apr/22/san-francisco-public-toilet-bathroom-opens">Read in The Guardian</a>
+            <a href="https://www.crohnscolitisfoundation.org/patientsandcaregivers/what-is-ibd">Read Crohn's & Colitis Foundation</a>
           </article>
           <article class="fp-source-card">
-            <strong>San Francisco Solved Metro Vandalism With One Neat Trick</strong>
+            <strong>Prostate symptoms can include frequent restroom trips</strong>
             <p>
-              The story connects modern access control with customer-only bathrooms, keypads, and digital gates.
-              FlushPin brings that same idea to small retail with an offer before the code.
+              The American Cancer Society lists needing to urinate more often, especially at night, among
+              possible prostate cancer symptoms. Access language should be simple, fast, and respectful.
             </p>
-            <a href="https://www.theatlantic.com/ideas/2026/04/fare-gate-society-bart/686868/">Read in The Atlantic</a>
+            <a href="https://www.cancer.org/cancer/types/prostate-cancer/detection-diagnosis-staging/signs-symptoms.html">Read American Cancer Society</a>
           </article>
         </div>
       </section>

@@ -14,7 +14,7 @@ export const translations = {
     thankYou: 'Thank you for helping the FlushPin community.',
 
     // Hero
-    badge: 'Southern California coverage',
+    badge: 'California coverage',
     heroTitle1: 'Restroom intelligence',
     heroTitle2: 'when you need access.',
     heroDesc: 'Location-based restroom guidance for travelers, parents, and anyone in a hurry — powered by community updates and respectful of business policies.',
@@ -33,9 +33,9 @@ export const translations = {
       findNearby: 'Find nearby',
       proofAccess: 'Community-powered access notes',
       proofIosApp: 'Free on the App Store',
-      proofBuilt: 'Built for Southern California',
+      proofBuilt: 'Built for California',
       statVenues: 'venues mapped across cafes, restaurants, retail, hotels, and public stops',
-      statCities: 'California cities covered as FlushPin expands from Southern California',
+      statCities: 'California cities covered from Southern California to the Bay Area',
       statTypes: 'code, ask staff, customers only, and open access guidance on one map',
       sectionTitle: 'Everything you need on the map.',
       sectionSub: 'Intelligence for access. Opportunity for business. Clear access signals for users, respectful controls for businesses.',
@@ -260,7 +260,7 @@ export const translations = {
     thankYou: 'Gracias por ayudar a la comunidad FlushPin.',
 
     // Hero
-    badge: 'Cobertura en el sur de California',
+    badge: 'Cobertura en California',
     heroTitle1: 'Inteligencia de baños',
     heroTitle2: 'cuando lo necesitas.',
     heroDesc: 'Guía de baños basada en ubicación para viajeros, padres y quien tenga prisa — con actualizaciones comunitarias y respeto por las políticas de los negocios.',
@@ -279,9 +279,9 @@ export const translations = {
       findNearby: 'Buscar cerca',
       proofAccess: 'Notas de acceso de la comunidad',
       proofIosApp: 'Gratis en App Store',
-      proofBuilt: 'Creado para el sur de California',
+      proofBuilt: 'Creado para California',
       statVenues: 'lugares registrados entre cafés, restaurantes, tiendas, hoteles y paradas públicas',
-      statCities: 'ciudades de California cubiertas mientras FlushPin crece desde el sur de California',
+      statCities: 'ciudades de California cubiertas desde el sur de California hasta el Area de la Bahia',
       statTypes: 'código, preguntar al personal, solo clientes y acceso abierto en un solo mapa',
       sectionTitle: 'Todo lo que necesitas en el mapa.',
       sectionSub: 'Inteligencia para el acceso. Oportunidad para negocios. Señales claras para usuarios y controles respetuosos para negocios.',
