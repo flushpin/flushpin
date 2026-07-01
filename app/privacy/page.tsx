@@ -159,7 +159,12 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 style={headingStyle}>14. Contact us</h2>
+            <h2 style={headingStyle}>14. Gender-Specific Access Codes</h2>
+            <p>Some businesses on FlushPin provide separate access codes for different restrooms (for example, labeled for men's or women's facilities). These categories are set and controlled entirely by the individual business, reflecting their own physical facility layout — FlushPin does not create, endorse, or enforce any gender classification. Our role is limited to accurately displaying the access information a business has provided. Where a business offers a unisex, all-gender, or single-occupancy restroom, we display that option as well. We are committed to presenting restroom access information neutrally and factually, without judgment of who should or should not use a particular facility.</p>
+          </section>
+
+          <section>
+            <h2 style={headingStyle}>15. Contact us</h2>
             <p>For privacy-related questions, deletion requests, or security concerns:</p>
             <p style={{ marginTop: "10px" }}><strong>FlushPin</strong><br />Orange County, California, USA<br />Email: <a href="mailto:admin@flushpin.com" style={linkStyle}>admin@flushpin.com</a></p>
           </section>
