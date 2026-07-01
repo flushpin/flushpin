@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import Logo from '../components/Logo'
 import { supabase } from '../lib/supabase'
 import { useLang } from '../lib/LanguageContext'
+import { APP_STORE_URL } from '../lib/site'
+import LanguageToggle from '../components/LanguageToggle'
 
 const COLOR_OPTIONS = [
   '#E74C3C', '#E67E22', '#F1C40F', '#2ECC71', '#1ABC9C',
@@ -12,7 +14,7 @@ const COLOR_OPTIONS = [
 ]
 
 export default function HomePage() {
-  const { lang, setLang, t } = useLang()
+  const { t } = useLang()
   const [user, setUser] = useState<any>(null)
   const [showAuth, setShowAuth] = useState(false)
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup')
@@ -34,10 +36,7 @@ export default function HomePage() {
   const handleOAuthSignIn = async (provider: 'google') => {
     setMessage('')
     const redirectTo = typeof window !== 'undefined' ? window.location.origin : 'https://www.flushpin.com'
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: { redirectTo },
-    })
+    const { error } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo } })
     if (error) setMessage(error.message)
   }
 
@@ -63,7 +62,6 @@ export default function HomePage() {
   }
 
   const handleSignOut = async () => { await supabase.auth.signOut(); setUser(null) }
-
   const handleSearch = () => {
     if (searchQuery.trim()) window.location.href = `/map?q=${encodeURIComponent(searchQuery.trim())}`
     else window.location.href = '/map'
@@ -72,234 +70,142 @@ export default function HomePage() {
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || ''
   const profileColor = user?.user_metadata?.profile_color || '#0EB5AB'
   const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '13px 16px',
-    borderRadius: '9px',
-    border: '1px solid #e0e0e0',
-    fontSize: '16px',
-    fontFamily: "'Plus Jakarta Sans',system-ui,sans-serif",
-    outline: 'none',
-    boxSizing: 'border-box',
-    color: '#1a1a1a',
-    background: 'white',
+    width: '100%', padding: '13px 16px', borderRadius: '10px', border: '1px solid #d8e6e2',
+    fontSize: '16px', fontFamily: "'Plus Jakarta Sans',system-ui,sans-serif", outline: 'none',
+    boxSizing: 'border-box', color: '#101f1e', background: 'white',
   }
-  const labelStyle: React.CSSProperties = {
-    fontSize: '14px',
-    fontWeight: 700,
-    color: '#425755',
-    marginBottom: '8px',
-    display: 'block',
-  }
+  const labelStyle: React.CSSProperties = { fontSize: '13px', fontWeight: 800, color: '#36514e', marginBottom: 8, display: 'block' }
 
   return (
     <main className="fp-home">
       <style>{`
-        @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Sora:wght@600;700;800&display=swap");
-        .fp-home{--fp-ink:#092321;--fp-muted:#5d6f6d;--fp-teal:#0eb5ab;--fp-coral:#ff6b4a;--fp-line:rgba(9,35,33,.12);margin:0;padding:0;font-family:"Plus Jakarta Sans",Inter,system-ui,sans-serif;background:#fff;min-height:100vh;color:var(--fp-ink)}
-        .fp-home *{box-sizing:border-box}.fp-nav-link:hover,.fp-footer-link:hover{color:var(--fp-teal)!important}.fp-primary:hover{transform:translateY(-1px);box-shadow:0 18px 34px rgba(14,181,171,.26)}.fp-secondary:hover{color:#d7fffb!important;border-color:rgba(14,181,171,.55)!important}
-        .fp-hero{background-image:linear-gradient(90deg,rgba(9,35,33,.94) 0%,rgba(9,35,33,.82) 44%,rgba(9,35,33,.34) 100%),url(https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=2200&q=80);background-position:center;background-size:cover;min-height:660px;padding:66px 24px 50px;position:relative;overflow:hidden}
-        .fp-hero-shell{z-index:1;grid-template-columns:minmax(0,1.02fr) minmax(360px,.78fr);align-items:center;gap:56px;width:min(1180px,100%);margin:0 auto;display:grid;position:relative}
-        .fp-hero-copy{color:#fff;max-width:660px}.fp-eyebrow{color:#d7fffb;letter-spacing:.04em;text-transform:uppercase;backdrop-filter:blur(14px);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);border-radius:999px;align-items:center;gap:10px;padding:8px 14px;font-size:13px;font-weight:800;display:inline-flex}.fp-eyebrow span{width:8px;height:8px;border-radius:50%;background:var(--fp-teal);box-shadow:0 0 0 5px rgba(14,181,171,.18)}
-        .fp-hero-title{letter-spacing:-.035em;margin:24px 0 22px;font-family:Sora,"Plus Jakarta Sans",system-ui,sans-serif;font-size:clamp(44px,6.4vw,76px);font-weight:800;line-height:.96}.fp-hero-title span{color:#7df4ea}.fp-hero-text{color:rgba(255,255,255,.84);max-width:590px;margin:0 0 30px;font-size:clamp(18px,2.4vw,22px);line-height:1.58}
-        .fp-search{background:rgba(255,255,255,.96);border-radius:18px;width:min(620px,100%);padding:8px;display:flex;box-shadow:0 26px 70px rgba(0,0,0,.28)}.fp-search input{color:#102927;background:transparent;border:0;border-radius:12px;outline:0;flex:1;min-width:0;padding:16px 18px;font-family:inherit;font-size:16px}.fp-search button{background:var(--fp-teal);color:#fff;cursor:pointer;white-space:nowrap;border:0;border-radius:12px;padding:0 24px;font-size:16px;font-weight:800}
-        .fp-cta-row{flex-wrap:wrap;align-items:center;gap:12px;margin-top:18px;display:flex}.fp-primary,.fp-secondary{border-radius:14px;justify-content:center;align-items:center;min-height:48px;padding:14px 22px;font-size:15px;font-weight:800;text-decoration:none;transition:transform .18s,box-shadow .18s,border-color .18s,color .18s;display:inline-flex}.fp-primary{background:var(--fp-teal);color:#fff;box-shadow:0 12px 24px rgba(14,181,171,.22)}.fp-secondary{color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28)}
-        .fp-hero-proof{color:rgba(255,255,255,.78);flex-wrap:wrap;gap:10px;margin-top:26px;font-size:13px;font-weight:700;display:flex}.fp-proof-pill{backdrop-filter:blur(12px);background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:8px 12px}
-        .fp-phone{backdrop-filter:blur(22px);background:linear-gradient(145deg,rgba(255,255,255,.86),rgba(255,255,255,.38));border:1px solid rgba(255,255,255,.42);border-radius:36px;justify-self:end;width:min(410px,100%);padding:14px;box-shadow:0 38px 90px rgba(0,0,0,.38)}.fp-phone-screen{background:#f6faf8;border:1px solid rgba(9,35,33,.1);border-radius:28px;min-height:520px;position:relative;overflow:hidden}.fp-map{background:linear-gradient(90deg,rgba(14,181,171,.08) 1px,transparent 1px) 0 0/56px 56px,linear-gradient(rgba(14,181,171,.08) 1px,transparent 1px) 0 0/56px 56px,radial-gradient(circle at 26% 28%,#fff1d6 0 9%,transparent 10%),radial-gradient(circle at 72% 18%,#ddf8f5 0 10%,transparent 11%),radial-gradient(circle at 78% 70%,#ffe2d6 0 12%,transparent 13%),#f5fbf8;position:absolute;inset:0}.fp-route{border:4px solid rgba(255,107,74,.5);border-color:rgba(255,107,74,.5) rgba(255,107,74,.5) transparent transparent;border-radius:60px 90px 70px 20px;width:280px;height:210px;position:absolute;top:126px;left:54px;transform:rotate(11deg)}.fp-pin{background:var(--fp-teal);border-radius:50% 50% 50% 8px;width:42px;height:42px;position:absolute;transform:rotate(-45deg);box-shadow:0 14px 26px rgba(14,181,171,.32)}.fp-pin:after{content:"";background:#fff;border-radius:50%;width:14px;height:14px;position:absolute;top:14px;left:14px}.fp-pin.one{top:150px;left:74px}.fp-pin.two{background:var(--fp-coral);top:100px;right:58px}.fp-pin.three{background:#142f2c;bottom:188px;right:92px}
-        .fp-card{background:rgba(255,255,255,.96);border:1px solid rgba(9,35,33,.08);border-radius:24px;padding:20px;position:absolute;bottom:22px;left:22px;right:22px;box-shadow:0 24px 54px rgba(9,35,33,.2)}.fp-card-top{justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:16px;display:flex}.fp-card h3{color:var(--fp-ink);letter-spacing:-.02em;margin:0 0 5px;font-size:20px}.fp-card p{color:var(--fp-muted);margin:0;font-size:13px;line-height:1.45}.fp-chip{color:#087e78;white-space:nowrap;background:#e5fbf8;border-radius:999px;padding:8px 10px;font-size:12px;font-weight:800;display:inline-flex}.fp-access-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;display:grid}.fp-access-box{background:#fbfffe;border:1px solid rgba(9,35,33,.1);border-radius:16px;padding:13px}.fp-access-label{color:var(--fp-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;font-size:11px;font-weight:800}.fp-access-value{color:var(--fp-ink);font-size:15px;font-weight:800}
-        .fp-sections{background:linear-gradient(#fff7ed 0%,#fff 38%,#f7fbfa 100%)}.fp-section{width:min(1120px,100% - 40px);margin:0 auto;padding:76px 0}.fp-section-heading{text-align:center;max-width:720px;margin:0 auto 34px}.fp-section-heading h2{letter-spacing:-.03em;color:var(--fp-ink);margin:0 0 12px;font-family:Sora,"Plus Jakarta Sans",system-ui,sans-serif;font-size:clamp(30px,4.6vw,52px);line-height:1.04}.fp-section-heading p{color:var(--fp-muted);margin:0;font-size:17px;line-height:1.65}.fp-stats{border:1px solid var(--fp-line);background:var(--fp-line);border-radius:24px;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;display:grid;overflow:hidden;box-shadow:0 22px 60px rgba(9,35,33,.08)}.fp-stat{background:#fff;min-height:150px;padding:30px}.fp-stat strong{letter-spacing:-.03em;color:var(--fp-ink);margin-bottom:10px;font-size:clamp(30px,4vw,48px);line-height:1;display:block}.fp-stat span{color:var(--fp-muted);font-size:14px;font-weight:700;line-height:1.5}
-        .fp-feature-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;display:grid}.fp-feature{border:1px solid var(--fp-line);background:rgba(255,255,255,.86);border-radius:24px;min-height:280px;padding:24px;box-shadow:0 18px 45px rgba(9,35,33,.06)}.fp-feature-visual{background:linear-gradient(135deg,#e6fbf8,#fff1e9);border:1px solid rgba(9,35,33,.08);border-radius:18px;height:116px;margin-bottom:20px;padding:14px;position:relative;overflow:hidden}.fp-feature h3{color:var(--fp-ink);letter-spacing:-.02em;margin:0 0 10px;font-size:21px}.fp-feature p{color:var(--fp-muted);margin:0;font-size:15px;line-height:1.65}.fp-mini-line{background:rgba(9,35,33,.12);border-radius:999px;height:10px;margin-bottom:10px}.fp-mini-line.med{background:rgba(14,181,171,.22)}
-        .fp-business{color:#fff;background:#092321;border-radius:28px;grid-template-columns:1fr .72fr;align-items:stretch;gap:26px;padding:34px;display:grid;position:relative;overflow:hidden}.fp-business h2{letter-spacing:-.03em;max-width:640px;margin:0 0 14px;font-family:Sora,"Plus Jakarta Sans",system-ui,sans-serif;font-size:clamp(30px,4vw,50px);line-height:1.06}.fp-business p{color:rgba(255,255,255,.74);max-width:610px;margin:0 0 22px;font-size:16px;line-height:1.7}.fp-business-panel{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-radius:22px;padding:22px}.fp-footer{color:#fff;background:#071a18;padding:56px 24px 30px}.fp-footer-grid{grid-template-columns:1.25fr .8fr .8fr;gap:34px;width:min(1120px,100%);margin:0 auto 34px;display:grid}.fp-footer h3,.fp-footer h4{margin:0 0 14px}.fp-footer p{color:rgba(255,255,255,.68);margin:0;line-height:1.65}.fp-footer a{color:rgba(255,255,255,.72);margin-bottom:10px;font-size:14px;font-weight:700;text-decoration:none;display:block}.fp-footer-bottom{color:rgba(255,255,255,.45);border-top:1px solid rgba(255,255,255,.12);flex-wrap:wrap;justify-content:space-between;gap:16px;width:min(1120px,100%);margin:0 auto;padding-top:24px;font-size:13px;display:flex}
-        @media (max-width:900px){.fp-hero{min-height:auto;padding:58px 20px}.fp-hero-shell,.fp-business,.fp-footer-grid{grid-template-columns:1fr}.fp-phone{justify-self:start;max-width:390px}.fp-feature-grid,.fp-stats{grid-template-columns:1fr}}@media (max-width:640px){.desktop-nav{display:none!important}.mobile-menu-btn{display:block!important}.fp-hero{padding:42px 20px 38px}.fp-hero-title{font-size:clamp(38px,12vw,52px)}.fp-hero-text{margin-bottom:24px;font-size:17px;line-height:1.52}.fp-phone{display:none!important}.fp-search{flex-direction:column}.fp-search button{min-height:50px}.fp-section{width:min(100% - 28px,1120px);padding:58px 0}.fp-business{padding:24px}}
+        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&family=Manrope:wght@700;800&display=swap");
+        .fp-home{--ink:#071917;--muted:#5d6d69;--teal:#0eb5ab;--leaf:#194d42;--lime:#d9f76f;--coral:#ff6f4a;--mist:#edf8f5;--line:rgba(7,25,23,.12);margin:0;background:#fbfffd;color:var(--ink);font-family:Inter,system-ui,sans-serif;overflow:hidden}
+        .fp-home *{box-sizing:border-box}.fp-nav{position:sticky;top:0;z-index:50;background:rgba(251,255,253,.88);backdrop-filter:blur(18px);border-bottom:1px solid rgba(7,25,23,.08);padding:12px 18px}.fp-nav-inner{width:min(1180px,100%);margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px}.fp-nav-actions{display:flex;align-items:center;gap:9px}.fp-nav-link,.fp-nav-btn{min-height:42px;border-radius:12px;padding:11px 16px;border:1px solid transparent;font-size:14px;font-weight:850;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}.fp-nav-link{color:#314d49}.fp-nav-link:hover{color:var(--teal)}.fp-nav-btn.light{background:#fff;border-color:#dce9e6;color:var(--ink)}.fp-nav-btn.teal{background:var(--teal);color:#fff}.fp-nav-btn.dark{background:var(--ink);color:#fff}.fp-lang{display:flex;background:#edf5f3;border-radius:12px;padding:3px}.fp-lang button{border:0;border-radius:9px;padding:7px 10px;background:transparent;cursor:pointer}.fp-menu{display:none;border:0;background:transparent;padding:7px;cursor:pointer}.fp-menu span{display:block;width:24px;height:2px;background:var(--ink);border-radius:9px;margin:5px 0}
+        .fp-holiday{background:#071917;color:#fff}.fp-holiday-inner{width:min(1180px,100%);margin:0 auto;padding:8px 18px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px;font-weight:800;text-align:center}.fp-holiday b{color:var(--lime)}
+        .fp-hero{min-height:calc(100vh - 122px);padding:34px 22px 28px;display:grid;align-items:center;background-image:linear-gradient(90deg,rgba(7,25,23,.94),rgba(7,25,23,.78) 45%,rgba(7,25,23,.16)),url("https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=2400&q=84");background-size:cover;background-position:center;position:relative}.fp-hero-shell{width:min(1180px,100%);margin:0 auto;display:grid;grid-template-columns:minmax(0,1.02fr) minmax(340px,.78fr);align-items:center;gap:48px}.fp-kicker{display:inline-flex;align-items:center;gap:9px;border:1px solid rgba(255,255,255,.22);border-radius:999px;background:rgba(255,255,255,.11);backdrop-filter:blur(16px);padding:8px 13px;color:#d9fffb;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}.fp-kicker:before{content:"";width:8px;height:8px;border-radius:50%;background:var(--lime);box-shadow:0 0 0 5px rgba(217,247,111,.18)}.fp-title{max-width:720px;margin:22px 0 18px;color:#fff;font-family:Manrope,Inter,system-ui,sans-serif;font-size:clamp(44px,7.4vw,88px);font-weight:900;line-height:.91;letter-spacing:0}.fp-title span{color:#8ffff5}.fp-lede{max-width:630px;margin:0;color:rgba(255,255,255,.84);font-size:clamp(18px,2.35vw,23px);line-height:1.52}.fp-app-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}.fp-store,.fp-web-map{min-height:56px;border-radius:15px;padding:12px 18px;text-decoration:none;display:inline-flex;align-items:center;gap:12px;font-weight:900}.fp-store{background:#fff;color:#071917;box-shadow:0 22px 52px rgba(0,0,0,.22)}.fp-store small,.fp-web-map small{display:block;font-size:11px;line-height:1;color:#60716e}.fp-store strong,.fp-web-map strong{display:block;font-size:17px;line-height:1.1}.fp-store-icon{width:30px;height:30px;border-radius:8px;background:#071917;display:grid;place-items:center;color:#fff;font-size:19px}.fp-web-map{background:var(--teal);color:#fff}.fp-web-map small{color:#d9fffb}.fp-search{width:min(640px,100%);margin-top:16px;background:rgba(255,255,255,.96);border-radius:18px;padding:8px;display:flex;box-shadow:0 22px 60px rgba(0,0,0,.26)}.fp-search input{flex:1;min-width:0;border:0;background:transparent;border-radius:12px;padding:16px 18px;color:#102927;outline:0;font-size:16px}.fp-search button{border:0;border-radius:12px;background:#071917;color:#fff;padding:0 22px;font-size:15px;font-weight:900;cursor:pointer}.fp-proof{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}.fp-proof span{border:1px solid rgba(255,255,255,.2);border-radius:999px;background:rgba(255,255,255,.1);padding:8px 12px;color:rgba(255,255,255,.8);font-size:13px;font-weight:800}
+        .fp-phone{justify-self:end;width:min(414px,100%);aspect-ratio:430/932;border-radius:58px;padding:10px;background:linear-gradient(135deg,#f3f0e9 0%,#a7a29a 13%,#f9f7f1 24%,#8f8a82 50%,#f4f1ea 78%,#77726b 100%);border:1px solid rgba(255,255,255,.58);box-shadow:0 56px 120px rgba(0,0,0,.46),inset 0 0 0 1px rgba(255,255,255,.68);position:relative;transform:rotate(1.4deg);backdrop-filter:blur(20px)}.fp-phone:before{content:"";position:absolute;left:-5px;top:150px;width:4px;height:78px;border-radius:6px 0 0 6px;background:linear-gradient(#d8d4cc,#77726c)}.fp-phone:after{content:"";position:absolute;right:-5px;top:215px;width:4px;height:106px;border-radius:0 6px 6px 0;background:linear-gradient(#d8d4cc,#77726c)}.fp-screen{height:100%;border-radius:49px;background:#f8fffd;overflow:hidden;position:relative;border:9px solid #080b0b;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),inset 0 0 26px rgba(0,0,0,.18)}.fp-app-shot{display:block;width:100%;height:100%;object-fit:cover;object-position:top center}
+        .fp-band{background:linear-gradient(#fbfffd,#f2faf7)}.fp-section{width:min(1120px,calc(100% - 40px));margin:0 auto;padding:74px 0}.fp-heading{text-align:center;max-width:760px;margin:0 auto 34px}.fp-heading h2{margin:0;color:var(--ink);font-family:Manrope,Inter,system-ui,sans-serif;font-size:clamp(32px,4.8vw,58px);line-height:.98;letter-spacing:0}.fp-heading p{margin:14px 0 0;color:var(--muted);font-size:17px;line-height:1.65}.fp-photo-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}.fp-photo-card{min-height:430px;border-radius:28px;overflow:hidden;position:relative;background-size:cover;background-position:center;box-shadow:0 24px 60px rgba(7,25,23,.14)}.fp-photo-card.small{min-height:206px}.fp-photo-stack{display:grid;gap:18px}.fp-photo-copy{position:absolute;left:22px;right:22px;bottom:22px;color:#fff}.fp-photo-copy h3{margin:0 0 8px;font-size:28px;line-height:1.05}.fp-photo-copy p{margin:0;color:rgba(255,255,255,.82);line-height:1.55;font-weight:650}.fp-overlay{position:absolute;inset:0;background:linear-gradient(transparent 30%,rgba(7,25,23,.82))}
+        .fp-feature-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.fp-feature{border:1px solid var(--line);border-radius:24px;background:#fff;padding:24px;min-height:260px;box-shadow:0 18px 45px rgba(7,25,23,.06)}.fp-icon{width:48px;height:48px;border-radius:16px;background:#e2fbf8;color:#087e78;display:grid;place-items:center;font-weight:950;margin-bottom:18px}.fp-feature h3{margin:0 0 10px;font-size:22px}.fp-feature p{margin:0;color:var(--muted);line-height:1.65}.fp-business{display:grid;grid-template-columns:1fr .72fr;gap:26px;align-items:stretch;border-radius:30px;background:#071917;color:#fff;padding:34px;box-shadow:0 28px 72px rgba(7,25,23,.2)}.fp-business h2{margin:0;font-family:Manrope,Inter,system-ui,sans-serif;font-size:clamp(32px,4.4vw,56px);line-height:1}.fp-business p{margin:16px 0 0;color:rgba(255,255,255,.74);font-size:16px;line-height:1.7}.fp-dashboard{border:1px solid rgba(255,255,255,.14);border-radius:24px;background:rgba(255,255,255,.08);padding:20px}.fp-bars{display:grid;gap:11px;margin-top:16px}.fp-bars span{height:11px;border-radius:999px;background:rgba(255,255,255,.18)}.fp-bars span:nth-child(2){width:72%;background:rgba(14,181,171,.48)}.fp-metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px}.fp-metric{border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:14px}.fp-metric b{display:block;font-size:24px}.fp-metric span{font-size:12px;color:rgba(255,255,255,.66)}
+        @media(max-width:900px){.fp-hero-shell,.fp-photo-grid,.fp-business{grid-template-columns:1fr}.fp-phone{justify-self:start}.fp-feature-grid{grid-template-columns:1fr}.fp-photo-card,.fp-photo-card.small{min-height:360px}}@media(max-width:640px){.fp-nav-actions{display:none}.fp-menu{display:block}.fp-nav-mobile{display:grid!important}.fp-hero{min-height:auto;padding:28px 16px 34px;background-image:linear-gradient(rgba(7,25,23,.9),rgba(7,25,23,.68)),url("https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1400&q=82")}.fp-title{font-size:clamp(40px,13vw,58px)}.fp-lede{font-size:17px}.fp-phone{display:none}.fp-search{flex-direction:column}.fp-search button{min-height:50px}.fp-section{width:min(100% - 28px,1120px);padding:56px 0}.fp-app-row{display:grid}.fp-store,.fp-web-map{width:100%}.fp-holiday-inner{font-size:12px}.fp-business{padding:24px}.fp-metrics{grid-template-columns:1fr}}
       `}</style>
 
-      <nav style={{ background: 'white', borderBottom: '1px solid #f0f0f0', padding: '16px 20px', position: 'sticky', top: 0, zIndex: 20 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Logo height={58} />
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }} className="desktop-nav">
-            <div style={{ display: 'flex', background: '#f5f5f5', borderRadius: '8px', padding: '3px' }}>
-              <button onClick={() => setLang('en')} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', fontSize: '13px', fontWeight: 700, cursor: 'pointer', background: lang === 'en' ? 'white' : 'transparent', color: lang === 'en' ? '#0A2E1F' : '#999' }}>🇺🇸</button>
-              <button onClick={() => setLang('es')} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', fontSize: '13px', fontWeight: 700, cursor: 'pointer', background: lang === 'es' ? 'white' : 'transparent', color: lang === 'es' ? '#0A2E1F' : '#999' }}>🇲🇽</button>
-            </div>
-            <a className="fp-nav-link" href="/business" style={{ color: '#425755', textDecoration: 'none', fontSize: '15px', fontWeight: 750 }}>{t.forBusinesses}</a>
+      <div className="fp-holiday"><div className="fp-holiday-inner"><b>{t.home.holidayBold}</b> {t.home.holidayText}</div></div>
+
+      <nav className="fp-nav">
+        <div className="fp-nav-inner">
+          <a href="/" aria-label="FlushPin home"><Logo height={58} /></a>
+          <div className="fp-nav-actions">
+            <LanguageToggle />
+            <a className="fp-nav-link" href="/business">{t.forBusinesses}</a>
             {user ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: profileColor, flexShrink: 0 }} />
-                <span style={{ fontSize: '15px', color: '#0A2E1F', fontWeight: 700 }}>{displayName}</span>
-                <button onClick={handleSignOut} style={{ background: '#f5f5f5', border: 'none', padding: '9px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', color: '#555' }}>{t.signOut}</button>
-              </div>
+              <>
+                <span style={{ width: 28, height: 28, borderRadius: '50%', background: profileColor }} />
+                <span style={{ fontSize: 14, fontWeight: 800 }}>{displayName}</span>
+                <button className="fp-nav-btn light" onClick={handleSignOut}>{t.signOut}</button>
+              </>
             ) : (
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button onClick={() => { setShowAuth(true); setAuthMode('signin'); setMessage('') }} style={{ background: 'white', color: '#0A2E1F', padding: '10px 20px', borderRadius: '9px', border: '1.5px solid #e0e0e0', fontSize: '15px', fontWeight: 700, cursor: 'pointer' }}>{t.signIn}</button>
-                <button onClick={() => { setShowAuth(true); setAuthMode('signup'); setMessage('') }} style={{ background: '#0EB5AB', color: 'white', padding: '10px 20px', borderRadius: '9px', border: 'none', fontSize: '15px', fontWeight: 800, cursor: 'pointer' }}>{t.signUp}</button>
-              </div>
+              <>
+                <button className="fp-nav-btn light" onClick={() => { setShowAuth(true); setAuthMode('signin'); setMessage('') }}>{t.signIn}</button>
+                <button className="fp-nav-btn teal" onClick={() => { setShowAuth(true); setAuthMode('signup'); setMessage('') }}>{t.signUp}</button>
+              </>
             )}
-            <a href="/map" style={{ background: '#092321', color: 'white', padding: '10px 20px', borderRadius: '9px', textDecoration: 'none', fontSize: '15px', fontWeight: 800 }}>{t.findRestroom}</a>
+            <a className="fp-nav-btn dark" href="/map">{t.findRestroom}</a>
           </div>
-          <button onClick={() => setMenuOpen(!menuOpen)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', display: 'none' }} className="mobile-menu-btn">
-            <div style={{ width: '24px', height: '2px', background: '#0A2E1F', marginBottom: '6px', borderRadius: '2px' }} />
-            <div style={{ width: '24px', height: '2px', background: '#0A2E1F', marginBottom: '6px', borderRadius: '2px' }} />
-            <div style={{ width: '24px', height: '2px', background: '#0A2E1F', borderRadius: '2px' }} />
-          </button>
+          <button className="fp-menu" onClick={() => setMenuOpen(!menuOpen)} aria-label="Open menu"><span /><span /><span /></button>
         </div>
         {menuOpen && (
-          <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '16px', marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <a href="/business" onClick={() => setMenuOpen(false)} style={{ color: '#425755', textDecoration: 'none', fontSize: '15px', fontWeight: 700 }}>{t.forBusinesses}</a>
-            <a href="/map" onClick={() => setMenuOpen(false)} style={{ background: '#092321', color: 'white', padding: '13px', borderRadius: '9px', textDecoration: 'none', fontSize: '15px', fontWeight: 800, textAlign: 'center' }}>{t.findRestroom}</a>
+          <div className="fp-nav-mobile" style={{ display: 'none', gap: 10, paddingTop: 14 }}>
+            <a className="fp-nav-btn dark" href="/map">{t.home.mobileFindNow}</a>
+            <a className="fp-nav-btn light" href="/business">{t.forBusinesses}</a>
+            {!user && <button className="fp-nav-btn teal" onClick={() => { setShowAuth(true); setAuthMode('signup') }}>{t.home.mobileSignUpFree}</button>}
           </div>
         )}
       </nav>
 
       <section className="fp-hero">
         <div className="fp-hero-shell">
-          <div className="fp-hero-copy">
-            <div className="fp-eyebrow"><span />{t.badge}</div>
-            <h1 className="fp-hero-title">{t.home.heroTitleMain} <span>{t.home.heroTitleAccent}</span></h1>
-            <p className="fp-hero-text">{t.home.heroDesc}</p>
+          <div>
+            <div className="fp-kicker">{t.home.kicker}</div>
+            <h1 className="fp-title">{t.home.heroTitleMain} <span>{t.home.heroTitleAccent}</span></h1>
+            <p className="fp-lede">{t.home.heroDesc}</p>
+            <div className="fp-app-row">
+              <a className="fp-store" href={APP_STORE_URL}><span className="fp-store-icon">A</span><span><small>{t.home.appStoreSmall}</small><strong>{t.home.appStoreStrong}</strong></span></a>
+              <a className="fp-web-map" href="/map"><span><small>{t.home.webMapSmall}</small><strong>{t.home.webMapStrong}</strong></span></a>
+            </div>
             <div className="fp-search">
               <input type="text" placeholder={t.home.searchPlaceholder} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()} />
               <button onClick={handleSearch}>{t.home.findNearby}</button>
             </div>
-            <div className="fp-cta-row">
-              <a className="fp-primary" href="/map">{t.findBtn}</a>
-              {!user && <button className="fp-secondary" onClick={() => { setShowAuth(true); setAuthMode('signup') }} style={{ cursor: 'pointer' }}>{t.joinFree}</button>}
-            </div>
-            <div className="fp-hero-proof">
-              <span className="fp-proof-pill">{t.home.proofAccess}</span>
-              <span className="fp-proof-pill">{t.home.proofBuilt}</span>
-              <span className="fp-proof-pill">{t.home.proofMap}</span>
-            </div>
+            <div className="fp-proof"><span>{t.home.proofCleanliness}</span><span>{t.home.proofCode}</span><span>{t.home.proofRules}</span></div>
           </div>
-          <div className="fp-phone" aria-label="FlushPin map preview">
-            <div className="fp-phone-screen">
-              <div className="fp-map" />
-              <div className="fp-route" />
-              <div className="fp-pin one" />
-              <div className="fp-pin two" />
-              <div className="fp-pin three" />
-              <div className="fp-card">
-                <div className="fp-card-top">
-                  <div>
-                    <h3>{t.home.cardPlace}</h3>
-                    <p>{t.home.cardDistance}</p>
-                  </div>
-                  <span className="fp-chip">{t.home.verified}</span>
-                </div>
-                <div className="fp-access-grid">
-                  <div className="fp-access-box"><div className="fp-access-label">{t.home.access}</div><div className="fp-access-value">{t.home.askStaffValue}</div></div>
-                  <div className="fp-access-box"><div className="fp-access-label">{t.home.cleanliness}</div><div className="fp-access-value">4.8 / 5</div></div>
-                  <div className="fp-access-box"><div className="fp-access-label">{t.home.policy}</div><div className="fp-access-value">{t.home.customers}</div></div>
-                  <div className="fp-access-box"><div className="fp-access-label">{t.home.confidence}</div><div className="fp-access-value">{t.home.high}</div></div>
-                </div>
-              </div>
+          <aside className="fp-phone" aria-label="FlushPin mobile app preview">
+            <div className="fp-screen">
+              <img className="fp-app-shot" src="/flushpin-nearby-hero.png" alt="FlushPin Nearby app screen showing California restroom results" />
             </div>
-          </div>
+          </aside>
         </div>
       </section>
 
-      <div className="fp-sections">
+      <div className="fp-band">
         <section className="fp-section">
-          <div className="fp-stats">
-            <div className="fp-stat"><strong>69,795+</strong><span>{t.home.statVenues}</span></div>
-            <div className="fp-stat"><strong>251+</strong><span>{t.home.statCities}</span></div>
-            <div className="fp-stat"><strong>4 types</strong><span>{t.home.statTypes}</span></div>
+          <div className="fp-heading"><h2>{t.home.section1Title}</h2><p>{t.home.section1Desc}</p></div>
+          <div className="fp-photo-grid">
+            <article className="fp-photo-card" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=1400&q=82")' }}><div className="fp-overlay" /><div className="fp-photo-copy"><h3>{t.home.photo1Title}</h3><p>{t.home.photo1Desc}</p></div></article>
+            <div className="fp-photo-stack">
+              <article className="fp-photo-card small" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1100&q=82")' }}><div className="fp-overlay" /><div className="fp-photo-copy"><h3>{t.home.photo2Title}</h3><p>{t.home.photo2Desc}</p></div></article>
+              <article className="fp-photo-card small" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1521017432531-fbd92d768814?auto=format&fit=crop&w=1100&q=82")' }}><div className="fp-overlay" /><div className="fp-photo-copy"><h3>{t.home.photo3Title}</h3><p>{t.home.photo3Desc}</p></div></article>
+            </div>
           </div>
         </section>
+
         <section className="fp-section" style={{ paddingTop: 0 }}>
-          <div className="fp-section-heading">
-            <h2>{t.home.sectionTitle}</h2>
-            <p>{t.home.sectionSub}</p>
-          </div>
           <div className="fp-feature-grid">
-            {t.home.features.map(([title, desc, color]) => (
-              <div className="fp-feature" key={title}>
-                <div className="fp-feature-visual">
-                  <div className="fp-mini-line" style={{ width: '92%' }} />
-                  <div className="fp-mini-line med" style={{ width: '70%' }} />
-                  <div className="fp-mini-line" style={{ width: '48%' }} />
-                  <div style={{ position: 'absolute', right: 18, bottom: 16, width: 42, height: 42, borderRadius: '50% 50% 50% 8px', transform: 'rotate(-45deg)', background: color, boxShadow: '0 12px 24px rgba(9,35,33,.15)' }} />
-                </div>
-                <h3>{title}</h3>
-                <p>{desc}</p>
-              </div>
-            ))}
+            <article className="fp-feature"><div className="fp-icon">01</div><h3>{t.home.feature1Title}</h3><p>{t.home.feature1Desc}</p></article>
+            <article className="fp-feature"><div className="fp-icon">02</div><h3>{t.home.feature2Title}</h3><p>{t.home.feature2Desc}</p></article>
+            <article className="fp-feature"><div className="fp-icon">03</div><h3>{t.home.feature3Title}</h3><p>{t.home.feature3Desc}</p></article>
           </div>
         </section>
+
         <section className="fp-section" style={{ paddingTop: 0 }}>
           <div className="fp-business">
             <div>
               <h2>{t.home.businessTitle}</h2>
               <p>{t.home.businessDesc}</p>
-              <div className="fp-cta-row">
-                <a className="fp-primary" href="/business">{t.forBusinesses}</a>
-                <a className="fp-secondary" href="/contact">{t.home.contactFlushPin}</a>
-              </div>
+              <div className="fp-app-row"><a className="fp-web-map" href="/business"><span><small>{t.home.businessPlanSmall}</small><strong>{t.home.businessPlanStrong}</strong></span></a><a className="fp-store" href="/contact"><span><small>{t.home.partnershipSmall}</small><strong>{t.home.partnershipStrong}</strong></span></a></div>
             </div>
-            <div className="fp-business-panel">
-              <div className="fp-access-label" style={{ color: '#7DF4EA' }}>{t.home.dashboardPreview}</div>
-              <div style={{ height: 10, borderRadius: 999, background: 'rgba(255,255,255,.18)', margin: '18px 0 12px', width: '86%' }} />
-              <div style={{ height: 10, borderRadius: 999, background: 'rgba(14,181,171,.42)', marginBottom: 12, width: '64%' }} />
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 24 }}>
-                <div style={{ border: '1px solid rgba(255,255,255,.14)', borderRadius: 16, padding: 14 }}><strong style={{ display: 'block', fontSize: 24, marginBottom: 4 }}>{t.home.claim}</strong><span style={{ color: 'rgba(255,255,255,.64)', fontSize: 13 }}>{t.home.manageDetails}</span></div>
-                <div style={{ border: '1px solid rgba(255,255,255,.14)', borderRadius: 16, padding: 14 }}><strong style={{ display: 'block', fontSize: 24, marginBottom: 4 }}>{t.home.promote}</strong><span style={{ color: 'rgba(255,255,255,.64)', fontSize: 13 }}>{t.home.reachUsers}</span></div>
-              </div>
-            </div>
+            <aside className="fp-dashboard">
+              <div style={{ color: '#8ffff5', fontSize: 12, fontWeight: 900, textTransform: 'uppercase' }}>{t.home.dashboardPreview}</div>
+              <div className="fp-bars"><span style={{ width: '94%' }} /><span /><span style={{ width: '58%' }} /></div>
+              <div className="fp-metrics"><div className="fp-metric"><b>184</b><span>{t.home.metricScans}</span></div><div className="fp-metric"><b>2-5p</b><span>{t.home.metricPeak}</span></div><div className="fp-metric"><b>37%</b><span>{t.home.metricOffers}</span></div><div className="fp-metric"><b>12%</b><span>{t.home.metricValue}</span></div></div>
+            </aside>
           </div>
         </section>
       </div>
 
       {showAuth && (
-        <div
-          onClick={() => { setShowAuth(false); setMessage('') }}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(3, 17, 15, 0.68)', backdropFilter: 'blur(10px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '18px' }}
-        >
-          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '24px', width: '100%', maxWidth: '430px', maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 28px 90px rgba(0,0,0,.32)', border: '1px solid rgba(255,255,255,.7)' }}>
-            <div style={{ padding: '22px 24px 18px', borderBottom: '1px solid #eef2f1', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '18px' }}>
+        <div onClick={() => { setShowAuth(false); setMessage('') }} style={{ position: 'fixed', inset: 0, background: 'rgba(3,17,15,.68)', backdropFilter: 'blur(10px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 24, width: '100%', maxWidth: 430, maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 28px 90px rgba(0,0,0,.32)', border: '1px solid rgba(255,255,255,.7)' }}>
+            <div style={{ padding: '22px 24px 18px', borderBottom: '1px solid #eef2f1', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 18 }}>
               <Logo height={34} />
-              <button
-                aria-label={t.home.close}
-                onClick={() => { setShowAuth(false); setMessage('') }}
-                style={{ width: 38, height: 38, borderRadius: '50%', border: '1px solid #dfe8e6', background: '#f7fbfa', color: '#61716f', cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 24, lineHeight: 1, fontWeight: 400 }}
-              >
-                ×
-              </button>
+              <button aria-label={t.home.close} onClick={() => { setShowAuth(false); setMessage('') }} style={{ width: 38, height: 38, borderRadius: '50%', border: '1px solid #dfe8e6', background: '#f7fbfa', color: '#61716f', cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 24 }}>×</button>
             </div>
-
             <div style={{ padding: '26px 28px 30px' }}>
-              <div style={{ marginBottom: 22 }}>
-                <p style={{ margin: '0 0 8px', color: '#0EB5AB', fontSize: 12, fontWeight: 900, letterSpacing: '.12em', textTransform: 'uppercase' }}>FlushPin account</p>
-                <h2 style={{ margin: 0, fontSize: 28, lineHeight: 1.08, letterSpacing: '-.04em', fontWeight: 900, color: '#092321' }}>{authMode === 'signup' ? t.joinFlushPin : t.welcomeBack}</h2>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
-                <button onClick={() => handleOAuthSignIn('google')} style={{ width: '100%', background: '#fff', color: '#182725', border: '1.5px solid #dce7e5', padding: '14px 16px', borderRadius: '14px', fontSize: '15px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, boxShadow: '0 8px 24px rgba(9,35,33,.06)' }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-                  {t.continueGoogle}
-                </button>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-                <div style={{ flex: 1, height: 1, background: '#eef2f1' }} />
-                <span style={{ color: '#7b8b89', fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.08em' }}>or use email</span>
-                <div style={{ flex: 1, height: 1, background: '#eef2f1' }} />
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <p style={{ margin: '0 0 8px', color: '#0EB5AB', fontSize: 12, fontWeight: 900, letterSpacing: '.12em', textTransform: 'uppercase' }}>{t.home.authAccountLabel}</p>
+              <h2 style={{ margin: '0 0 22px', fontSize: 28, lineHeight: 1.08, fontWeight: 900, color: '#092321' }}>{authMode === 'signup' ? t.joinFlushPin : t.welcomeBack}</h2>
+              <button onClick={() => handleOAuthSignIn('google')} style={{ width: '100%', background: '#fff', color: '#182725', border: '1.5px solid #dce7e5', padding: '14px 16px', borderRadius: 14, fontSize: 15, fontWeight: 800, cursor: 'pointer', marginBottom: 18 }}>{t.continueGoogle}</button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
                 {authMode === 'signup' && (
                   <>
-                    <div><label style={labelStyle}>{t.fullName}</label><input style={inputStyle} placeholder="Jane Smith" value={fullName} onChange={e => setFullName(e.target.value)} /></div>
-                    <div>
-                      <label style={labelStyle}>{t.home.profileColor}</label>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                        {COLOR_OPTIONS.map(color => <div key={color} onClick={() => setSelectedColor(color)} style={{ width: 30, height: 30, borderRadius: '50%', background: color, cursor: 'pointer', border: selectedColor === color ? '3px solid #0A2E1F' : '3px solid transparent', boxShadow: selectedColor === color ? '0 0 0 3px rgba(14,181,171,.18)' : 'none' }} />)}
-                      </div>
-                    </div>
+                    <div><label style={labelStyle}>{t.fullName}</label><input style={inputStyle} placeholder={t.home.namePlaceholder} value={fullName} onChange={e => setFullName(e.target.value)} /></div>
+                    <div><label style={labelStyle}>{t.home.profileColor}</label><div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{COLOR_OPTIONS.map(color => <div key={color} onClick={() => setSelectedColor(color)} style={{ width: 30, height: 30, borderRadius: '50%', background: color, cursor: 'pointer', border: selectedColor === color ? '3px solid #0A2E1F' : '3px solid transparent' }} />)}</div></div>
                   </>
                 )}
-                <div><label style={labelStyle}>{t.email}</label><input style={inputStyle} type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} /></div>
+                <div><label style={labelStyle}>{t.email}</label><input style={inputStyle} type="email" placeholder={t.home.emailPlaceholder} value={email} onChange={e => setEmail(e.target.value)} /></div>
                 <div><label style={labelStyle}>{t.password}</label><input style={inputStyle} type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} /></div>
-                {message && <p style={{ fontSize: '14px', color: message.includes('Check') ? '#087f68' : '#B91C1C', background: message.includes('Check') ? '#E6FFFA' : '#FEF2F2', border: `1px solid ${message.includes('Check') ? '#B6F4E8' : '#FECACA'}`, borderRadius: 12, padding: '10px 12px', margin: 0, fontWeight: 800 }}>{message}</p>}
-                <button onClick={authMode === 'signup' ? handleSignUp : handleSignIn} disabled={loading} style={{ background: '#0EB5AB', color: 'white', border: 'none', padding: '16px', borderRadius: '14px', fontSize: '17px', fontWeight: 900, cursor: 'pointer', opacity: loading ? 0.7 : 1, boxShadow: '0 14px 30px rgba(14,181,171,.24)' }}>{loading ? '...' : (authMode === 'signup' ? t.createAccount : t.signIn)}</button>
-                <button onClick={() => { setAuthMode(authMode === 'signup' ? 'signin' : 'signup'); setMessage('') }} style={{ background: 'none', border: 'none', color: '#0EB5AB', fontSize: '14px', fontWeight: 900, cursor: 'pointer', padding: 0 }}>{authMode === 'signup' ? t.home.alreadyHaveAccount : t.home.needAccount}</button>
+                {message && <p style={{ fontSize: 14, color: message.includes('Check') ? '#087f68' : '#B91C1C', background: message.includes('Check') ? '#E6FFFA' : '#FEF2F2', borderRadius: 12, padding: '10px 12px', margin: 0, fontWeight: 800 }}>{message}</p>}
+                <button onClick={authMode === 'signup' ? handleSignUp : handleSignIn} disabled={loading} style={{ background: '#0EB5AB', color: 'white', border: 'none', padding: 16, borderRadius: 14, fontSize: 17, fontWeight: 900, cursor: 'pointer', opacity: loading ? .7 : 1 }}>{loading ? '...' : (authMode === 'signup' ? t.createAccount : t.signIn)}</button>
+                <button onClick={() => { setAuthMode(authMode === 'signup' ? 'signin' : 'signup'); setMessage('') }} style={{ background: 'none', border: 'none', color: '#0EB5AB', fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>{authMode === 'signup' ? t.home.alreadyHaveAccount : t.home.needAccount}</button>
               </div>
             </div>
           </div>

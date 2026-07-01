@@ -24,6 +24,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  useEffect(() => {
+    document.documentElement.lang = lang === 'es' ? 'es-MX' : 'en'
+  }, [lang])
+
   const setLang = (l: Lang) => {
     setLangState(l)
     localStorage.setItem('flushpin_lang', l)
