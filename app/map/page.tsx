@@ -436,7 +436,7 @@ export default function FindPage() {
         {parsed.method === 'keypad_code' && parsed.displayPin && (
           <div style={{background:'#E1F5EE',borderRadius:'10px',padding:'16px',textAlign:'center'}}>
             <p style={{fontSize:'12px',color:'#0F6E56',fontWeight:'600',margin:'0 0 4px',letterSpacing:'1px'}}>{t.customerCode}</p>
-            <p style={{fontSize:'42px',fontWeight:'700',color:'#085041',letterSpacing:'10px',margin:'10px 0'}}>{parsed.displayPin}</p>
+            <p style={{fontSize:'42px',fontWeight:'700',color:'#085041',letterSpacing:'10px',margin:'10px 0'}} className="fp-map-pin-code">{parsed.displayPin}</p>
           </div>
         )}
         {parsed.method === 'no_code_needed' && (
@@ -488,10 +488,63 @@ export default function FindPage() {
   const labelStyle = {fontSize:'14px',fontWeight:'600' as const,color:'#555',marginBottom:'6px',display:'block' as const}
 
   return (
-    <div style={{minHeight:'100vh',background:'#f8f9fa',fontFamily:"'Inter',system-ui,sans-serif"}}>
-      <nav style={{background:'white',borderBottom:'1px solid #f0f0f0',padding:'12px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',position:'sticky',top:0,zIndex:10}}>
+    <div className="fp-map-page" style={{minHeight:'100vh',background:'#f8f9fa',fontFamily:"'Inter',system-ui,sans-serif",overflowX:'hidden'}}>
+      <style>{`
+        .fp-map-page { max-width: 100%; }
+        .fp-map-nav {
+          background: white;
+          border-bottom: 1px solid #f0f0f0;
+          padding: 12px 20px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          position: sticky;
+          top: 0;
+          z-index: 10;
+          flex-wrap: wrap;
+        }
+        .fp-map-nav-tools {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+        }
+        .fp-map-pin-code {
+          font-size: 42px;
+          letter-spacing: 10px;
+        }
+        @media (max-width: 640px) {
+          .fp-map-nav {
+            padding: 12px 16px;
+            gap: 10px;
+          }
+        }
+        @media (max-width: 389px) {
+          .fp-map-nav-tools {
+            width: 100%;
+            justify-content: flex-start;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 2px;
+          }
+          .fp-map-nav-tools > * {
+            flex-shrink: 0;
+          }
+          .fp-map-pin-code {
+            font-size: 30px;
+            letter-spacing: 4px;
+          }
+          .fp-map-list {
+            padding-bottom: 24px !important;
+          }
+        }
+      `}</style>
+      <nav className="fp-map-nav">
         <Logo height={32} />
-        <div style={{display:'flex',gap:'8px',alignItems:'center',flexWrap:'wrap'}}>
+        <div className="fp-map-nav-tools">
           <AppStoreLink width={108} height={32} />
           <div style={{display:'flex',background:'#f5f5f5',borderRadius:'8px',padding:'3px'}}>
             <button onClick={()=>setLang('en')} style={{padding:'5px 12px',borderRadius:'6px',border:'none',fontSize:'14px',cursor:'pointer',background:lang==='en'?'white':'transparent'}}>🇺🇸</button>
@@ -547,7 +600,7 @@ export default function FindPage() {
       {emergency&&<div style={{background:'#FEF2F2',borderBottom:'1px solid #FCA5A5',padding:'10px 20px'}}><p style={{fontSize:'14px',fontWeight:'700',color:'#DC2626',margin:0}}>{t.urgentMode}</p></div>}
       {successMsg&&<div style={{background:'#E1F5EE',borderBottom:'1px solid #9FE1CB',padding:'10px 20px'}}><p style={{fontSize:'14px',fontWeight:'700',color:'#1D9E75',margin:0}}>{successMsg}</p></div>}
 
-      <div style={{padding:'16px 16px 100px'}}>
+      <div className="fp-map-list" style={{padding:'16px 16px 100px'}}>
         <p style={{fontSize:'14px',color:'#999',fontWeight:'500',margin:'0 0 12px'}}>
           {loading
             ? t.loading

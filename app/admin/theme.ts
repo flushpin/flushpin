@@ -50,6 +50,19 @@ export type LiveActivityPoint = {
   isRecent: boolean
 }
 
+export type AdminMember = {
+  id: string
+  email: string | null
+  fullName: string | null
+  provider: string | null
+  createdAt: string | null
+  lastSignInAt: string | null
+  emailConfirmed: boolean
+  bannedUntil: string | null
+  isBanned: boolean
+  isProtected: boolean
+}
+
 export type LiveActivityPayload = {
   hours: number
   recentMinutes: number

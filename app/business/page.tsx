@@ -118,9 +118,15 @@ const businessPageHtml = `<style>
         width: min(1180px, 100%);
         margin: 0 auto;
         display: grid;
-        grid-template-columns: minmax(0, 1.02fr) minmax(360px, 0.78fr);
+        grid-template-columns: 1fr;
         align-items: center;
         gap: 56px;
+      }
+
+      @media (min-width: 981px) {
+        .fp-hero-shell {
+          grid-template-columns: minmax(0, 1.02fr) minmax(360px, 0.78fr);
+        }
       }
 
       .fp-eyebrow {
@@ -897,12 +903,49 @@ const businessPageHtml = `<style>
           height: 52px;
         }
 
-        .fp-nav-links a:not(.fp-dark-link) {
-          display: none;
+        .fp-nav {
+          padding: 14px 18px;
+        }
+
+        .fp-nav-inner {
+          flex-wrap: wrap;
+          gap: 12px;
+        }
+
+        .fp-nav-links {
+          width: 100%;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
+        .fp-nav-links a {
+          padding: 8px 12px;
+          font-size: 14px;
         }
 
         .fp-hero {
-          padding: 42px 20px 38px;
+          min-height: auto;
+          padding: 48px 20px 40px;
+        }
+
+        .fp-intent-card {
+          justify-self: center;
+          max-width: min(390px, 100%);
+          margin: 0 auto;
+        }
+      }
+
+      @media (max-width: 389px) {
+        .fp-logo img {
+          height: 44px;
+        }
+
+        .fp-hero {
+          padding: 42px 18px 34px;
+        }
+
+        .fp-intent-card {
+          display: none;
         }
 
         .fp-hero h1 {
