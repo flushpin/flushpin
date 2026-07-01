@@ -3,14 +3,19 @@
 import { useEffect, useState } from 'react'
 import AdminBarChart from './components/AdminBarChart'
 import LiveActivityMap from './components/LiveActivityMap'
-import { adminTheme, type DashboardMetrics, type LiveActivityPayload } from './theme'
+import { adminTheme, type AdminMember, type DashboardMetrics, type LiveActivityPayload } from './theme'
 
 const BAD_WORDS = [
   'fuck', 'shit', 'bitch', 'nigga', 'nigger', 'negro', 'faggot', 'retard', 'spic', 'chink', 'rape', 'bomb',
   'orospu', 'yarrak', 'sikis', 'bok', 'amk',
 ]
 
-type TabKey = 'overview' | 'live' | 'pins' | 'flagged' | 'optout' | 'logs'
+type TabKey = 'overview' | 'members' | 'live' | 'pins' | 'flagged' | 'optout' | 'logs'
+
+type MembersPayload = {
+  members: AdminMember[]
+  summary: { total: number; banned?: number; protected?: number }
+}
 
 type DashboardData = {
   metrics: DashboardMetrics
@@ -126,10 +131,17 @@ function btnStyle(variant: 'primary' | 'ghost' | 'danger' = 'ghost'): React.CSSP
   }
 }
 
+const ADMIN_SESSION_KEY = 'flushpin_admin_session'
+
 export default function AdminDashboard() {
+  const [loggedIn, setLoggedIn] = useState(false)
+  const [email, setEmail] = useState('admin@flushpin.com')
+  const [password, setPassword] = useState('')
+  const [loginError, setLoginError] = useState('')
+  const [loginLoading, setLoginLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<TabKey>('overview')
   const [data, setData] = useState<DashboardData | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [liveActivity, setLiveActivity] = useState<LiveActivityPayload | null>(null)
   const [liveLoading, setLiveLoading] = useState(false)
@@ -140,6 +152,55 @@ export default function AdminDashboard() {
   const [businessClaims, setBusinessClaims] = useState<BusinessClaimsQueue | null>(null)
   const [businessClaimsLoading, setBusinessClaimsLoading] = useState(false)
   const [businessClaimsError, setBusinessClaimsError] = useState<string | null>(null)
+  const [members, setMembers] = useState<MembersPayload | null>(null)
+  const [membersLoading, setMembersLoading] = useState(false)
+  const [membersError, setMembersError] = useState<string | null>(null)
+  const [memberSearch, setMemberSearch] = useState('')
+
+  const loadMembers = async () => {
+    setMembersLoading(true)
+    setMembersError(null)
+    try {
+      const res = await fetch('/admin/members')
+      const json = await res.json().catch(() => null)
+      if (!res.ok) {
+        setMembersError(json?.error || `Members unavailable (HTTP ${res.status})`)
+        setMembers(null)
+        return
+      }
+      setMembers(json)
+    } finally {
+      setMembersLoading(false)
+    }
+  }
+
+  const runMemberAction = async (userId: string, action: 'ban' | 'unban' | 'delete', email: string | null) => {
+    const label = email || userId
+    if (action === 'delete') {
+      if (!confirm(`Permanently delete ${label}?\n\nThis removes their account and cannot be undone.`)) return
+    } else if (action === 'ban') {
+      if (!confirm(`Ban ${label}?\n\nThey will not be able to sign in until you unban them.`)) return
+    } else if (action === 'unban') {
+      if (!confirm(`Unban ${label} and restore sign-in access?`)) return
+    }
+
+    setActionBusy(userId)
+    try {
+      const res = await fetch('/admin/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, action }),
+      })
+      const json = await res.json().catch(() => null)
+      if (!res.ok) {
+        alert(json?.error || 'Action failed')
+        return
+      }
+      await Promise.all([loadMembers(), loadData()])
+    } finally {
+      setActionBusy(null)
+    }
+  }
 
   const loadBusinessClaims = async () => {
     setBusinessClaimsLoading(true)
@@ -226,25 +287,70 @@ export default function AdminDashboard() {
   }
 
   useEffect(() => {
-    if (activeTab !== 'live') return
+    if (typeof window === 'undefined') return
+    if (sessionStorage.getItem(ADMIN_SESSION_KEY) === '1') {
+      setLoggedIn(true)
+      loadData()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!loggedIn || activeTab !== 'live') return
     loadLiveActivity()
     const interval = setInterval(loadLiveActivity, 60_000)
     return () => clearInterval(interval)
-  }, [activeTab])
+  }, [loggedIn, activeTab])
 
   useEffect(() => {
-    if (activeTab !== 'pins') return
+    if (!loggedIn || activeTab !== 'pins') return
     loadModeration()
-  }, [activeTab])
+  }, [loggedIn, activeTab])
 
   useEffect(() => {
-    if (activeTab !== 'optout') return
+    if (!loggedIn || activeTab !== 'optout') return
     loadBusinessClaims()
-  }, [activeTab])
+  }, [loggedIn, activeTab])
 
   useEffect(() => {
-    loadData()
-  }, [])
+    if (!loggedIn || activeTab !== 'members') return
+    loadMembers()
+  }, [loggedIn, activeTab])
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoginError('')
+    setLoginLoading(true)
+
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+      const json = await res.json().catch(() => null)
+      if (!res.ok) {
+        setLoginError(json?.error || 'Login failed')
+        return
+      }
+
+      sessionStorage.setItem(ADMIN_SESSION_KEY, '1')
+      setLoggedIn(true)
+      setPassword('')
+      await loadData()
+    } catch {
+      setLoginError('Login failed — try again')
+    } finally {
+      setLoginLoading(false)
+    }
+  }
+
+  const handleLogout = () => {
+    sessionStorage.removeItem(ADMIN_SESSION_KEY)
+    setLoggedIn(false)
+    setData(null)
+    setPassword('')
+    setLoginError('')
+  }
 
   const loadData = async () => {
     setLoading(true)
@@ -328,6 +434,74 @@ export default function AdminDashboard() {
     fontFamily: adminTheme.fontBody,
   }
 
+  if (!loggedIn) {
+    return (
+      <div style={{ ...shellStyle, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <div style={{ width: '100%', maxWidth: 420 }}>
+          <div style={{ textAlign: 'center', marginBottom: 32 }}>
+            <div style={{ fontFamily: adminTheme.fontDisplay, fontSize: 28, fontWeight: 700, color: adminTheme.teal }}>
+              flushpin
+            </div>
+            <div style={{ fontSize: 14, color: adminTheme.textMuted, marginTop: 8 }}>Admin Console</div>
+          </div>
+
+          <form onSubmit={handleLogin} style={{ ...cardStyle(), padding: 28 }}>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 12, color: adminTheme.textMuted, marginBottom: 8 }}>Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@flushpin.com"
+                autoComplete="username"
+                required
+                style={{
+                  width: '100%',
+                  background: adminTheme.bg,
+                  border: `1px solid ${adminTheme.cardBorder}`,
+                  borderRadius: 10,
+                  padding: 12,
+                  color: adminTheme.text,
+                  fontSize: 14,
+                  boxSizing: 'border-box',
+                  fontFamily: adminTheme.fontBody,
+                }}
+              />
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', fontSize: 12, color: adminTheme.textMuted, marginBottom: 8 }}>Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                required
+                style={{
+                  width: '100%',
+                  background: adminTheme.bg,
+                  border: `1px solid ${adminTheme.cardBorder}`,
+                  borderRadius: 10,
+                  padding: 12,
+                  color: adminTheme.text,
+                  fontSize: 14,
+                  boxSizing: 'border-box',
+                  fontFamily: adminTheme.fontBody,
+                }}
+              />
+            </div>
+            {loginError ? (
+              <div style={{ color: adminTheme.danger, fontSize: 13, marginBottom: 16, textAlign: 'center' }}>{loginError}</div>
+            ) : null}
+            <button type="submit" disabled={loginLoading} style={{ ...btnStyle('primary'), width: '100%', opacity: loginLoading ? 0.7 : 1 }}>
+              {loginLoading ? 'Signing in…' : 'Sign In'}
+            </button>
+          </form>
+        </div>
+      </div>
+    )
+  }
+
   if (loading && !data) {
     return (
       <div style={{ ...shellStyle, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}>
@@ -361,8 +535,19 @@ export default function AdminDashboard() {
     { label: 'Flagged Content', value: metrics.flaggedPending, accent: adminTheme.danger },
   ]
 
+  const filteredMembers = (members?.members ?? []).filter((member) => {
+    const q = memberSearch.trim().toLowerCase()
+    if (!q) return true
+    return (
+      (member.email ?? '').toLowerCase().includes(q) ||
+      (member.fullName ?? '').toLowerCase().includes(q) ||
+      (member.provider ?? '').toLowerCase().includes(q)
+    )
+  })
+
   const tabs: Array<{ key: TabKey; label: string; badge?: number }> = [
     { key: 'overview', label: 'Overview' },
+    { key: 'members', label: 'Members', badge: metrics.totalMembers || undefined },
     { key: 'live', label: 'Live Map', badge: liveActivity?.summary.recentViews || undefined },
     { key: 'pins', label: 'Pins', badge: pinsBadge || undefined },
     { key: 'flagged', label: 'Flagged', badge: metrics.flaggedPending },
@@ -399,6 +584,7 @@ export default function AdminDashboard() {
             type="button"
             onClick={() => {
               loadData()
+              if (activeTab === 'members') loadMembers()
               if (activeTab === 'live') loadLiveActivity()
               if (activeTab === 'pins') loadModeration()
               if (activeTab === 'optout') loadBusinessClaims()
@@ -407,6 +593,7 @@ export default function AdminDashboard() {
           >
             Refresh
           </button>
+          <button type="button" onClick={handleLogout} style={btnStyle('danger')}>Logout</button>
         </div>
       </header>
 
@@ -881,6 +1068,156 @@ export default function AdminDashboard() {
                       ))}
                     </div>
                   ))
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'members' && (
+          <div>
+            {membersError ? (
+              <div
+                style={{
+                  ...cardStyle(),
+                  padding: 16,
+                  marginBottom: 16,
+                  borderColor: 'rgba(251, 191, 36, 0.35)',
+                  color: adminTheme.warning,
+                  fontSize: 13,
+                }}
+              >
+                {membersError}
+              </div>
+            ) : null}
+
+            {membersLoading ? (
+              <div style={{ ...cardStyle(), padding: 40, textAlign: 'center', color: adminTheme.textMuted }}>
+                Loading members…
+              </div>
+            ) : (
+              <>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 16 }}>
+                  <p style={{ color: adminTheme.textMuted, fontSize: 13, margin: 0, flex: 1 }}>
+                    {members?.summary.total ?? 0} registered users
+                    {(members?.summary.banned ?? 0) > 0 ? ` · ${members?.summary.banned} banned` : ''}
+                  </p>
+                  <input
+                    type="search"
+                    value={memberSearch}
+                    onChange={(e) => setMemberSearch(e.target.value)}
+                    placeholder="Search email or name…"
+                    style={{
+                      background: adminTheme.bg,
+                      border: `1px solid ${adminTheme.cardBorder}`,
+                      borderRadius: 10,
+                      padding: '10px 14px',
+                      color: adminTheme.text,
+                      fontSize: 13,
+                      fontFamily: adminTheme.fontBody,
+                      minWidth: 220,
+                    }}
+                  />
+                </div>
+
+                {filteredMembers.length === 0 ? (
+                  <div style={{ ...cardStyle(), padding: 40, textAlign: 'center', color: adminTheme.textMuted }}>
+                    {memberSearch ? 'No members match your search' : 'No members yet'}
+                  </div>
+                ) : (
+                  <div style={{ ...cardStyle(), overflow: 'hidden' }}>
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                        <thead>
+                          <tr style={{ borderBottom: `1px solid ${adminTheme.cardBorder}`, textAlign: 'left' }}>
+                            {['Email', 'Name', 'Provider', 'Joined', 'Last sign-in', 'Status', 'Actions'].map((label) => (
+                              <th
+                                key={label}
+                                style={{
+                                  padding: '12px 14px',
+                                  color: adminTheme.textMuted,
+                                  fontWeight: 600,
+                                  fontSize: 11,
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.04em',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {label}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredMembers.map((member) => (
+                            <tr key={member.id} style={{ borderBottom: `1px solid ${adminTheme.cardBorder}` }}>
+                              <td style={{ padding: '12px 14px', color: adminTheme.text, fontWeight: 600 }}>
+                                {member.email || '—'}
+                              </td>
+                              <td style={{ padding: '12px 14px', color: adminTheme.textSoft }}>
+                                {member.fullName || '—'}
+                              </td>
+                              <td style={{ padding: '12px 14px', color: adminTheme.textMuted }}>
+                                {member.provider || '—'}
+                              </td>
+                              <td style={{ padding: '12px 14px', color: adminTheme.textMuted, whiteSpace: 'nowrap' }}>
+                                {member.createdAt ? new Date(member.createdAt).toLocaleString() : '—'}
+                              </td>
+                              <td style={{ padding: '12px 14px', color: adminTheme.textMuted, whiteSpace: 'nowrap' }}>
+                                {member.lastSignInAt ? new Date(member.lastSignInAt).toLocaleString() : 'Never'}
+                              </td>
+                              <td style={{ padding: '12px 14px' }}>
+                                {member.isProtected ? (
+                                  <span style={{ fontSize: 11, fontWeight: 700, color: adminTheme.textMuted }}>Protected</span>
+                                ) : member.isBanned ? (
+                                  <span style={{ fontSize: 11, fontWeight: 700, color: adminTheme.danger }}>Banned</span>
+                                ) : member.emailConfirmed ? (
+                                  <span style={{ fontSize: 11, fontWeight: 700, color: adminTheme.teal }}>Active</span>
+                                ) : (
+                                  <span style={{ fontSize: 11, fontWeight: 700, color: adminTheme.warning }}>Unverified</span>
+                                )}
+                              </td>
+                              <td style={{ padding: '12px 14px' }}>
+                                {member.isProtected ? (
+                                  <span style={{ fontSize: 11, color: adminTheme.textMuted }}>—</span>
+                                ) : (
+                                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                                    {member.isBanned ? (
+                                      <button
+                                        type="button"
+                                        disabled={actionBusy === member.id}
+                                        onClick={() => runMemberAction(member.id, 'unban', member.email)}
+                                        style={btnStyle('ghost')}
+                                      >
+                                        Unban
+                                      </button>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        disabled={actionBusy === member.id}
+                                        onClick={() => runMemberAction(member.id, 'ban', member.email)}
+                                        style={btnStyle('ghost')}
+                                      >
+                                        Ban
+                                      </button>
+                                    )}
+                                    <button
+                                      type="button"
+                                      disabled={actionBusy === member.id}
+                                      onClick={() => runMemberAction(member.id, 'delete', member.email)}
+                                      style={btnStyle('danger')}
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 )}
               </>
             )}

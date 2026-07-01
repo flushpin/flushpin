@@ -1,8 +1,13 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { LanguageProvider } from '../lib/LanguageContext'
 import ConditionalFooter from '../components/ConditionalFooter'
 import { APP_STORE_ID } from '../lib/site'
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+}
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.flushpin.com'),
