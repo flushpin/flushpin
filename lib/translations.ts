@@ -26,8 +26,6 @@ export const translations = {
     appStoreComingSoon: 'coming soon',
 
     home: {
-      holidayBold: 'Happy 4th of July week.',
-      holidayText: 'Travel smarter, hydrate, and find clean restroom access before the rush.',
       mobileFindNow: 'Find a Restroom Now',
       mobileSignUpFree: 'Sign up free',
       kicker: 'Now covering California restrooms',
@@ -393,8 +391,6 @@ export const translations = {
     appStoreComingSoon: 'próximamente',
 
     home: {
-      holidayBold: 'Feliz semana del 4 de julio.',
-      holidayText: 'Viaja con calma, hidrátate y encuentra un baño limpio antes de la prisa.',
       mobileFindNow: 'Buscar baño ahora',
       mobileSignUpFree: 'Regístrate gratis',
       kicker: 'Baños en California, en un solo mapa',
