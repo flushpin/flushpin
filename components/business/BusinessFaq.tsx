@@ -38,7 +38,7 @@ const faqs = [
   {
     question: 'How much does it cost?',
     answer:
-      'Your first 90 days are free — full features, no credit card. After that, plans start at $49 per location per month.',
+      'Free Listing is $0. Starter QR is $9/mo per location. Business is $29/mo per location. Multi-Location is $49/mo for up to 10 locations. Growth / Local Ads is a future custom package. There is no long contract, and shops can start small.',
   },
 ]
 
