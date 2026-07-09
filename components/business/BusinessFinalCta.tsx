@@ -8,7 +8,7 @@ export default function BusinessFinalCta() {
           Your restroom code is asked every day. Make it work for you.
         </h2>
         <Link
-          href="/business/claim"
+          href="/business/start"
           className="mt-8 inline-flex items-center justify-center rounded-full bg-fp-teal px-8 py-3.5 text-base font-semibold text-white no-underline transition-colors hover:bg-fp-teal-dark"
         >
           Claim your business — free for 90 days

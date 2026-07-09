@@ -5,6 +5,11 @@ import Logo from '../../components/Logo'
 import LanguageToggle from '../../components/LanguageToggle'
 import { supabase } from '../../lib/supabase'
 import { useLang } from '../../lib/LanguageContext'
+import {
+  formatEmailTemplate,
+  isAlreadyRegisteredError,
+  isUnconfirmedEmailError,
+} from '../../lib/auth-errors'
 
 const COLORS = [
   { id: 'emerald', hex: '#10B981', label: 'Emerald' },
@@ -17,15 +22,21 @@ const COLORS = [
   { id: 'pride', hex: 'linear-gradient(135deg,#FF6B6B,#FFD93D,#6BCB77,#4D96FF,#C77DFF)', label: 'Pride' },
 ]
 
+type Screen = 'main' | 'email' | 'signin' | 'confirm' | 'forgot'
+
 export default function SignUp() {
   const { t } = useLang()
   const s = t.signup
-  const [screen, setScreen] = useState('main')
+  const [screen, setScreen] = useState<Screen>('main')
   const [selectedColor, setSelectedColor] = useState('teal')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [message, setMessage] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [pendingEmail, setPendingEmail] = useState('')
+
+  const selectedColorHex = COLORS.find((c) => c.id === selectedColor)?.hex ?? '#1D9E75'
 
   const handleOAuthSignIn = async (provider: 'google') => {
     setMessage('')
@@ -35,6 +46,45 @@ export default function SignUp() {
       options: { redirectTo },
     })
     if (error) setMessage(error.message)
+  }
+
+  const handleSignUp = async () => {
+    if (!name.trim()) {
+      setMessage(t.home.enterFullName)
+      return
+    }
+    setLoading(true)
+    setMessage('')
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: name.trim(),
+          profile_color: selectedColorHex,
+        },
+      },
+    })
+    if (error) {
+      setMessage(isAlreadyRegisteredError(error) ? t.home.emailRegistered : error.message)
+    } else {
+      if (data.session) await supabase.auth.signOut()
+      setPendingEmail(email)
+      setScreen('confirm')
+    }
+    setLoading(false)
+  }
+
+  const handleSignIn = async () => {
+    setLoading(true)
+    setMessage('')
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) {
+      setMessage(isUnconfirmedEmailError(error) ? s.confirmEmailRequired : error.message)
+    } else if (data.session) {
+      window.location.href = '/map'
+    }
+    setLoading(false)
   }
 
   const SignupLogo = () => (
@@ -54,6 +104,33 @@ export default function SignUp() {
   const input = { width: '100%', padding: '14px 16px', borderRadius: '10px', border: '1.5px solid #e5e5e5', fontSize: '15px', marginBottom: '12px', outline: 'none', boxSizing: 'border-box' as const }
   const btnGreen = { width: '100%', background: '#1D9E75', color: 'white', border: 'none', padding: '14px', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', marginBottom: '14px' }
   const h2style = { fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: '24px', fontWeight: '700', color: '#0A2E1F', textAlign: 'center' as const, marginBottom: '8px', letterSpacing: '-0.5px' }
+  const errorStyle = { fontSize: '13px', color: '#DC2626', fontWeight: '700', textAlign: 'center' as const, marginBottom: '14px', lineHeight: '1.5' }
+
+  if (screen === 'confirm') {
+    return (
+      <main style={wrap}>
+        <div style={card}>
+          <LangBar />
+          <SignupLogo />
+          <h2 style={h2style}>{s.confirmAlmostDone}</h2>
+          <p style={{ color: '#555', fontSize: '15px', textAlign: 'center', marginBottom: '28px', lineHeight: '1.6' }}>
+            {formatEmailTemplate(s.confirmEmailSent, pendingEmail)}
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setPassword('')
+              setMessage('')
+              setScreen('signin')
+            }}
+            style={{ ...btnGreen, marginBottom: 0 }}
+          >
+            {s.backToSignIn}
+          </button>
+        </div>
+      </main>
+    )
+  }
 
   if (screen === 'forgot') {
     return (
@@ -64,8 +141,31 @@ export default function SignUp() {
           <h2 style={h2style}>{s.resetTitle}</h2>
           <p style={{ color: '#888', fontSize: '14px', textAlign: 'center', marginBottom: '28px', lineHeight: '1.6' }}>{s.resetDesc}</p>
           <input value={email} onChange={e => setEmail(e.target.value)} placeholder={s.yourEmail} style={input} />
-          <button style={btnGreen}>{s.sendReset}</button>
-          <button onClick={() => setScreen('email')} style={{ width: '100%', background: 'transparent', border: 'none', color: '#888', fontSize: '14px', cursor: 'pointer' }}>{s.backToSignIn}</button>
+          <button type="button" style={btnGreen}>{s.sendReset}</button>
+          <button type="button" onClick={() => setScreen('signin')} style={{ width: '100%', background: 'transparent', border: 'none', color: '#888', fontSize: '14px', cursor: 'pointer' }}>{s.backToSignIn}</button>
+        </div>
+      </main>
+    )
+  }
+
+  if (screen === 'signin') {
+    return (
+      <main style={wrap}>
+        <div style={card}>
+          <LangBar />
+          <SignupLogo />
+          <h2 style={h2style}>{t.welcomeBack}</h2>
+          <p style={{ color: '#888', fontSize: '14px', textAlign: 'center', marginBottom: '24px' }}>{s.welcomeDesc}</p>
+          <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder={s.emailAddress} style={input} />
+          <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder={s.password} style={{ ...input, marginBottom: '20px' }} />
+          {message && <p style={errorStyle}>{message}</p>}
+          <button type="button" onClick={handleSignIn} disabled={loading} style={{ ...btnGreen, marginBottom: '16px', opacity: loading ? 0.7 : 1 }}>
+            {loading ? '...' : s.signIn}
+          </button>
+          <p style={{ textAlign: 'center', fontSize: '13px', color: '#888', marginBottom: '8px' }}>
+            <span onClick={() => { setMessage(''); setScreen('email') }} style={{ color: '#1D9E75', cursor: 'pointer', fontWeight: '600' }}>{t.home.needAccount}</span>
+          </p>
+          <p onClick={() => setScreen('forgot')} style={{ textAlign: 'center', fontSize: '13px', color: '#bbb', cursor: 'pointer' }}>{s.forgotPassword}</p>
         </div>
       </main>
     )
@@ -91,12 +191,15 @@ export default function SignUp() {
             ))}
           </div>
           <input value={name} onChange={e => setName(e.target.value)} placeholder={s.yourName} style={input} />
-          <input value={email} onChange={e => setEmail(e.target.value)} placeholder={s.emailAddress} style={input} />
+          <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder={s.emailAddress} style={input} />
           <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder={s.password} style={{ ...input, marginBottom: '20px' }} />
-          <button style={{ ...btnGreen, marginBottom: '16px' }}>{s.createAccount}</button>
+          {message && <p style={errorStyle}>{message}</p>}
+          <button type="button" onClick={handleSignUp} disabled={loading} style={{ ...btnGreen, marginBottom: '16px', opacity: loading ? 0.7 : 1 }}>
+            {loading ? '...' : s.createAccount}
+          </button>
           <p style={{ textAlign: 'center', fontSize: '13px', color: '#888' }}>
             {s.alreadyHave}{' '}
-            <span onClick={() => setScreen('main')} style={{ color: '#1D9E75', cursor: 'pointer', fontWeight: '600' }}>{s.signIn}</span>
+            <span onClick={() => { setMessage(''); setScreen('signin') }} style={{ color: '#1D9E75', cursor: 'pointer', fontWeight: '600' }}>{s.signIn}</span>
           </p>
         </div>
       </main>
@@ -116,7 +219,7 @@ export default function SignUp() {
             {t.continueGoogle}
           </button>
         </div>
-        {message && <p style={{ fontSize: '13px', color: '#DC2626', fontWeight: '700', textAlign: 'center', margin: '-10px 0 18px' }}>{message}</p>}
+        {message && <p style={{ ...errorStyle, margin: '-10px 0 18px' }}>{message}</p>}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
           <div style={{ flex: 1, height: '1px', background: '#f0f0f0' }} />
           <span style={{ color: '#ccc', fontSize: '13px' }}>{s.or}</span>
@@ -125,7 +228,7 @@ export default function SignUp() {
         <button onClick={() => setScreen('email')} style={{ width: '100%', background: '#f8f8f8', border: '1.5px solid #e5e5e5', borderRadius: '11px', padding: '14px', fontSize: '15px', fontWeight: '600', cursor: 'pointer', color: '#333', marginBottom: '16px' }}>{s.signUpWithEmail}</button>
         <p style={{ textAlign: 'center', fontSize: '13px', color: '#888', marginBottom: '8px' }}>
           {s.alreadyHave}{' '}
-          <span style={{ color: '#1D9E75', cursor: 'pointer', fontWeight: '600' }}>{s.signIn}</span>
+          <span onClick={() => setScreen('signin')} style={{ color: '#1D9E75', cursor: 'pointer', fontWeight: '600' }}>{s.signIn}</span>
         </p>
         <p onClick={() => setScreen('forgot')} style={{ textAlign: 'center', fontSize: '13px', color: '#bbb', cursor: 'pointer' }}>{s.forgotPassword}</p>
       </div>

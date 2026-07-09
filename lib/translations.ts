@@ -87,6 +87,10 @@ export const translations = {
       needAccount: 'Need an account? Sign up',
       profileColor: 'Profile color',
       checkEmail: 'Check your email to confirm your account.',
+      confirmAlmostDone: 'Almost done!',
+      confirmEmailSent: 'We sent a confirmation link to {email}. Click it, then sign in.',
+      confirmEmailRequired: 'Please confirm your email first. Check your inbox (and spam folder).',
+      backToSignIn: 'Back to sign in',
       emailRegistered: 'This email is already registered. Please sign in.',
       enterFullName: 'Please enter your full name.',
       close: 'Close',
@@ -285,6 +289,9 @@ export const translations = {
       backToSignIn: 'Back to sign in',
       signUpWithEmail: 'Sign up with email',
       or: 'or',
+      confirmAlmostDone: 'Almost done!',
+      confirmEmailSent: 'We sent a confirmation link to {email}. Click it, then sign in.',
+      confirmEmailRequired: 'Please confirm your email first. Check your inbox (and spam folder).',
     },
 
     business: {
@@ -484,6 +491,10 @@ export const translations = {
       needAccount: '¿Necesitas cuenta? Regístrate',
       profileColor: 'Color de perfil',
       checkEmail: 'Revisa tu correo para confirmar tu cuenta.',
+      confirmAlmostDone: '¡Casi listo!',
+      confirmEmailSent: 'Enviamos un enlace de confirmación a {email}. Ábrelo y luego inicia sesión.',
+      confirmEmailRequired: 'Confirma tu correo primero. Revisa tu bandeja de entrada (y spam).',
+      backToSignIn: 'Volver a iniciar sesión',
       emailRegistered: 'Este correo ya está registrado. Inicia sesión.',
       enterFullName: 'Por favor escribe tu nombre completo.',
       close: 'Cerrar',
@@ -682,6 +693,9 @@ export const translations = {
       backToSignIn: 'Volver a iniciar sesión',
       signUpWithEmail: 'Registrarse con correo',
       or: 'o',
+      confirmAlmostDone: '¡Casi listo!',
+      confirmEmailSent: 'Enviamos un enlace de confirmación a {email}. Ábrelo y luego inicia sesión.',
+      confirmEmailRequired: 'Confirma tu correo primero. Revisa tu bandeja de entrada (y spam).',
     },
 
     business: {

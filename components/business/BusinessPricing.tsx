@@ -11,6 +11,7 @@ type Plan = {
   popular?: boolean
   bestValue?: boolean
   cta: string
+  planSlug: 'free' | 'starter' | 'business' | 'multi'
 }
 
 const plans: Plan[] = [
@@ -32,6 +33,7 @@ const plans: Plan[] = [
       'Analytics dashboard',
     ],
     cta: 'List my business free',
+    planSlug: 'free',
   },
   {
     name: 'Starter QR',
@@ -50,6 +52,7 @@ const plans: Plan[] = [
       'Email support',
     ],
     cta: 'Get Starter QR',
+    planSlug: 'starter',
   },
   {
     name: 'Business',
@@ -67,6 +70,7 @@ const plans: Plan[] = [
       'Priority email support',
     ],
     cta: 'Get Business',
+    planSlug: 'business',
   },
   {
     name: 'Multi-Location',
@@ -85,6 +89,7 @@ const plans: Plan[] = [
       'Campaign suggestions',
     ],
     cta: 'Get Multi-Location',
+    planSlug: 'multi',
   },
 ]
 
@@ -154,7 +159,7 @@ export default function BusinessPricing() {
               </ul>
 
               <Link
-                href="/business/claim"
+                href={`/business/start?plan=${plan.planSlug}`}
                 className="mt-8 inline-flex w-full items-center justify-center rounded-full bg-fp-teal px-6 py-3 text-sm font-semibold text-white no-underline transition-colors hover:bg-fp-teal-dark"
               >
                 {plan.cta}
