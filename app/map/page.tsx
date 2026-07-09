@@ -1,9 +1,16 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
 import RatingModal from '../../components/RatingModal'
 import PromoModal from '../../components/PromoModal'
 import { useLang } from '../../lib/LanguageContext'
+import {
+  MAP_CATEGORY_CONFIG,
+  isMapCategorySlug,
+  matchesMapCategory,
+  type MapCategorySlug,
+} from '../../lib/mapCategories'
 import {
   ACCESS_METHOD_CHIPS,
   buildAccessPayload,
@@ -68,6 +75,23 @@ function bboxDeltas(lat: number, miles: number) {
 }
 
 export default function FindPage() {
+  return (
+    <Suspense
+      fallback={
+        <div style={{ minHeight: '100vh', background: '#f8f9fa', fontFamily: "'Inter',system-ui,sans-serif", padding: '24px' }}>
+          <p style={{ color: '#999', fontSize: '15px', margin: 0 }}>Loading map…</p>
+        </div>
+      }
+    >
+      <MapPageContent />
+    </Suspense>
+  )
+}
+
+function MapPageContent() {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const { lang, setLang, t } = useLang()
   const [restrooms, setRestrooms] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -219,6 +243,17 @@ export default function FindPage() {
   const effectiveLat = anchorLat ?? userLat ?? 33.6846
   const effectiveLng = anchorLng ?? userLng ?? -117.7892
 
+  const categoryParam = searchParams.get('category')
+  const activeCategory: MapCategorySlug | null = isMapCategorySlug(categoryParam) ? categoryParam : null
+  const categoryApplies = !!activeCategory && !searchQuery.trim()
+
+  const clearCategory = () => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete('category')
+    const next = params.toString()
+    router.replace(next ? `${pathname}?${next}` : pathname)
+  }
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const q = params.get('q') || ''
@@ -291,7 +326,7 @@ export default function FindPage() {
   const withDistance = restrooms
     .map(r => ({ ...r, distance: getDistance(effectiveLat, effectiveLng, r.lat, r.lng) }))
     .sort((a, b) => a.distance - b.distance)
-  const filtered = withDistance.filter(r => {
+  const statusFiltered = withDistance.filter(r => {
     if (emergency) return r.status==='green'
     if (filter==='verified') return r.status==='green'
     if (filter==='accessible') return r.accessible
@@ -299,6 +334,9 @@ export default function FindPage() {
     if (filter==='baby') return r.has_baby_changing === true
     return true
   })
+  const displayed = categoryApplies
+    ? statusFiltered.filter((r) => matchesMapCategory(r, activeCategory!))
+    : statusFiltered
 
   const formatDist = (d:number) => unit==='mi'?`${d.toFixed(1)} mi`:`${(d*1.609).toFixed(1)} km`
   const statusColor = (s:string) => s==='green'?'#1D9E75':s==='amber'?'#D97706':'#DC2626'
@@ -586,7 +624,43 @@ export default function FindPage() {
             <span style={{fontSize:'14px',color:'#555'}}>
               {lang === 'es' ? 'Resultados para ' : 'Results for '}<strong style={{color:'#0A2E1F'}}>{searchQuery}</strong>{lang === 'es' ? ' cerca de ' : ' near '}<strong style={{color:'#0A2E1F'}}>{locationName}</strong>
             </span>
-            <button onClick={()=>{setSearchQuery('');setSearchInput('');const url=new URL(window.location.href);url.searchParams.delete('q');url.searchParams.delete('lat');url.searchParams.delete('lng');url.searchParams.delete('near');window.history.replaceState({},'',url.pathname);getLocation((lat,lng)=>loadData(lat,lng,'',false))}} style={{background:'#f0f0f0',border:'none',borderRadius:'20px',padding:'3px 10px',fontSize:'13px',cursor:'pointer',color:'#666'}}>{lang === 'es' ? '✕ Limpiar' : '✕ Clear'}</button>
+            <button onClick={()=>{setSearchQuery('');setSearchInput('');const url=new URL(window.location.href);url.searchParams.delete('q');url.searchParams.delete('lat');url.searchParams.delete('lng');url.searchParams.delete('near');window.history.replaceState({},'',`${url.pathname}${url.search}`);getLocation((lat,lng)=>loadData(lat,lng,'',false))}} style={{background:'#f0f0f0',border:'none',borderRadius:'20px',padding:'3px 10px',fontSize:'13px',cursor:'pointer',color:'#666'}}>{lang === 'es' ? '✕ Limpiar' : '✕ Clear'}</button>
+          </div>
+        )}
+        {categoryApplies && activeCategory && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: '#E1F5EE',
+                color: '#0F6E56',
+                border: '1px solid #9FE1CB',
+                borderRadius: '20px',
+                padding: '4px 12px',
+                fontSize: '13px',
+                fontWeight: '600',
+              }}
+            >
+              {MAP_CATEGORY_CONFIG[activeCategory].label}
+              <button
+                type="button"
+                onClick={clearCategory}
+                aria-label={`Remove ${MAP_CATEGORY_CONFIG[activeCategory].label} filter`}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#0F6E56',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  lineHeight: 1,
+                  padding: 0,
+                }}
+              >
+                ✕
+              </button>
+            </span>
           </div>
         )}
       </div>
@@ -619,7 +693,7 @@ export default function FindPage() {
         <p style={{fontSize:'14px',color:'#999',fontWeight:'500',margin:'0 0 12px'}}>
           {loading
             ? t.loading
-            : lang === 'es' ? `${filtered.length} lugar${filtered.length !== 1 ? 'es' : ''} dentro de ${RADIUS_MILES} mi de ${locationName}` : `${filtered.length} location${filtered.length !== 1 ? 's' : ''} within ${RADIUS_MILES} mi of ${locationName}`}
+            : lang === 'es' ? `${displayed.length} lugar${displayed.length !== 1 ? 'es' : ''} dentro de ${RADIUS_MILES} mi de ${locationName}` : `${displayed.length} location${displayed.length !== 1 ? 's' : ''} within ${RADIUS_MILES} mi of ${locationName}`}
         </p>
 
         {loading&&<div style={{textAlign:'center',padding:'60px 20px'}}>
@@ -627,7 +701,7 @@ export default function FindPage() {
           <p style={{color:'#999',fontSize:'15px'}}>{t.findingLocation}</p>
         </div>}
 
-        {!loading&&filtered.length===0&&(
+        {!loading && displayed.length === 0 && searchQuery && (
           <div style={{textAlign:'center',padding:'60px 20px'}}>
             <div style={{fontSize:'40px',marginBottom:'12px'}}>🔍</div>
             <p style={{color:'#555',fontSize:'17px',fontWeight:'700',marginBottom:'8px'}}>{lang === 'es' ? `No hay resultados para "${searchQuery}"` : `No results for "${searchQuery}"`}</p>
@@ -635,7 +709,28 @@ export default function FindPage() {
           </div>
         )}
 
-        {filtered.map(r=>(
+        {!loading && displayed.length === 0 && !searchQuery && categoryApplies && activeCategory && (
+          <div style={{textAlign:'center',padding:'60px 20px'}}>
+            <div style={{fontSize:'40px',marginBottom:'12px'}}>📍</div>
+            <p style={{color:'#555',fontSize:'17px',fontWeight:'700',marginBottom:'8px'}}>
+              {lang === 'es'
+                ? `No encontramos ${MAP_CATEGORY_CONFIG[activeCategory].label.toLowerCase()} cerca de ${locationName}`
+                : `No ${MAP_CATEGORY_CONFIG[activeCategory].label.toLowerCase()} found near ${locationName}`}
+            </p>
+            <p style={{color:'#999',fontSize:'15px',marginBottom:'20px'}}>
+              {lang === 'es' ? 'Prueba otra categoría o amplía la búsqueda.' : 'Try another category or browse everything nearby.'}
+            </p>
+            <button
+              type="button"
+              onClick={clearCategory}
+              style={{background:'#1D9E75',color:'white',border:'none',padding:'12px 20px',borderRadius:'10px',fontSize:'15px',fontWeight:'700',cursor:'pointer'}}
+            >
+              {lang === 'es' ? 'Mostrar todo cerca' : 'Show all nearby'}
+            </button>
+          </div>
+        )}
+
+        {displayed.map(r=>(
           <div key={r.id} onClick={()=>{setSelected(r===selected?null:r);setShowPin(false)}} style={{background:'white',borderRadius:'14px',marginBottom:'10px',boxShadow:'0 1px 6px rgba(0,0,0,0.06)',overflow:'hidden',cursor:'pointer',border:selected?.id===r.id?'2px solid #1D9E75':'2px solid transparent'}}>
             <div style={{padding:'16px'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
