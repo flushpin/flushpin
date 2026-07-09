@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { useLang } from '../lib/LanguageContext'
 import AppStoreLink from './AppStoreLink'
@@ -97,19 +96,13 @@ export default function SiteFooter() {
       <div className="mx-auto w-full max-w-6xl">
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-[1.25fr_repeat(4,minmax(0,1fr))]">
           <div className="max-w-sm">
-            <Link href="/" className="mb-5 inline-flex items-center gap-3 no-underline" aria-label="FlushPin home">
-              <Image
-                src="/flushpin-footer-logo.png"
-                alt="FlushPin"
-                width={64}
-                height={64}
-                sizes="64px"
-              />
-              <span>
-                <span className="block text-2xl font-bold leading-none text-white">FlushPin</span>
-                <span className="mt-1 block text-sm text-fp-gray-400">
-                  {lang === 'es' ? 'Inteligencia de acceso a baños' : 'Restroom access intelligence'}
-                </span>
+            <Link href="/" className="mb-5 inline-block no-underline" aria-label="FlushPin home">
+              <span className="block text-2xl font-bold leading-none tracking-tight">
+                <span className="text-white">Flush</span>
+                <span className="text-fp-teal">Pin</span>
+              </span>
+              <span className="mt-1 block text-sm text-fp-gray-400">
+                {lang === 'es' ? 'Inteligencia de acceso a baños' : 'Restroom access intelligence'}
               </span>
             </Link>
             <p className="text-sm leading-relaxed text-fp-gray-400">
@@ -117,8 +110,8 @@ export default function SiteFooter() {
                 ? 'Con base en Irvine, California. Ayudamos a las personas a encontrar acceso a baños y a los negocios locales a entender y convertir tráfico real.'
                 : 'Irvine, California based. Helping people find restroom access while helping local shops understand and convert real foot traffic.'}
             </p>
-            <div style={{ marginTop: 18 }}>
-              <AppStoreLink width={140} height={42} />
+            <div className="mt-[18px]">
+              <AppStoreLink height={48} />
             </div>
           </div>
 

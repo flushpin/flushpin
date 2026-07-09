@@ -1,7 +1,6 @@
-import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, ShieldCheck } from 'lucide-react'
-import { APP_STORE_URL } from '../../lib/site'
+import AppStoreLink from '../AppStoreLink'
 import HeroSearch from './HeroSearch'
 
 export default function HeroSection() {
@@ -26,15 +25,7 @@ export default function HeroSection() {
         </p>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-6">
-          <a href={APP_STORE_URL} aria-label="Download on the App Store" className="inline-block">
-            <Image
-              src="/app-store-badge.png"
-              alt="Download on the App Store"
-              width={120}
-              height={40}
-              className="h-10 w-auto"
-            />
-          </a>
+          <AppStoreLink height={48} />
           <Link
             href="/map"
             className="inline-flex items-center gap-1 text-sm font-medium text-fp-teal no-underline hover:text-fp-teal-dark"
