@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Logo from '../../components/Logo'
 
 export const metadata: Metadata = {
   alternates: {
@@ -10,13 +9,6 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <main style={{ margin: 0, padding: 0, fontFamily: "'Inter',system-ui,sans-serif", background: "#fff", minHeight: "100vh" }}>
-      <nav style={{ background: "white", borderBottom: "1px solid #f0f0f0", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 20 }}>
-        <Logo height={48} />
-        <a href="/" style={{ color: "#555", textDecoration: "none", fontSize: "14px", fontWeight: "500" }}>
-          ← Back to home
-        </a>
-      </nav>
-
       <div style={{ maxWidth: "760px", margin: "0 auto", padding: "48px 24px 80px" }}>
         <h1 style={{ fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: "clamp(28px,5vw,40px)", fontWeight: "700", color: "#0A2E1F", marginBottom: "8px" }}>
           Privacy Policy

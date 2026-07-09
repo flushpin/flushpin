@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import Logo from '../../../components/Logo'
 
 type RequestType = 'claim' | 'update' | 'removal'
 
@@ -94,13 +93,6 @@ export default function ClaimPage() {
 
   return (
     <main style={{margin:0,padding:0,fontFamily:"'Inter',system-ui,sans-serif",background:"#fff",minHeight:"100vh"}}>
-
-      {/* Nav */}
-      <nav style={{background:"white",borderBottom:"1px solid #f0f0f0",padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:20}}>
-        <Logo height={48} />
-        <a href="/business" style={{color:"#555",textDecoration:"none",fontSize:"14px",fontWeight:"500"}}>← Back to Business</a>
-      </nav>
-
       <div style={{maxWidth:"600px",margin:"0 auto",padding:"48px 20px 80px"}}>
 
         {sent ? (

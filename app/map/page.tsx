@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import RatingModal from '../../components/RatingModal'
-import Logo from '../../components/Logo'
 import PromoModal from '../../components/PromoModal'
 import { useLang } from '../../lib/LanguageContext'
 import {
@@ -95,6 +94,8 @@ export default function FindPage() {
   const [successMsg, setSuccessMsg] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [searchInput, setSearchInput] = useState('')
+  const [anchorLat, setAnchorLat] = useState<number | null>(null)
+  const [anchorLng, setAnchorLng] = useState<number | null>(null)
 
   const resolveCityLabel = async (lat: number, lng: number) => {
     try {
@@ -104,6 +105,25 @@ export default function FindPage() {
     } catch {
       return 'Your area'
     }
+  }
+
+  const resolveSearchLocation = async (query: string) => {
+    try {
+      const res = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`)
+      const data = await res.json()
+      if (res.ok && data.lat && data.lng) {
+        return { lat: data.lat as number, lng: data.lng as number, label: (data.label as string) || query }
+      }
+    } catch {
+      // fall through
+    }
+    return null
+  }
+
+  const applyAnchor = async (lat: number, lng: number, label?: string) => {
+    setAnchorLat(lat)
+    setAnchorLng(lng)
+    setLocationName(label || await resolveCityLabel(lat, lng))
   }
 
   const fetchGooglePlaces = async (lat: number, lng: number, keyword: string) => {
@@ -180,8 +200,7 @@ export default function FindPage() {
       setUserLat(lat)
       setUserLng(lng)
       setLocating(false)
-      const label = fallbackLabel || await resolveCityLabel(lat, lng)
-      setLocationName(label)
+      await applyAnchor(lat, lng, fallbackLabel)
       onSuccess(lat, lng)
     }
 
@@ -197,28 +216,80 @@ export default function FindPage() {
     )
   }
 
-  const anchorLat = userLat ?? 33.6846
-  const anchorLng = userLng ?? -117.7892
+  const effectiveLat = anchorLat ?? userLat ?? 33.6846
+  const effectiveLng = anchorLng ?? userLng ?? -117.7892
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const q = params.get('q') || ''
-    setSearchQuery(q); setSearchInput(q)
-    supabase.auth.getSession().then(({data:{session}})=>setUser(session?.user??null))
-    supabase.auth.onAuthStateChange((_,session)=>setUser(session?.user??null))
-    getLocation((lat, lng) => { loadData(lat, lng, q, false) })
+    const near = params.get('near') || ''
+    const urlLat = params.get('lat')
+    const urlLng = params.get('lng')
+    setSearchQuery(q)
+    setSearchInput(q)
+    supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null))
+    supabase.auth.onAuthStateChange((_, session) => setUser(session?.user ?? null))
+
+    const init = async () => {
+      if (urlLat && urlLng) {
+        const lat = parseFloat(urlLat)
+        const lng = parseFloat(urlLng)
+        if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+          await applyAnchor(lat, lng, near || undefined)
+          await loadData(lat, lng, '', false)
+          return
+        }
+      }
+
+      if (q) {
+        const located = await resolveSearchLocation(q)
+        if (located) {
+          await applyAnchor(located.lat, located.lng, located.label)
+          await loadData(located.lat, located.lng, '', false)
+          return
+        }
+      }
+
+      getLocation((lat, lng) => { loadData(lat, lng, '', false) })
+    }
+
+    init()
   }, [])
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     const q = searchInput.trim()
     setSearchQuery(q)
     const url = new URL(window.location.href)
-    if (q) { url.searchParams.set('q', q) } else { url.searchParams.delete('q') }
+
+    if (!q) {
+      url.searchParams.delete('q')
+      url.searchParams.delete('lat')
+      url.searchParams.delete('lng')
+      url.searchParams.delete('near')
+      window.history.replaceState({}, '', url.toString())
+      getLocation((lat, lng) => { loadData(lat, lng, '', false) })
+      return
+    }
+
+    setLoading(true)
+    const located = await resolveSearchLocation(q)
+    if (located) {
+      await applyAnchor(located.lat, located.lng, located.label)
+      url.searchParams.set('q', q)
+      url.searchParams.set('lat', String(located.lat))
+      url.searchParams.set('lng', String(located.lng))
+      url.searchParams.set('near', located.label)
+      window.history.replaceState({}, '', url.toString())
+      await loadData(located.lat, located.lng, '', false)
+      return
+    }
+
+    url.searchParams.set('q', q)
     window.history.replaceState({}, '', url.toString())
-    loadData(anchorLat, anchorLng, q, !!q)
+    await loadData(effectiveLat, effectiveLng, q, true)
   }
   const withDistance = restrooms
-    .map(r => ({ ...r, distance: getDistance(anchorLat, anchorLng, r.lat, r.lng) }))
+    .map(r => ({ ...r, distance: getDistance(effectiveLat, effectiveLng, r.lat, r.lng) }))
     .sort((a, b) => a.distance - b.distance)
   const filtered = withDistance.filter(r => {
     if (emergency) return r.status==='green'
@@ -488,8 +559,7 @@ export default function FindPage() {
 
   return (
     <div style={{minHeight:'100vh',background:'#f8f9fa',fontFamily:"'Inter',system-ui,sans-serif"}}>
-      <nav style={{background:'white',borderBottom:'1px solid #f0f0f0',padding:'12px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',position:'sticky',top:0,zIndex:10}}>
-        <Logo height={32} />
+      <div style={{background:'white',borderBottom:'1px solid #f0f0f0',padding:'12px 20px',display:'flex',alignItems:'center',justifyContent:'flex-end'}}>
         <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
           <div style={{display:'flex',background:'#f5f5f5',borderRadius:'8px',padding:'3px'}}>
             <button onClick={()=>setLang('en')} style={{padding:'5px 12px',borderRadius:'6px',border:'none',fontSize:'14px',cursor:'pointer',background:lang==='en'?'white':'transparent'}}>🇺🇸</button>
@@ -498,7 +568,7 @@ export default function FindPage() {
           <button onClick={()=>setUnit(unit==='mi'?'km':'mi')} style={{background:'#f5f5f5',border:'none',padding:'7px 14px',borderRadius:'20px',fontSize:'13px',fontWeight:'600',cursor:'pointer',color:'#555'}}>{unit==='mi'?'km':'mi'}</button>
           <button onClick={()=>setEmergency(!emergency)} style={{background:emergency?'#DC2626':'white',color:emergency?'white':'#DC2626',border:'2px solid #DC2626',padding:'7px 16px',borderRadius:'20px',fontSize:'13px',fontWeight:'700',cursor:'pointer'}}>🚨 {emergency?'ON':'Urgent'}</button>
         </div>
-      </nav>
+      </div>
 
       <div style={{background:'white',padding:'12px 16px',borderBottom:'1px solid #f0f0f0'}}>
         <div style={{display:'flex',borderRadius:'12px',overflow:'hidden',border:'2px solid #1D9E75',boxShadow:'0 2px 8px rgba(29,158,117,0.15)'}}>
@@ -516,7 +586,7 @@ export default function FindPage() {
             <span style={{fontSize:'14px',color:'#555'}}>
               {lang === 'es' ? 'Resultados para ' : 'Results for '}<strong style={{color:'#0A2E1F'}}>{searchQuery}</strong>{lang === 'es' ? ' cerca de ' : ' near '}<strong style={{color:'#0A2E1F'}}>{locationName}</strong>
             </span>
-            <button onClick={()=>{setSearchQuery('');setSearchInput('');window.history.replaceState({},'',(window.location.pathname));loadData(anchorLat,anchorLng,'')}} style={{background:'#f0f0f0',border:'none',borderRadius:'20px',padding:'3px 10px',fontSize:'13px',cursor:'pointer',color:'#666'}}>{lang === 'es' ? '✕ Limpiar' : '✕ Clear'}</button>
+            <button onClick={()=>{setSearchQuery('');setSearchInput('');const url=new URL(window.location.href);url.searchParams.delete('q');url.searchParams.delete('lat');url.searchParams.delete('lng');url.searchParams.delete('near');window.history.replaceState({},'',url.pathname);getLocation((lat,lng)=>loadData(lat,lng,'',false))}} style={{background:'#f0f0f0',border:'none',borderRadius:'20px',padding:'3px 10px',fontSize:'13px',cursor:'pointer',color:'#666'}}>{lang === 'es' ? '✕ Limpiar' : '✕ Clear'}</button>
           </div>
         )}
       </div>
@@ -527,7 +597,7 @@ export default function FindPage() {
           <span style={{fontSize:'14px',color:'#555',fontWeight:'500'}}>
             {locating ? t.findingLocation : `${lang === 'es' ? 'Cerca de' : 'Near'} ${locationName}`}
           </span>
-          <button onClick={()=>getLocation((lat,lng)=>loadData(lat,lng,searchQuery))} style={{background:'none',border:'none',color:'#1D9E75',fontSize:'13px',cursor:'pointer',fontWeight:'600',marginLeft:'auto'}}>{t.updateLocation}</button>
+          <button onClick={()=>{window.history.replaceState({},'',window.location.pathname);getLocation((lat,lng)=>loadData(lat,lng,searchQuery,false))}} style={{background:'none',border:'none',color:'#1D9E75',fontSize:'13px',cursor:'pointer',fontWeight:'600',marginLeft:'auto'}}>{t.updateLocation}</button>
         </div>
         <div style={{display:'flex',gap:'8px',overflowX:'auto',paddingBottom:'2px'}}>
           {[
@@ -628,7 +698,7 @@ export default function FindPage() {
       </div>
 
       {showPromo&&promoTarget&&(<PromoModal restroom={promoTarget} onComplete={()=>{recordPinView(promoTarget, user?.id);setShowPromo(false);setShowPin(true)}}/>)}
-      {showRating&&ratingTarget&&(<RatingModal restroom={ratingTarget} user={user} onClose={()=>setShowRating(false)} onDone={()=>{setShowRating(false);setSuccessMsg('✅ Thank you!');setTimeout(()=>setSuccessMsg(''),3000);loadData(anchorLat,anchorLng,searchQuery)}} initialPinWorked={ratingTarget?._pinWorked}/>)}
+      {showRating&&ratingTarget&&(<RatingModal restroom={ratingTarget} user={user} onClose={()=>setShowRating(false)} onDone={()=>{setShowRating(false);setSuccessMsg('✅ Thank you!');setTimeout(()=>setSuccessMsg(''),3000);loadData(effectiveLat,effectiveLng,searchQuery,false)}} initialPinWorked={ratingTarget?._pinWorked}/>)}
 
       {showEditForm&&editTarget&&(
         <div onClick={()=>{if(!savingEdit)closeEditForm()}} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:50,display:'flex',alignItems:'flex-end'}}>

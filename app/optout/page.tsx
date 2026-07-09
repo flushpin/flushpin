@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import Logo from '../../components/Logo'
 import { supabase } from '../../lib/supabase'
 
 function getEmailTrust(email: string): 'generic' | 'business' {
@@ -68,13 +67,6 @@ export default function OptOutPage() {
 
   return (
     <main style={{margin:0,padding:0,fontFamily:"'Inter',system-ui,sans-serif",background:"#f8f9fa",minHeight:"100vh"}}>
-
-      {/* NAV */}
-      <nav style={{background:"white",borderBottom:"1px solid #f0f0f0",padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:20}}>
-        <Logo height={32} />
-        <a href="/" style={{color:"#555",textDecoration:"none",fontSize:"14px",fontWeight:"500"}}>← Back to home</a>
-      </nav>
-
       <div style={{maxWidth:"660px",margin:"0 auto",padding:"40px 20px 80px"}}>
 
         {submitted ? (

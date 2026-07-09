@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation'
 import SiteFooter from './SiteFooter'
 
-const hiddenPrefixes = ['/admin']
+const hiddenPrefixes = ['/admin', '/business', '/events']
 
 export default function ConditionalFooter() {
   const pathname = usePathname()

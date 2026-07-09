@@ -1,21 +1,55 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --fp-white: #ffffff;
+  --fp-ink: #1b1b21;
+  --fp-gray-600: #52525b;
+  --fp-gray-400: #a1a1aa;
+  --fp-border: #e5e7eb;
+  --fp-teal: #00a886;
+  --fp-teal-dark: #0f6e56;
+  --fp-teal-tint: #f0faf7;
+  --fp-footer: #1b1b21;
+  --background: var(--fp-white);
+  --foreground: var(--fp-ink);
 }
 
 @theme inline {
+  --color-fp-white: var(--fp-white);
+  --color-fp-ink: var(--fp-ink);
+  --color-fp-gray-600: var(--fp-gray-600);
+  --color-fp-gray-400: var(--fp-gray-400);
+  --color-fp-border: var(--fp-border);
+  --color-fp-teal: var(--fp-teal);
+  --color-fp-teal-dark: var(--fp-teal-dark);
+  --color-fp-teal-tint: var(--fp-teal-tint);
+  --color-fp-footer: var(--fp-footer);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-/* Site uses a fixed light theme; disable OS dark-mode override */
-
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--fp-white);
+  color: var(--fp-ink);
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.fp-card {
+  background: var(--fp-white);
+  border: 1px solid var(--fp-border);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.fp-hero-title {
+  color: var(--fp-ink);
+  font-size: clamp(40px, 6vw, 64px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
 }

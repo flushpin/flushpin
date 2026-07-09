@@ -1,0 +1,52 @@
+import { NextRequest, NextResponse } from 'next/server'
+
+function unauthorized() {
+  return new NextResponse('Authentication required', {
+    status: 401,
+    headers: {
+      'WWW-Authenticate': 'Basic realm="FlushPin Admin", charset="UTF-8"',
+    },
+  })
+}
+
+function safeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false
+  let mismatch = 0
+  for (let i = 0; i < a.length; i++) {
+    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  }
+  return mismatch === 0
+}
+
+export function middleware(request: NextRequest) {
+  const expectedUser = process.env.ADMIN_BASIC_USER
+  const expectedPass = process.env.ADMIN_BASIC_PASS
+
+  if (!expectedUser || !expectedPass) {
+    return new NextResponse('Admin auth is not configured on this deployment.', { status: 503 })
+  }
+
+  const auth = request.headers.get('authorization')
+  if (!auth?.startsWith('Basic ')) return unauthorized()
+
+  try {
+    const decoded = atob(auth.slice('Basic '.length))
+    const separator = decoded.indexOf(':')
+    if (separator < 0) return unauthorized()
+
+    const submittedUser = decoded.slice(0, separator)
+    const submittedPass = decoded.slice(separator + 1)
+
+    if (safeEqual(submittedUser, expectedUser) && safeEqual(submittedPass, expectedPass)) {
+      return NextResponse.next()
+    }
+  } catch {
+    return unauthorized()
+  }
+
+  return unauthorized()
+}
+
+export const config = {
+  matcher: ['/admin/:path*', '/api/admin/:path*'],
+}

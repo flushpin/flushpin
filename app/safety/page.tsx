@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Logo from '../../components/Logo'
 
 export const metadata: Metadata = {
   alternates: {
@@ -10,11 +9,6 @@ export const metadata: Metadata = {
 export default function SafetyPage() {
   return (
     <main style={{margin:0,padding:0,fontFamily:"'Inter',system-ui,sans-serif",background:"#fff",minHeight:"100vh"}}>
-      <nav style={{background:"white",borderBottom:"1px solid #f0f0f0",padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:20}}>
-        <Logo height={48} />
-        <a href="/" style={{color:"#555",textDecoration:"none",fontSize:"14px",fontWeight:"500"}}>← Back to home</a>
-      </nav>
-
       <div style={{maxWidth:"680px",margin:"0 auto",padding:"48px 24px 80px"}}>
         <div style={{textAlign:"center",marginBottom:"40px"}}>
           <div style={{display:"inline-block",background:"#FFF7ED",color:"#9A3412",fontSize:"13px",padding:"6px 18px",borderRadius:"20px",marginBottom:"16px",fontWeight:"600"}}>
