@@ -1,5 +1,5 @@
 'use client'
-import { Suspense, useState, useEffect } from 'react'
+import { Suspense, useState, useEffect, useRef } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
 import RatingModal from '../../components/RatingModal'
@@ -23,6 +23,14 @@ import {
   type AccessEditState,
   type AccessMethod,
 } from '../../lib/accessType'
+import type { NearbyPlaceResult } from '../../lib/nearby'
+import {
+  fetchNearbyPlaces,
+  registerNearbyUnmountAbort,
+} from '../../lib/nearbyClient'
+
+const RESTROOM_PUBLIC_FIELDS =
+  'id, name, address, score, pin_updated_at, status, verified, accessible, has_baby_changing, access_type, has_code, lat, lng, place_id, pin'
 
 function recordPinView(restroom: { id?: unknown }, userId?: string | null) {
   if (!hasDbRestroomId(restroom.id)) return
@@ -41,18 +49,7 @@ function getDistance(lat1:number, lng1:number, lat2:number, lng2:number) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
 }
 
-function getDistanceMeters(lat1:number, lng1:number, lat2:number, lng2:number) {
-  return getDistance(lat1, lng1, lat2, lng2) * 1609.34
-}
-
 const RADIUS_MILES = 12
-
-function nameSimilar(a:string, b:string) {
-  const clean = (s:string) => s.toLowerCase().replace(/[^a-z0-9]/g,'').trim()
-  const ca = clean(a)
-  const cb = clean(b)
-  return ca.includes(cb) || cb.includes(ca) || ca === cb
-}
 
 type MapPlace = { name?: string; address?: string; lat: number; lng: number; [key: string]: unknown }
 
@@ -66,12 +63,6 @@ function matchesSearch(r: MapPlace, query: string) {
 
 function withinRadius(r: MapPlace, lat: number, lng: number, miles: number) {
   return getDistance(lat, lng, r.lat, r.lng) <= miles
-}
-
-function bboxDeltas(lat: number, miles: number) {
-  const latDelta = miles / 69
-  const lngDelta = miles / (69 * Math.cos(lat * Math.PI / 180))
-  return { latDelta, lngDelta }
 }
 
 export default function FindPage() {
@@ -120,6 +111,11 @@ function MapPageContent() {
   const [searchInput, setSearchInput] = useState('')
   const [anchorLat, setAnchorLat] = useState<number | null>(null)
   const [anchorLng, setAnchorLng] = useState<number | null>(null)
+  const [nearbyError, setNearbyError] = useState<string | null>(null)
+  const [nearbyEmpty, setNearbyEmpty] = useState(false)
+  const [showRetry, setShowRetry] = useState(false)
+  const loadRequestIdRef = useRef(0)
+  const unmountAbortRef = useRef<AbortController | null>(null)
 
   const resolveCityLabel = async (lat: number, lng: number) => {
     try {
@@ -150,6 +146,34 @@ function MapPageContent() {
     setLocationName(label || await resolveCityLabel(lat, lng))
   }
 
+  const mapNearbyToCard = (p: NearbyPlaceResult) => {
+    const isPublic = p.category_group === 'public_restroom'
+    return {
+      id: isPublic ? `public_${p.place_id}` : `google_${p.place_id}`,
+      place_id: p.place_id,
+      google_place_id: isPublic ? null : p.place_id,
+      name: p.name,
+      address: p.address,
+      lat: p.lat,
+      lng: p.lng,
+      type: p.types[0] ?? 'other',
+      status: p.verified ? 'green' : p.access_available ? 'amber' : 'red',
+      source: p.source ?? (isPublic ? 'supabase' : 'google'),
+      has_code: p.has_code,
+      category_group: p.category_group,
+      distance_m: p.distance_m,
+      pin: '',
+      stars: 0,
+      score: 0,
+      verified: p.verified ? 'Community verified' : '',
+      accessible: false,
+    }
+  }
+
+  const fetchNearbyApi = async (lat: number, lng: number, force = false) => {
+    return fetchNearbyPlaces(lat, lng, { force })
+  }
+
   const fetchGooglePlaces = async (lat: number, lng: number, keyword: string) => {
     try {
       const q = keyword ? `&q=${encodeURIComponent(keyword)}` : ''
@@ -164,58 +188,69 @@ function MapPageContent() {
     }
   }
 
-  const fetchSupabaseNearby = async (lat: number, lng: number, keyword: string) => {
-    const { data: rpcData, error: rpcError } = await supabase.rpc('get_nearby_restrooms', {
-      user_lat: lat,
-      user_lng: lng,
-      radius_miles: RADIUS_MILES,
-      search_text: keyword,
-      baby_filter: false,
-    })
-    if (!rpcError && rpcData) {
-      return rpcData.filter((r: MapPlace) =>
-        withinRadius(r, lat, lng, RADIUS_MILES) && matchesSearch(r, keyword)
-      )
+  const hydrateRestroomForAccess = async (target: Record<string, unknown>) => {
+    if (target.access_type || (typeof target.pin === 'string' && target.pin.trim())) {
+      return target
     }
-
-    const { latDelta, lngDelta } = bboxDeltas(lat, RADIUS_MILES)
-    const { data, error } = await supabase
-      .from('restroom')
-      .select('*')
-      .gte('lat', lat - latDelta)
-      .lte('lat', lat + latDelta)
-      .gte('lng', lng - lngDelta)
-      .lte('lng', lng + lngDelta)
-      .limit(300)
-
-    if (error || !data) return []
-
-    return data.filter(r =>
-      withinRadius(r, lat, lng, RADIUS_MILES) && matchesSearch(r, keyword)
-    )
+    const placeId = (target.place_id ?? target.google_place_id) as string | undefined
+    if (!placeId) return target
+    const { data } = await supabase
+      .from('restroom_public')
+      .select(RESTROOM_PUBLIC_FIELDS)
+      .eq('place_id', placeId)
+      .maybeSingle()
+    if (!data) return target
+    return { ...target, ...data, distance: target.distance }
   }
 
-  const loadData = async (lat: number, lng: number, keyword: string = '', includeGoogle = false) => {
-    setLoading(true)
+  const loadData = async (
+    queryLat: number,
+    queryLng: number,
+    keyword: string = '',
+    useKeywordGoogleFallback = false,
+    options?: { force?: boolean },
+  ) => {
+    const force = options?.force ?? false
+    const requestId = ++loadRequestIdRef.current
+    if (restrooms.length === 0) setLoading(true)
+    setNearbyError(null)
+    setShowRetry(false)
+    setNearbyEmpty(false)
     const trimmedKeyword = keyword.trim()
-    const googlePromise =
-      includeGoogle && trimmedKeyword
-        ? fetchGooglePlaces(lat, lng, trimmedKeyword)
-        : Promise.resolve([])
-    const [supabaseData, googlePlaces] = await Promise.all([
-      fetchSupabaseNearby(lat, lng, keyword),
-      googlePromise,
-    ])
 
-    const newPlaces = googlePlaces.filter((gp: { name: string; lat: number; lng: number }) =>
-      !supabaseData.some((sp: { name: string; lat: number; lng: number }) => {
-        const sameish = nameSimilar(sp.name, gp.name)
-        const tooClose = getDistanceMeters(sp.lat, sp.lng, gp.lat, gp.lng) < 100
-        return sameish || tooClose
-      })
-    )
+    if (useKeywordGoogleFallback && trimmedKeyword) {
+      const googlePlaces = await fetchGooglePlaces(queryLat, queryLng, trimmedKeyword)
+      if (requestId !== loadRequestIdRef.current) return
+      setRestrooms(googlePlaces)
+      setLoading(false)
+      return
+    }
 
-    setRestrooms([...supabaseData, ...newPlaces])
+    const result = await fetchNearbyApi(queryLat, queryLng, force)
+    if (requestId !== loadRequestIdRef.current) return
+
+    if (result.status === 'aborted') {
+      setLoading(false)
+      return
+    }
+
+    if (result.status === 'error') {
+      setNearbyError(result.message)
+      setShowRetry(result.code === 'places_unavailable')
+      setLoading(false)
+      return
+    }
+
+    const mapped = result.places
+      .map(mapNearbyToCard)
+      .filter(
+        (r) =>
+          withinRadius(r, queryLat, queryLng, RADIUS_MILES) &&
+          matchesSearch(r, trimmedKeyword),
+      )
+
+    setRestrooms(mapped)
+    setNearbyEmpty(mapped.length === 0)
     setLoading(false)
   }
 
@@ -240,8 +275,10 @@ function MapPageContent() {
     )
   }
 
-  const effectiveLat = anchorLat ?? userLat ?? 33.6846
-  const effectiveLng = anchorLng ?? userLng ?? -117.7892
+  const queryLat = anchorLat ?? userLat ?? 33.6846
+  const queryLng = anchorLng ?? userLng ?? -117.7892
+  const sortLat = userLat ?? anchorLat ?? 33.6846
+  const sortLng = userLng ?? anchorLng ?? -117.7892
 
   const categoryParam = searchParams.get('category')
   const activeCategory: MapCategorySlug | null = isMapCategorySlug(categoryParam) ? categoryParam : null
@@ -255,6 +292,10 @@ function MapPageContent() {
   }
 
   useEffect(() => {
+    const abortController = new AbortController()
+    unmountAbortRef.current = abortController
+    registerNearbyUnmountAbort(abortController)
+
     const params = new URLSearchParams(window.location.search)
     const q = params.get('q') || ''
     const near = params.get('near') || ''
@@ -285,10 +326,16 @@ function MapPageContent() {
         }
       }
 
-      getLocation((lat, lng) => { loadData(lat, lng, '', false) })
+      getLocation((lat, lng) => { loadData(lat, lng, '', false, { force: true }) })
     }
 
     init()
+
+    return () => {
+      abortController.abort()
+      registerNearbyUnmountAbort(null)
+      unmountAbortRef.current = null
+    }
   }, [])
 
   const handleSearch = async () => {
@@ -302,7 +349,7 @@ function MapPageContent() {
       url.searchParams.delete('lng')
       url.searchParams.delete('near')
       window.history.replaceState({}, '', url.toString())
-      getLocation((lat, lng) => { loadData(lat, lng, '', false) })
+      getLocation((lat, lng) => { loadData(lat, lng, '', false, { force: true }) })
       return
     }
 
@@ -321,10 +368,10 @@ function MapPageContent() {
 
     url.searchParams.set('q', q)
     window.history.replaceState({}, '', url.toString())
-    await loadData(effectiveLat, effectiveLng, q, true)
+    await loadData(queryLat, queryLng, q, true)
   }
   const withDistance = restrooms
-    .map(r => ({ ...r, distance: getDistance(effectiveLat, effectiveLng, r.lat, r.lng) }))
+    .map(r => ({ ...r, distance: getDistance(sortLat, sortLng, r.lat, r.lng) }))
     .sort((a, b) => a.distance - b.distance)
   const statusFiltered = withDistance.filter(r => {
     if (emergency) return r.status==='green'
@@ -449,13 +496,15 @@ function MapPageContent() {
     setShowEditForm(true)
   }
 
-  const handleAccessAction = (r: any, e: React.MouseEvent) => {
+  const handleAccessAction = async (r: any, e: React.MouseEvent) => {
     e.stopPropagation()
-    if (restroomHasAccessInfo(r)) {
-      setPromoTarget(r)
+    const hydrated = await hydrateRestroomForAccess(r)
+    if (restroomHasAccessInfo(hydrated)) {
+      setSelected(hydrated)
+      setPromoTarget(hydrated)
       setShowPromo(true)
     } else {
-      handleEditOpen(r, e, 'share')
+      handleEditOpen(hydrated, e, 'share')
     }
   }
 
@@ -624,7 +673,7 @@ function MapPageContent() {
             <span style={{fontSize:'14px',color:'#555'}}>
               {lang === 'es' ? 'Resultados para ' : 'Results for '}<strong style={{color:'#0A2E1F'}}>{searchQuery}</strong>{lang === 'es' ? ' cerca de ' : ' near '}<strong style={{color:'#0A2E1F'}}>{locationName}</strong>
             </span>
-            <button onClick={()=>{setSearchQuery('');setSearchInput('');const url=new URL(window.location.href);url.searchParams.delete('q');url.searchParams.delete('lat');url.searchParams.delete('lng');url.searchParams.delete('near');window.history.replaceState({},'',`${url.pathname}${url.search}`);getLocation((lat,lng)=>loadData(lat,lng,'',false))}} style={{background:'#f0f0f0',border:'none',borderRadius:'20px',padding:'3px 10px',fontSize:'13px',cursor:'pointer',color:'#666'}}>{lang === 'es' ? '✕ Limpiar' : '✕ Clear'}</button>
+            <button onClick={()=>{setSearchQuery('');setSearchInput('');const url=new URL(window.location.href);url.searchParams.delete('q');url.searchParams.delete('lat');url.searchParams.delete('lng');url.searchParams.delete('near');window.history.replaceState({},'',`${url.pathname}${url.search}`);getLocation((lat,lng)=>loadData(lat,lng,'',false,{force:true}))}} style={{background:'#f0f0f0',border:'none',borderRadius:'20px',padding:'3px 10px',fontSize:'13px',cursor:'pointer',color:'#666'}}>{lang === 'es' ? '✕ Limpiar' : '✕ Clear'}</button>
           </div>
         )}
         {categoryApplies && activeCategory && (
@@ -671,7 +720,7 @@ function MapPageContent() {
           <span style={{fontSize:'14px',color:'#555',fontWeight:'500'}}>
             {locating ? t.findingLocation : `${lang === 'es' ? 'Cerca de' : 'Near'} ${locationName}`}
           </span>
-          <button onClick={()=>{window.history.replaceState({},'',window.location.pathname);getLocation((lat,lng)=>loadData(lat,lng,searchQuery,false))}} style={{background:'none',border:'none',color:'#1D9E75',fontSize:'13px',cursor:'pointer',fontWeight:'600',marginLeft:'auto'}}>{t.updateLocation}</button>
+          <button onClick={()=>{window.history.replaceState({},'',window.location.pathname);getLocation((lat,lng)=>loadData(lat,lng,searchQuery,false,{force:true}))}} style={{background:'none',border:'none',color:'#1D9E75',fontSize:'13px',cursor:'pointer',fontWeight:'600',marginLeft:'auto'}}>{t.updateLocation}</button>
         </div>
         <div style={{display:'flex',gap:'8px',overflowX:'auto',paddingBottom:'2px'}}>
           {[
@@ -688,6 +737,12 @@ function MapPageContent() {
 
       {emergency&&<div style={{background:'#FEF2F2',borderBottom:'1px solid #FCA5A5',padding:'10px 20px'}}><p style={{fontSize:'14px',fontWeight:'700',color:'#DC2626',margin:0}}>{t.urgentMode}</p></div>}
       {successMsg&&<div style={{background:'#E1F5EE',borderBottom:'1px solid #9FE1CB',padding:'10px 20px'}}><p style={{fontSize:'14px',fontWeight:'700',color:'#1D9E75',margin:0}}>{successMsg}</p></div>}
+      {nearbyError&&<div style={{background:'#FEF3C7',borderBottom:'1px solid #FCD34D',padding:'10px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px',flexWrap:'wrap'}}>
+        <p style={{fontSize:'14px',fontWeight:'600',color:'#92400E',margin:0}}>{nearbyError}</p>
+        {showRetry&&(
+          <button type="button" onClick={()=>loadData(queryLat,queryLng,searchQuery,false,{force:true})} style={{background:'#92400E',color:'white',border:'none',padding:'8px 14px',borderRadius:'8px',fontSize:'13px',fontWeight:'600',cursor:'pointer'}}>Retry</button>
+        )}
+      </div>}
 
       <div style={{padding:'16px 16px 100px'}}>
         <p style={{fontSize:'14px',color:'#999',fontWeight:'500',margin:'0 0 12px'}}>
@@ -700,6 +755,13 @@ function MapPageContent() {
           <div style={{fontSize:'40px',marginBottom:'12px'}}>🚽</div>
           <p style={{color:'#999',fontSize:'15px'}}>{t.findingLocation}</p>
         </div>}
+
+        {!loading && !nearbyError && nearbyEmpty && displayed.length === 0 && !searchQuery && !categoryApplies && (
+          <div style={{textAlign:'center',padding:'60px 20px'}}>
+            <div style={{fontSize:'40px',marginBottom:'12px'}}>📍</div>
+            <p style={{color:'#555',fontSize:'17px',fontWeight:'700',marginBottom:'8px'}}>No nearby restroom locations found.</p>
+          </div>
+        )}
 
         {!loading && displayed.length === 0 && searchQuery && (
           <div style={{textAlign:'center',padding:'60px 20px'}}>
@@ -738,6 +800,9 @@ function MapPageContent() {
                   <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'4px'}}>
                     <div style={{width:'9px',height:'9px',borderRadius:'50%',background:statusColor(r.status||'red'),flexShrink:0}}/>
                     <span style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:'16px',fontWeight:'700',color:'#0A2E1F'}}>{r.name}</span>
+                    {r.category_group === 'public_restroom' && (
+                      <span style={{fontSize:'11px',background:'#E0F2FE',color:'#0369A1',padding:'2px 8px',borderRadius:'10px',fontWeight:'600'}}>Public</span>
+                    )}
                     {r.accessible&&<span style={{fontSize:'13px'}}>♿</span>}
                     {r.has_baby_changing&&<span style={{fontSize:'13px'}}>🍼</span>}
                   </div>
@@ -793,7 +858,7 @@ function MapPageContent() {
       </div>
 
       {showPromo&&promoTarget&&(<PromoModal restroom={promoTarget} onComplete={()=>{recordPinView(promoTarget, user?.id);setShowPromo(false);setShowPin(true)}}/>)}
-      {showRating&&ratingTarget&&(<RatingModal restroom={ratingTarget} user={user} onClose={()=>setShowRating(false)} onDone={()=>{setShowRating(false);setSuccessMsg('✅ Thank you!');setTimeout(()=>setSuccessMsg(''),3000);loadData(effectiveLat,effectiveLng,searchQuery,false)}} initialPinWorked={ratingTarget?._pinWorked}/>)}
+      {showRating&&ratingTarget&&(<RatingModal restroom={ratingTarget} user={user} onClose={()=>setShowRating(false)} onDone={()=>{setShowRating(false);setSuccessMsg('✅ Thank you!');setTimeout(()=>setSuccessMsg(''),3000);loadData(queryLat,queryLng,searchQuery,false)}} initialPinWorked={ratingTarget?._pinWorked}/>)}
 
       {showEditForm&&editTarget&&(
         <div onClick={()=>{if(!savingEdit)closeEditForm()}} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:50,display:'flex',alignItems:'flex-end'}}>

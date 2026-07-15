@@ -20,6 +20,25 @@ export function getVerifiedDisplayLabel(row: RestroomVerifiedFields): string {
   return ''
 }
 
+const PLACEHOLDER_VERIFIED_LABELS = new Set([
+  'not yet verified',
+  'access info unknown',
+  'unknown',
+  'unverified',
+  'pending',
+])
+
+/** Nearby API boolean — primary signal is status green; placeholder labels are false. */
+export function mapNearbyVerifiedBoolean(
+  row: RestroomVerifiedFields & { status?: string | null },
+): boolean {
+  if (row.status === 'green') return true
+  const label = getVerifiedDisplayLabel(row).toLowerCase()
+  if (!label) return false
+  if (PLACEHOLDER_VERIFIED_LABELS.has(label)) return false
+  return false
+}
+
 /** Whether listing should be treated as community-verified in web UI. */
 export function isRestroomVerified(row: RestroomVerifiedFields & { status?: string | null }): boolean {
   if (row.status === 'green') return true
