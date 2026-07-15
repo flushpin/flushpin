@@ -391,9 +391,57 @@ assert(
   mapNearbyVerifiedBoolean({ verified: 'Not yet verified', status: 'red' }) === false,
 )
 
-console.log('sortNearbyPlaces 30m group')
+console.log('sortNearbyPlaces distance bands')
 const sorted = sortNearbyPlaces([mkPlace('far', 500), mkPlace('close', 25), mkPlace('mid', 100)])
-assert('30m group first', sorted[0].place_id === 'close')
+assert('closest distance band first', sorted[0].place_id === 'close')
+assert('mid before far by distance band', sorted[1].place_id === 'mid')
+
+console.log('real brand type acceptance fixtures')
+{
+  const panda = mapGoogleRawToCandidate({
+    id: 'ChIJpanda',
+    displayName: { text: 'Panda Express' },
+    formattedAddress: 'Irvine',
+    location: { latitude: 33.7005151, longitude: -117.8365633 },
+    types: ['chinese_restaurant', 'fast_food_restaurant', 'restaurant', 'food', 'point_of_interest', 'establishment'],
+  }, 33.7005151, -117.8365633)
+  assert('Panda Express accepted via fast_food_restaurant', panda?.name === 'Panda Express')
+
+  const chipotle = mapGoogleRawToCandidate({
+    id: 'ChIJchip',
+    displayName: { text: 'Chipotle Mexican Grill' },
+    formattedAddress: 'Irvine',
+    location: { latitude: 33.6855242, longitude: -117.8112582 },
+    types: ['mexican_restaurant', 'fast_food_restaurant', 'restaurant', 'food', 'point_of_interest', 'establishment'],
+  }, 33.6855242, -117.8112582)
+  assert('Chipotle accepted via fast_food_restaurant', chipotle?.name === 'Chipotle Mexican Grill')
+
+  const seven = mapGoogleRawToCandidate({
+    id: 'ChIJ711',
+    displayName: { text: '7-Eleven' },
+    formattedAddress: 'Irvine',
+    location: { latitude: 33.6819592, longitude: -117.812413 },
+    types: ['convenience_store', 'point_of_interest', 'establishment'],
+  }, 33.6819592, -117.812413)
+  assert('7-Eleven accepted via convenience_store', seven?.name === '7-Eleven')
+
+  const gas = mapGoogleRawToCandidate({
+    id: 'ChIJgas',
+    displayName: { text: 'Chevron' },
+    formattedAddress: 'Irvine',
+    location: { latitude: 33.6931294, longitude: -117.8260154 },
+    types: ['gas_station', 'point_of_interest', 'service', 'establishment'],
+  }, 33.6931294, -117.8260154)
+  assert('Chevron accepted via gas_station', gas?.name === 'Chevron')
+}
+
+assert('discovery-only helper true for bare google business', isGoogleDiscoveryOnlyPlace({
+  category_group: 'business_restroom',
+  source: 'google',
+  has_code: false,
+  verified: false,
+  access_available: false,
+}) === true)
 
 console.log('blacklist')
 assert('bank filtered', mapGoogleRawToCandidate({

@@ -184,6 +184,21 @@ export type NearbyApiResponse = {
   source: NearbySourceKind
   count: number
   places: NearbyPlaceResult[]
+  /** Preview-only diagnostic block when debug=1 is requested. */
+  _preview_audit?: NearbyPreviewAudit
+}
+
+export type NearbyPreviewAudit = {
+  google_tiers_m: number[]
+  tiers: Array<{ radius_m: number; raw_count: number; passed_filter_count: number }>
+  filtered_out: Array<{ name: string; reason: string | null; raw_types: string[] }>
+  lookup?: {
+    query: string
+    in_raw_google: boolean
+    in_final: boolean
+    first_tier_m?: number
+    filter_reason?: string | null
+  }
 }
 
 export type GoogleRawPlace = {
@@ -281,6 +296,8 @@ export function resetNearbyCacheWarningsForTests() {
 export type NearbyRequest = {
   lat: number
   lng: number
+  previewAudit?: boolean
+  targetName?: string
 }
 
 export function normalizeGooglePlaceId(value: string | null | undefined): string | null {
@@ -558,10 +575,6 @@ export function mapGoogleRawToCandidate(
 
 export function sortNearbyPlaces(places: NearbyPlaceResult[]): NearbyPlaceResult[] {
   return [...places].sort((a, b) => {
-    const aClose = a.distance_m <= NEARBY_CLOSE_GROUP_M ? 0 : 1
-    const bClose = b.distance_m <= NEARBY_CLOSE_GROUP_M ? 0 : 1
-    if (aClose !== bClose) return aClose - bClose
-
     const bandA = Math.floor(a.distance_m / NEARBY_CLOSE_GROUP_M)
     const bandB = Math.floor(b.distance_m / NEARBY_CLOSE_GROUP_M)
     if (bandA !== bandB) return bandA - bandB
@@ -841,13 +854,31 @@ export async function runGoogleNearbySearch(
   userLat: number,
   userLng: number,
   deps: Pick<NearbyDeps, 'googleFetch' | 'googleApiKey' | 'onGoogleCall'>,
+  audit?: {
+    tiers: Array<{ radius_m: number; raw_count: number; passed_filter_count: number }>
+    raw_names_by_tier: Array<{ radius_m: number; names: string[] }>
+  },
 ): Promise<GoogleRawPlace[]> {
+  const recordTier = (radiusM: number, raw: GoogleRawPlace[]) => {
+    if (!audit) return
+    audit.tiers.push({
+      radius_m: radiusM,
+      raw_count: raw.length,
+      passed_filter_count: googleRawToBusinessPlaces(raw, userLat, userLng).length,
+    })
+    audit.raw_names_by_tier.push({
+      radius_m: radiusM,
+      names: raw.map((p) => p.displayName?.text?.trim() || '').filter(Boolean),
+    })
+  }
+
   const tier1 = await fetchGoogleSearchNearby(
     userLat,
     userLng,
     NEARBY_RADIUS_TIER1_M,
     deps,
   )
+  recordTier(NEARBY_RADIUS_TIER1_M, tier1)
   let merged = tier1
   let candidates = googleRawToBusinessPlaces(merged, userLat, userLng)
 
@@ -858,6 +889,7 @@ export async function runGoogleNearbySearch(
       NEARBY_RADIUS_TIER2_M,
       deps,
     )
+    recordTier(NEARBY_RADIUS_TIER2_M, tier2)
     merged = mergeGooglePlaces(tier1, tier2)
     candidates = googleRawToBusinessPlaces(merged, userLat, userLng)
 
@@ -868,6 +900,7 @@ export async function runGoogleNearbySearch(
         NEARBY_RADIUS_TIER3_M,
         deps,
       )
+      recordTier(NEARBY_RADIUS_TIER3_M, tier3)
       merged = mergeGooglePlaces(tier1, tier2, tier3)
     }
   }
@@ -888,6 +921,10 @@ export async function buildNearbyResponse(
   let rawGoogle: GoogleRawPlace[] = []
   let cacheCenter: { lat: number; lng: number } | null = null
   const googleTiersUsed = new Set<number>()
+  let tierAudit: {
+    tiers: Array<{ radius_m: number; raw_count: number; passed_filter_count: number }>
+    raw_names_by_tier: Array<{ radius_m: number; names: string[] }>
+  } | null = null
 
   if (deps.supabase) {
     try {
@@ -912,13 +949,16 @@ export async function buildNearbyResponse(
 
   if (!cached) {
     try {
+      tierAudit = request.previewAudit
+        ? { tiers: [], raw_names_by_tier: [] }
+        : null
       rawGoogle = await runGoogleNearbySearch(lat, lng, {
         ...deps,
         onGoogleCall: (radiusM) => {
           googleTiersUsed.add(radiusM)
           deps.onGoogleCall?.(radiusM)
         },
-      })
+      }, tierAudit ?? undefined)
       source = 'google'
 
       if (deps.supabase && cacheAvailable) {
@@ -998,6 +1038,52 @@ export async function buildNearbyResponse(
   }
 
   assertNoPinFieldsInResponse(response)
+
+  if (request.previewAudit) {
+    const filteredOut: NearbyPreviewAudit['filtered_out'] = []
+    for (const raw of rawGoogle) {
+      const placeAudit = auditGooglePlaceFilter(raw)
+      if (placeAudit.decision === 'excluded') {
+        filteredOut.push({
+          name: placeAudit.name,
+          reason: placeAudit.exclusion_reason,
+          raw_types: placeAudit.raw_types,
+        })
+      }
+    }
+
+    let lookup: NearbyPreviewAudit['lookup']
+    if (request.targetName?.trim()) {
+      const query = request.targetName.trim().toLowerCase()
+      const inFinal = merged.some((p) => p.name.toLowerCase().includes(query))
+      const rawMatch = rawGoogle.find((p) =>
+        (p.displayName?.text ?? '').toLowerCase().includes(query),
+      )
+      let firstTier: number | undefined
+      if (tierAudit) {
+        for (const tier of tierAudit.raw_names_by_tier) {
+          if (tier.names.some((n) => n.toLowerCase().includes(query))) {
+            firstTier = tier.radius_m
+            break
+          }
+        }
+      }
+      lookup = {
+        query: request.targetName.trim(),
+        in_raw_google: !!rawMatch,
+        in_final: inFinal,
+        first_tier_m: firstTier,
+        filter_reason: rawMatch ? auditGooglePlaceFilter(rawMatch).exclusion_reason : 'not_in_google_raw',
+      }
+    }
+
+    response._preview_audit = {
+      google_tiers_m: [...googleTiersUsed],
+      tiers: tierAudit?.tiers ?? [],
+      filtered_out: filteredOut.slice(0, 25),
+      lookup,
+    }
+  }
 
   logNearbyDevTelemetry({
     cache_hit: cached,

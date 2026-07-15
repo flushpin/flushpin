@@ -53,8 +53,17 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const previewAudit =
+      process.env.VERCEL_ENV === 'preview' && searchParams.get('debug') === '1'
+    const targetName = searchParams.get('target')
+
     const response = await buildNearbyResponse(
-      { lat: coords.lat, lng: coords.lng },
+      {
+        lat: coords.lat,
+        lng: coords.lng,
+        previewAudit,
+        targetName: targetName ?? undefined,
+      },
       {
         googleFetch: fetch,
         supabase,

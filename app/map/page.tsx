@@ -812,7 +812,23 @@ function MapPageContent() {
                   {r.opt_out&&<div style={{background:'#FEE2E2',borderRadius:'8px',padding:'6px 12px',marginLeft:'17px',marginBottom:'6px',display:'inline-flex',alignItems:'center',gap:'6px'}}><span>🚫</span><span style={{fontSize:'13px',fontWeight:'700',color:'#DC2626'}}>{lang === 'es' ? 'Baño no disponible al público' : 'Restroom not available to the public'}</span></div>}
                   <div style={{display:'flex',gap:'8px',alignItems:'center',paddingLeft:'17px',flexWrap:'wrap'}}>
                     {r.score>0&&r.stars>0&&!r.source&&<span style={{fontSize:'13px',color:'#D97706',fontWeight:'500'}}>{'★'.repeat(r.stars||0)}{'☆'.repeat(5-(r.stars||0))} {r.score}</span>}
-                    {!r.discovery_only && (() => {
+                    {r.discovery_only ? (
+                      <span style={{fontSize:'12px',color:'#64748B',fontWeight:'500'}}>
+                        {lang === 'es' ? 'Detalles de acceso aún no agregados' : 'Access details not added yet'}
+                      </span>
+                    ) : r.category_group === 'public_restroom' ? (
+                      <span style={{fontSize:'12px',background:'#E0F2FE',color:'#0369A1',padding:'3px 9px',borderRadius:'10px',fontWeight:'600'}}>
+                        {lang === 'es' ? 'Baño público' : 'Public restroom'}
+                      </span>
+                    ) : r.verified ? (
+                      <span style={{fontSize:'12px',background:'#D1FAE5',color:'#065F46',padding:'3px 9px',borderRadius:'10px',fontWeight:'600'}}>
+                        {lang === 'es' ? 'Verificado' : 'Verified'}
+                      </span>
+                    ) : r.has_code ? (
+                      <span style={{fontSize:'12px',background:'#E1F5EE',color:'#085041',padding:'3px 9px',borderRadius:'10px',fontWeight:'600'}}>
+                        {lang === 'es' ? 'Código disponible' : 'Code available'}
+                      </span>
+                    ) : (() => {
                       const badge = getAccessListLabel(r)
                       const hasInfo = restroomHasAccessInfo(r)
                       if (hasInfo) {
@@ -823,7 +839,7 @@ function MapPageContent() {
                           </>
                         )
                       }
-                      return <span style={{fontSize:'12px',background:'#FEE2E2',color:statusColor('red'),padding:'3px 9px',borderRadius:'10px',fontWeight:'600'}}>{statusLabel('red')}</span>
+                      return null
                     })()}
                   </div>
                 </div>
