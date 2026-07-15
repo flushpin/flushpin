@@ -11,15 +11,18 @@ import {
   NEARBY_RADIUS_TIER3_M,
   PUBLIC_RESTROOM_RADIUS_M,
   assertNoPinFieldsInResponse,
+  auditGooglePlaceFilter,
   cacheCenterTooFar,
   cellKey,
   dedupeNearbyPlaces,
   googleRawToBusinessPlaces,
   haversineDistanceMeters,
   isBlacklistedGoogleName,
+  isGoogleDiscoveryOnlyPlace,
   isWithinPublicRestroomRadius,
   mapGoogleRawToCandidate,
   mergeGooglePlaces,
+  nearbyResultPriority,
   normalizeGooglePlaceId,
   overlayBooleans,
   parseCachePayload,
@@ -400,6 +403,65 @@ assert('bank filtered', mapGoogleRawToCandidate({
   location: { latitude: 1, longitude: 2 },
   types: ['restaurant'],
 }, 1, 2) === null)
+
+console.log('Google business type filters')
+{
+  const policeAudit = auditGooglePlaceFilter({
+    displayName: { text: 'Bonds Irvine Police Department' },
+    types: ['restaurant', 'food', 'point_of_interest', 'establishment'],
+  })
+  assert('police department excluded by institution name', policeAudit.decision === 'excluded')
+  assert('police matched restaurant type but still excluded', policeAudit.matching_allowed_type === 'restaurant')
+  assert(
+    'police exclusion reason is institution',
+    mapGoogleRawToCandidate({
+      id: 'ChIJpolice',
+      displayName: { text: 'Bonds Irvine Police Department' },
+      formattedAddress: '3851 Alton Pkwy',
+      location: { latitude: 33.6846, longitude: -117.8265 },
+      types: ['restaurant', 'food', 'point_of_interest', 'establishment'],
+    }, 33.6846, -117.8265) === null,
+  )
+
+  const bakeryAudit = auditGooglePlaceFilter({
+    displayName: { text: 'Health choice' },
+    types: ['bakery', 'food_store', 'store', 'food', 'point_of_interest', 'establishment'],
+  })
+  assert('bakery allowed via exact type match', bakeryAudit.decision === 'included')
+  assert('bakery match reason', bakeryAudit.matching_allowed_type === 'bakery')
+
+  const excludedTypeAudit = auditGooglePlaceFilter({
+    displayName: { text: 'City Hall Cafe' },
+    types: ['restaurant', 'city_hall', 'establishment'],
+  })
+  assert('city_hall excluded type blocks result', excludedTypeAudit.decision === 'excluded')
+  assert('excluded type recorded', excludedTypeAudit.excluded_type_hit === 'city_hall')
+
+  assert(
+    'generic-only types do not qualify',
+    mapGoogleRawToCandidate({
+      id: 'ChIJgeneric',
+      displayName: { text: 'Mystery POI' },
+      formattedAddress: '1 Main',
+      location: { latitude: 1, longitude: 2 },
+      types: ['establishment', 'point_of_interest', 'food'],
+    }, 1, 2) === null,
+  )
+}
+
+console.log('nearby priority sort')
+{
+  const ranked = sortNearbyPlaces([
+    { ...mkPlace('google-far', 25), verified: false, has_code: false, category_group: 'business_restroom' },
+    { ...mkPlace('verified-close', 28), verified: true, has_code: false, category_group: 'business_restroom' },
+    { ...mkPlace('public-close', 20), verified: false, has_code: false, category_group: 'public_restroom' },
+  ])
+  assert('verified wins within close band', ranked[0].place_id === 'verified-close')
+  assert('public restroom before google discovery in band', ranked[1].place_id === 'public-close')
+}
+
+void nearbyResultPriority
+void isGoogleDiscoveryOnlyPlace
 
 console.log('\n---')
 console.log(`Passed: ${passed}, Failed: ${failed}`)

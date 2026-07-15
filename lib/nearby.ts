@@ -53,6 +53,72 @@ export const INCLUDED_TYPES = [
   'department_store',
 ] as const
 
+/** Table A/B types from Places API (New) — exact Set membership only, no substring matching. */
+export const ALLOWED_BUSINESS_TYPES = new Set<string>(INCLUDED_TYPES)
+
+/** Generic response types that must not alone qualify a business result. */
+export const GENERIC_ONLY_TYPES = new Set([
+  'establishment',
+  'point_of_interest',
+  'food',
+  'store',
+  'premise',
+])
+
+/**
+ * Official Places API (New) types that disqualify a business result when present.
+ * @see https://developers.google.com/maps/documentation/places/web-service/place-types
+ */
+export const EXCLUDED_GOOGLE_TYPES = new Set([
+  'police',
+  'local_government_office',
+  'government_office',
+  'city_hall',
+  'courthouse',
+  'fire_station',
+  'embassy',
+  'post_office',
+  'hospital',
+  'doctor',
+  'dentist',
+  'bank',
+  'finance',
+  'real_estate_agency',
+  'insurance_agency',
+  'school',
+  'university',
+  'primary_school',
+  'secondary_school',
+  'accounting',
+  'lawyer',
+])
+
+/**
+ * Institution name patterns when Google mis-tags a public office as restaurant/store.
+ * Complements EXCLUDED_GOOGLE_TYPES; not a substitute for type-based exclusion.
+ */
+export const GOOGLE_INSTITUTION_NAME_PATTERNS = [
+  'police department',
+  'police dept',
+  ' sheriffs',
+  'sheriff office',
+  'sheriff\'s office',
+  'fire department',
+  'fire dept',
+  'city hall',
+  'courthouse',
+  'municipal court',
+  'government office',
+  'public safety',
+  'law enforcement',
+  'district attorney',
+  'probation office',
+  'immigration office',
+  'dmv',
+  'post office',
+  'embassy',
+] as const
+
 /**
  * Name blacklist mirrored from get_nearby_restrooms RPC ILIKE filters (verified in Faz 0 review).
  * Applied to Google results only; Supabase public restroom rows are exempt.
@@ -126,6 +192,19 @@ export type GoogleRawPlace = {
   formattedAddress?: string
   location?: { latitude?: number; longitude?: number }
   types?: string[]
+  primaryType?: string
+}
+
+export type GooglePlaceFilterAudit = {
+  name: string
+  raw_types: string[]
+  primary_type: string | null
+  matching_allowed_type: string | null
+  excluded_type_hit: string | null
+  institution_name_hit: boolean
+  blacklist_hit: boolean
+  decision: 'included' | 'excluded'
+  exclusion_reason: string | null
 }
 
 export type CachePayload = {
@@ -287,10 +366,101 @@ export function isBlacklistedGoogleName(name: string): boolean {
   return GOOGLE_NAME_BLACKLIST_PATTERNS.some((p) => lower.includes(p))
 }
 
+export function isInstitutionExcludedGoogleName(name: string): boolean {
+  const lower = name.toLowerCase()
+  return GOOGLE_INSTITUTION_NAME_PATTERNS.some((p) => lower.includes(p))
+}
+
+export function collectGooglePlaceTypeTokens(
+  types: string[] | undefined,
+  primaryType?: string | null,
+): string[] {
+  const tokens = new Set<string>()
+  for (const t of types ?? []) {
+    if (t) tokens.add(t)
+  }
+  if (primaryType) tokens.add(primaryType)
+  return [...tokens]
+}
+
+export function findExcludedGoogleType(
+  types: string[] | undefined,
+  primaryType?: string | null,
+): string | null {
+  for (const t of collectGooglePlaceTypeTokens(types, primaryType)) {
+    if (EXCLUDED_GOOGLE_TYPES.has(t)) return t
+  }
+  return null
+}
+
+export function getMatchingAllowedBusinessType(types: string[] | undefined): string | null {
+  if (!types?.length) return null
+  for (const t of types) {
+    if (ALLOWED_BUSINESS_TYPES.has(t)) return t
+  }
+  return null
+}
+
 export function googlePlaceMatchesIncludedTypes(types: string[] | undefined): boolean {
-  if (!types?.length) return false
-  const allowed = new Set<string>(INCLUDED_TYPES)
-  return types.some((t) => allowed.has(t))
+  return getMatchingAllowedBusinessType(types) != null
+}
+
+export function auditGooglePlaceFilter(
+  place: Pick<GoogleRawPlace, 'displayName' | 'types' | 'primaryType'>,
+): GooglePlaceFilterAudit {
+  const name = place.displayName?.text?.trim() ?? ''
+  const rawTypes = place.types ?? []
+  const primaryType = place.primaryType ?? null
+  const excludedTypeHit = findExcludedGoogleType(rawTypes, primaryType)
+  const institutionHit = name ? isInstitutionExcludedGoogleName(name) : false
+  const blacklistHit = name ? isBlacklistedGoogleName(name) : false
+  const matchingAllowed = getMatchingAllowedBusinessType(rawTypes)
+
+  let decision: GooglePlaceFilterAudit['decision'] = 'included'
+  let exclusionReason: string | null = null
+
+  if (excludedTypeHit) {
+    decision = 'excluded'
+    exclusionReason = `excluded_type:${excludedTypeHit}`
+  } else if (institutionHit) {
+    decision = 'excluded'
+    exclusionReason = 'institution_name'
+  } else if (blacklistHit) {
+    decision = 'excluded'
+    exclusionReason = 'name_blacklist'
+  } else if (!matchingAllowed) {
+    decision = 'excluded'
+    exclusionReason = 'no_allowed_business_type'
+  }
+
+  return {
+    name,
+    raw_types: rawTypes,
+    primary_type: primaryType,
+    matching_allowed_type: matchingAllowed,
+    excluded_type_hit: excludedTypeHit,
+    institution_name_hit: institutionHit,
+    blacklist_hit: blacklistHit,
+    decision,
+    exclusion_reason: exclusionReason,
+  }
+}
+
+export function nearbyResultPriority(place: NearbyPlaceResult): number {
+  if (place.verified) return 0
+  if (place.has_code) return 1
+  if (place.category_group === 'public_restroom') return 2
+  return 3
+}
+
+export function isGoogleDiscoveryOnlyPlace(place: Pick<NearbyPlaceResult, 'category_group' | 'source' | 'has_code' | 'verified' | 'access_available'>): boolean {
+  return (
+    place.category_group === 'business_restroom' &&
+    place.source === 'google' &&
+    !place.has_code &&
+    !place.verified &&
+    !place.access_available
+  )
 }
 
 export function shouldFallbackNearby(
@@ -365,8 +535,9 @@ export function mapGoogleRawToCandidate(
   const lng = place.location?.longitude
   const name = place.displayName?.text?.trim()
   if (!place_id || lat == null || lng == null || !name) return null
-  if (!googlePlaceMatchesIncludedTypes(place.types)) return null
-  if (isBlacklistedGoogleName(name)) return null
+
+  const audit = auditGooglePlaceFilter(place)
+  if (audit.decision === 'excluded') return null
 
   return {
     place_id,
@@ -390,6 +561,14 @@ export function sortNearbyPlaces(places: NearbyPlaceResult[]): NearbyPlaceResult
     const aClose = a.distance_m <= NEARBY_CLOSE_GROUP_M ? 0 : 1
     const bClose = b.distance_m <= NEARBY_CLOSE_GROUP_M ? 0 : 1
     if (aClose !== bClose) return aClose - bClose
+
+    const bandA = Math.floor(a.distance_m / NEARBY_CLOSE_GROUP_M)
+    const bandB = Math.floor(b.distance_m / NEARBY_CLOSE_GROUP_M)
+    if (bandA !== bandB) return bandA - bandB
+
+    const pri = nearbyResultPriority(a) - nearbyResultPriority(b)
+    if (pri !== 0) return pri
+
     return a.distance_m - b.distance_m
   })
 }
@@ -414,7 +593,7 @@ export function assertNoPinFieldsInResponse(payload: unknown): void {
 }
 
 const GOOGLE_FIELD_MASK =
-  'places.id,places.displayName,places.formattedAddress,places.location,places.types'
+  'places.id,places.displayName,places.formattedAddress,places.location,places.types,places.primaryType'
 
 export async function fetchGoogleSearchNearby(
   lat: number,

@@ -23,7 +23,7 @@ import {
   type AccessEditState,
   type AccessMethod,
 } from '../../lib/accessType'
-import type { NearbyPlaceResult } from '../../lib/nearby'
+import { isGoogleDiscoveryOnlyPlace, type NearbyPlaceResult } from '../../lib/nearby'
 import {
   fetchNearbyPlaces,
   registerNearbyUnmountAbort,
@@ -148,6 +148,7 @@ function MapPageContent() {
 
   const mapNearbyToCard = (p: NearbyPlaceResult) => {
     const isPublic = p.category_group === 'public_restroom'
+    const discoveryOnly = isGoogleDiscoveryOnlyPlace(p)
     return {
       id: isPublic ? `public_${p.place_id}` : `google_${p.place_id}`,
       place_id: p.place_id,
@@ -157,11 +158,12 @@ function MapPageContent() {
       lat: p.lat,
       lng: p.lng,
       type: p.types[0] ?? 'other',
-      status: p.verified ? 'green' : p.access_available ? 'amber' : 'red',
+      status: discoveryOnly ? 'neutral' : p.verified ? 'green' : p.access_available ? 'amber' : 'red',
       source: p.source ?? (isPublic ? 'supabase' : 'google'),
       has_code: p.has_code,
       category_group: p.category_group,
       distance_m: p.distance_m,
+      discovery_only: discoveryOnly,
       pin: '',
       stars: 0,
       score: 0,
@@ -386,7 +388,7 @@ function MapPageContent() {
     : statusFiltered
 
   const formatDist = (d:number) => unit==='mi'?`${d.toFixed(1)} mi`:`${(d*1.609).toFixed(1)} km`
-  const statusColor = (s:string) => s==='green'?'#1D9E75':s==='amber'?'#D97706':'#DC2626'
+  const statusColor = (s:string) => s==='green'?'#1D9E75':s==='amber'?'#D97706':s==='neutral'?'#CBD5E1':'#DC2626'
   const statusLabel = (s:string) => s==='green'?'Community verified':s==='amber'?'Needs update':'Access info unknown'
   const openDirections = (r:any) => window.open(`https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lng}&travelmode=driving`,'_blank')
 
@@ -810,7 +812,7 @@ function MapPageContent() {
                   {r.opt_out&&<div style={{background:'#FEE2E2',borderRadius:'8px',padding:'6px 12px',marginLeft:'17px',marginBottom:'6px',display:'inline-flex',alignItems:'center',gap:'6px'}}><span>🚫</span><span style={{fontSize:'13px',fontWeight:'700',color:'#DC2626'}}>{lang === 'es' ? 'Baño no disponible al público' : 'Restroom not available to the public'}</span></div>}
                   <div style={{display:'flex',gap:'8px',alignItems:'center',paddingLeft:'17px',flexWrap:'wrap'}}>
                     {r.score>0&&r.stars>0&&!r.source&&<span style={{fontSize:'13px',color:'#D97706',fontWeight:'500'}}>{'★'.repeat(r.stars||0)}{'☆'.repeat(5-(r.stars||0))} {r.score}</span>}
-                    {(() => {
+                    {!r.discovery_only && (() => {
                       const badge = getAccessListLabel(r)
                       const hasInfo = restroomHasAccessInfo(r)
                       if (hasInfo) {
