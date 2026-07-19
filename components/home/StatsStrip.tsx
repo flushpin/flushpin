@@ -1,6 +1,6 @@
 const stats = [
   { value: '34,000+', label: 'restroom locations' },
-  { value: 'California', label: 'statewide coverage' },
+  { value: 'Worldwide', label: 'live location data' },
   { value: 'Community', label: 'verified access info' },
 ]
 

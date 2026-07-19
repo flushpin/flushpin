@@ -7,7 +7,7 @@ const faqs = [
   {
     question: 'What is FlushPin?',
     answer:
-      'An app people use to find restrooms and door codes nearby. Thousands already use it across California. Your business page on FlushPin is where they see your info — and your offer.',
+      'An app people use to find restrooms and access details nearby. FlushPin works worldwide, and your business page is where travelers see your information and offers.',
   },
   {
     question: 'Do my customers need to download an app?',

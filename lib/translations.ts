@@ -15,7 +15,7 @@ export const translations = {
     thankYou: 'Thank you for helping the FlushPin community.',
 
     // Hero
-    badge: 'Southern California coverage',
+    badge: 'Worldwide coverage',
     heroTitle1: 'Restroom intelligence',
     heroTitle2: 'when you need access.',
     heroDesc: 'Location-based restroom guidance for travelers, parents, and anyone in a hurry — powered by community updates and respectful of business policies.',
@@ -29,10 +29,10 @@ export const translations = {
     home: {
       mobileFindNow: 'Find a Restroom Now',
       mobileSignUpFree: 'Sign up free',
-      kicker: 'Now covering California restrooms',
+      kicker: 'Restroom codes. Anywhere on Earth.',
       heroTitleMain: 'Every locked door has a code.',
       heroTitleAccent: 'We know where to find it.',
-      heroDesc: 'Find up-to-date restroom access information across California, including door codes, key requirements, and cleanliness reports from people who\'ve been there.',
+      heroDesc: 'FlushPin taps into live location data covering millions of places worldwide — cafés, gas stations, malls, and rest stops. Find the restroom, check the access details, and go. See community-shared door codes where available, and add ones you discover so the next traveler never has to ask.',
       appStoreSmall: 'Available on',
       appStoreStrong: 'App Store',
       webMapSmall: 'Use instantly',
@@ -215,7 +215,7 @@ export const translations = {
       venuesTitle: 'venues mapped',
       venuesSub: 'cafes, restaurants & more',
       citiesTitle: 'cities covered',
-      citiesSub: 'across California',
+      citiesSub: 'worldwide',
     },
 
     accessType: {

@@ -129,7 +129,7 @@ export default function CounterSection() {
 
         <div style={{textAlign:'center'}}>
           <p style={{fontSize:'13px',color:'#5DCAA5',margin:0,fontStyle:'italic'}}>
-            "Finally, I don't have to ask the barista anymore." — FlushPin user, California
+            "Finally, I don't have to ask the barista anymore." — FlushPin user
           </p>
         </div>
 

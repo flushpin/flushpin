@@ -112,7 +112,7 @@ export default function SiteFooter() {
             <p className="text-sm leading-relaxed text-fp-gray-400">
               {lang === 'es'
                 ? 'Con base en Irvine, California. Ayudamos a las personas a encontrar acceso a baños y a los negocios locales a entender y convertir tráfico real.'
-                : 'Irvine, California based. Helping people find restroom access while helping local shops understand and convert real foot traffic.'}
+                : 'Made in Irvine, CA — used worldwide. Helping people find restroom access while helping local shops understand and convert real foot traffic.'}
             </p>
             <div className="mt-[18px] bg-transparent">
               <AppStoreLink height={48} />
@@ -139,7 +139,7 @@ export default function SiteFooter() {
         </div>
 
         <div className="mt-10 flex flex-col gap-3 border-t border-white/10 pt-8 text-sm text-fp-gray-400 sm:flex-row sm:justify-between">
-          <span>{lang === 'es' ? 'Irvine, California - flushpin.com' : 'Irvine, California - flushpin.com'}</span>
+          <span>{lang === 'es' ? 'Irvine, California - flushpin.com' : 'Made in Irvine, CA — used worldwide.'}</span>
           <span>
             {lang === 'es' ? '© 2026 FlushPin. Todos los derechos reservados.' : '© 2026 FlushPin. All rights reserved.'}
           </span>

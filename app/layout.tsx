@@ -6,8 +6,9 @@ import SiteHeader from '../components/SiteHeader'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.flushpin.com'),
-  title: 'FlushPin — Restroom Intelligence',
-  description: 'Location-based restroom intelligence for people who need access and businesses who want opportunity. Community-powered, California-first.',
+  title: 'FlushPin — Find Restroom Codes Anywhere',
+  description:
+    'Find nearby restrooms and their door codes anywhere in the world. Live data on millions of locations. Free for travelers, families, and road trippers.',
   alternates: {
     canonical: '/',
   },
@@ -21,8 +22,9 @@ export const metadata: Metadata = {
     apple: '/apple-touch-icon.png',
   },
   openGraph: {
-    title: 'FlushPin — Restroom Intelligence',
-    description: 'Find nearby restroom access guidance, community updates, and business intelligence.',
+    title: 'FlushPin — Find Restroom Codes Anywhere',
+    description:
+      'Find nearby restrooms and their door codes anywhere in the world. Live data on millions of locations. Free for travelers, families, and road trippers.',
     url: 'https://www.flushpin.com',
     siteName: 'FlushPin',
     type: 'website',
