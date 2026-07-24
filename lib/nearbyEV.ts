@@ -18,7 +18,7 @@ export type EVTaggedPlace = {
 
 const API_RADIUS_KM = 20
 const CACHE_TTL_MS = 10 * 60 * 1000
-const MAX_NEARBY_DISTANCE_METERS = 200
+const MAX_NEARBY_DISTANCE_METERS = 350
 
 type CacheEntry = {
   stations: EVStation[]

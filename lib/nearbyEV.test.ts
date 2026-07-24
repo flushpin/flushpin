@@ -3,7 +3,7 @@ import { haversineMeters, matchNearbyEV, type EVStation } from './nearbyEV'
 
 const origin = { id: 'business', lat: 33.6846, lng: -117.7892 }
 const about150mNorth = 33.6846 + (150 / 111_320)
-const about230mNorth = 33.6846 + (230 / 111_320)
+const about500mNorth = 33.6846 + (500 / 111_320)
 
 const nearStation: EVStation = {
   stationId: 1,
@@ -19,7 +19,7 @@ const closerStation: EVStation = {
 }
 const farStation: EVStation = {
   stationId: 3,
-  latitude: about230mNorth,
+  latitude: about500mNorth,
   longitude: origin.lng,
 }
 
