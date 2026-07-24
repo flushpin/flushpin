@@ -24,6 +24,7 @@ import {
   type AccessMethod,
 } from '../../lib/accessType'
 import { isGoogleDiscoveryOnlyPlace, type NearbyPlaceResult } from '../../lib/nearby'
+import { fetchEVStations, matchNearbyEV } from '../../lib/nearbyEV'
 import {
   fetchNearbyPlaces,
   registerNearbyUnmountAbort,
@@ -50,6 +51,17 @@ function getDistance(lat1:number, lng1:number, lat2:number, lng2:number) {
 }
 
 const RADIUS_MILES = 12
+
+function EVChargingIcon({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="3.5" y="2.5" width="11" height="19" rx="2" stroke="currentColor" strokeWidth="2" />
+      <path d="M14.5 7h2.2l2.8 3v7.5a2 2 0 0 0 2 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M18.5 8.6V5.8M21 11.2V8.4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <text x="9" y="15.2" textAnchor="middle" fill="currentColor" fontSize="6.5" fontWeight="800" fontFamily="Arial, sans-serif">EV</text>
+    </svg>
+  )
+}
 
 type MapPlace = { name?: string; address?: string; lat: number; lng: number; [key: string]: unknown }
 
@@ -223,7 +235,9 @@ function MapPageContent() {
     if (useKeywordGoogleFallback && trimmedKeyword) {
       const googlePlaces = await fetchGooglePlaces(queryLat, queryLng, trimmedKeyword)
       if (requestId !== loadRequestIdRef.current) return
-      setRestrooms(googlePlaces)
+      const stations = await fetchEVStations(queryLat, queryLng)
+      if (requestId !== loadRequestIdRef.current) return
+      setRestrooms(matchNearbyEV(googlePlaces, stations))
       setLoading(false)
       return
     }
@@ -251,7 +265,11 @@ function MapPageContent() {
           matchesSearch(r, trimmedKeyword),
       )
 
-    setRestrooms(mapped)
+    const stations = await fetchEVStations(queryLat, queryLng)
+    if (requestId !== loadRequestIdRef.current) return
+    const mappedWithEV = matchNearbyEV(mapped, stations)
+
+    setRestrooms(mappedWithEV)
     setNearbyEmpty(mapped.length === 0)
     setLoading(false)
   }
@@ -381,6 +399,7 @@ function MapPageContent() {
     if (filter==='accessible') return r.accessible
     if (filter==='pin') return restroomHasAccessInfo(r)
     if (filter==='baby') return r.has_baby_changing === true
+    if (filter==='ev') return r.hasNearbyEVCharging === true
     return true
   })
   const displayed = categoryApplies
@@ -388,9 +407,19 @@ function MapPageContent() {
     : statusFiltered
 
   const formatDist = (d:number) => unit==='mi'?`${d.toFixed(1)} mi`:`${(d*1.609).toFixed(1)} km`
+  const formatEVDistance = (meters:number) => `${Math.round((meters * 3.28084) / 10) * 10} ft`
   const statusColor = (s:string) => s==='green'?'#1D9E75':s==='amber'?'#D97706':s==='neutral'?'#CBD5E1':'#DC2626'
   const statusLabel = (s:string) => s==='green'?'Community verified':s==='amber'?'Needs update':'Access info unknown'
   const openDirections = (r:any) => window.open(`https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lng}&travelmode=driving`,'_blank')
+  const openEVDirections = (r: {
+    nearbyEV?: { latitude: number; longitude: number }
+  }) => {
+    if (!r.nearbyEV) return
+    window.open(
+      `https://www.google.com/maps/dir/?api=1&destination=${r.nearbyEV.latitude},${r.nearbyEV.longitude}&travelmode=driving`,
+      '_blank',
+    )
+  }
 
   const localizedMethodChips = ACCESS_METHOD_CHIPS.map(chip => ({
     ...chip,
@@ -730,7 +759,8 @@ function MapPageContent() {
             {id:'verified',label:t.verifiedFilter},
             {id:'accessible',label:t.accessibleFilter},
             {id:'pin',label:t.pinFilter},
-            {id:'baby',label:lang === 'es' ? '🍼 Bebé' : '🍼 Baby'}
+            {id:'baby',label:lang === 'es' ? '🍼 Bebé' : '🍼 Baby'},
+            {id:'ev',label:lang === 'es' ? 'EV cerca' : 'EV nearby'},
           ].map(f=>(
             <button key={f.id} onClick={()=>setFilter(f.id)} style={{background:filter===f.id?'#0A2E1F':'#f5f5f5',color:filter===f.id?'white':'#555',border:'none',padding:'8px 16px',borderRadius:'20px',fontSize:'13px',fontWeight:'600',cursor:'pointer',whiteSpace:'nowrap',flexShrink:0}}>{f.label}</button>
           ))}
@@ -802,6 +832,32 @@ function MapPageContent() {
                   <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'4px'}}>
                     <div style={{width:'9px',height:'9px',borderRadius:'50%',background:statusColor(r.status||'red'),flexShrink:0}}/>
                     <span style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:'16px',fontWeight:'700',color:'#0A2E1F'}}>{r.name}</span>
+                    {r.hasNearbyEVCharging && (
+                      <>
+                        <span
+                          title="EV charging nearby"
+                          aria-label="EV charging nearby"
+                          style={{
+                            width:'22px',
+                            height:'22px',
+                            borderRadius:'50%',
+                            background:'#16A34A',
+                            border:'2px solid white',
+                            boxShadow:'0 1px 4px rgba(0,0,0,0.18)',
+                            display:'inline-flex',
+                            alignItems:'center',
+                            justifyContent:'center',
+                            color:'white',
+                            flexShrink:0,
+                          }}
+                        >
+                          <EVChargingIcon size={14} />
+                        </span>
+                        <span style={{fontSize:'11px',background:'#ECFDF5',color:'#166534',border:'1px solid #86EFAC',padding:'2px 7px',borderRadius:'10px',fontWeight:'700',whiteSpace:'nowrap'}}>
+                          {r.nearbyEV?.operatorName || 'EV nearby'}
+                        </span>
+                      </>
+                    )}
                     {r.category_group === 'public_restroom' && (
                       <span style={{fontSize:'11px',background:'#E0F2FE',color:'#0369A1',padding:'2px 8px',borderRadius:'10px',fontWeight:'600'}}>Public</span>
                     )}
@@ -853,6 +909,37 @@ function MapPageContent() {
 
             {selected?.id===r.id&&(
               <div style={{borderTop:'1px solid #f5f5f5',padding:'14px 16px',background:'#fafafa'}}>
+                {r.nearbyEV && (
+                  <button
+                    type="button"
+                    onClick={e=>{e.stopPropagation();openEVDirections(r)}}
+                    style={{
+                      width:'100%',
+                      display:'flex',
+                      alignItems:'center',
+                      gap:'10px',
+                      background:'#ECFDF5',
+                      border:'1px solid #86EFAC',
+                      borderRadius:'10px',
+                      padding:'10px 12px',
+                      marginBottom:'10px',
+                      cursor:'pointer',
+                      textAlign:'left',
+                    }}
+                  >
+                    <span style={{width:'28px',height:'28px',borderRadius:'50%',background:'#16A34A',border:'2px solid white',display:'inline-flex',alignItems:'center',justifyContent:'center',color:'white',flexShrink:0}}>
+                      <EVChargingIcon size={17} />
+                    </span>
+                    <span style={{display:'flex',flexDirection:'column',gap:'2px'}}>
+                      <strong style={{fontSize:'13px',color:'#166534'}}>
+                        {lang === 'es' ? 'Carga de vehículos eléctricos cerca' : 'EV charging nearby'}
+                      </strong>
+                      <span style={{fontSize:'12px',color:'#15803D'}}>
+                        {r.nearbyEV.operatorName || (lang === 'es' ? 'Carga EV' : 'EV charging')} · {formatEVDistance(r.nearbyEV.distanceMeters)} {lang === 'es' ? 'de distancia' : 'away'}
+                      </span>
+                    </span>
+                  </button>
+                )}
                 {!showPin?(
                   <div style={{display:'flex',gap:'8px'}}>
                     {r.opt_out?(
