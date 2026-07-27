@@ -29,6 +29,11 @@ import {
   fetchNearbyPlaces,
   registerNearbyUnmountAbort,
 } from '../../lib/nearbyClient'
+import {
+  extractPlaceIdFromCard,
+  findExistingRestroomId,
+  loadRestroomAccessById,
+} from '../../lib/findRestroom'
 
 const RESTROOM_PUBLIC_FIELDS =
   'id, name, address, score, pin_updated_at, status, verified, accessible, has_baby_changing, access_type, has_code, lat, lng, place_id, pin'
@@ -206,15 +211,38 @@ function MapPageContent() {
     if (target.access_type || (typeof target.pin === 'string' && target.pin.trim())) {
       return target
     }
-    const placeId = (target.place_id ?? target.google_place_id) as string | undefined
-    if (!placeId) return target
-    const { data } = await supabase
-      .from('restroom_public')
-      .select(RESTROOM_PUBLIC_FIELDS)
-      .eq('place_id', placeId)
-      .maybeSingle()
-    if (!data) return target
-    return { ...target, ...data, distance: target.distance }
+
+    const placeId = extractPlaceIdFromCard(target)
+    const name = typeof target.name === 'string' ? target.name : null
+    const lat = typeof target.lat === 'number' ? target.lat : Number(target.lat)
+    const lng = typeof target.lng === 'number' ? target.lng : Number(target.lng)
+
+    // 1) Fast path: restroom_public by place_id (same as before)
+    if (placeId) {
+      const { data } = await supabase
+        .from('restroom_public')
+        .select(RESTROOM_PUBLIC_FIELDS)
+        .eq('place_id', placeId)
+        .maybeSingle()
+      if (data) {
+        return { ...target, ...data, distance: target.distance }
+      }
+    }
+
+    // 2) Discovery miss: resolve numeric restroom (place_id, then name+coords)
+    //    so app-published PINs show on the web map too.
+    const foundId = await findExistingRestroomId({
+      placeId,
+      name,
+      lat: Number.isFinite(lat) ? lat : null,
+      lng: Number.isFinite(lng) ? lng : null,
+    })
+    if (foundId == null) return target
+
+    const row = await loadRestroomAccessById(foundId)
+    if (!row) return target
+
+    return { ...target, ...row, distance: target.distance }
   }
 
   const loadData = async (
@@ -530,6 +558,22 @@ function MapPageContent() {
   const handleAccessAction = async (r: any, e: React.MouseEvent) => {
     e.stopPropagation()
     const hydrated = await hydrateRestroomForAccess(r)
+    // Keep list card in sync so the button flips Share → View after hydrate.
+    setRestrooms((prev) =>
+      prev.map((item) =>
+        String(item.id) === String(r.id)
+          ? {
+              ...item,
+              pin: (hydrated as { pin?: string }).pin ?? item.pin,
+              access_type: (hydrated as { access_type?: string }).access_type ?? (item as { access_type?: string }).access_type,
+              status: (hydrated as { status?: string }).status ?? item.status,
+              pin_updated_at: (hydrated as { pin_updated_at?: string }).pin_updated_at ?? (item as { pin_updated_at?: string }).pin_updated_at,
+              has_code: (hydrated as { has_code?: boolean }).has_code ?? item.has_code,
+              verified: (hydrated as { verified?: string }).verified ?? item.verified,
+            }
+          : item,
+      ),
+    )
     if (restroomHasAccessInfo(hydrated)) {
       setSelected(hydrated)
       setPromoTarget(hydrated)
