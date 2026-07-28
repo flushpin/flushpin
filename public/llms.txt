@@ -66,3 +66,10 @@ Platform: iOS
 Category: Navigation / Utilities
 Cost: Free
 App Store: https://apps.apple.com/us/app/flushpin/id6779367395
+
+## Search / indexing notes
+
+- Canonical host: https://www.flushpin.com
+- Sitemap: https://www.flushpin.com/sitemap.xml
+- Robots: https://www.flushpin.com/robots.txt
+- Preferred brand query: FlushPin restroom codes / FlushPin app

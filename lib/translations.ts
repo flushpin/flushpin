@@ -32,7 +32,7 @@ export const translations = {
       kicker: 'Restroom codes. Anywhere on Earth.',
       heroTitleMain: 'Every locked door has a code.',
       heroTitleAccent: 'We know where to find it.',
-      heroDesc: 'FlushPin taps into live location data covering millions of places worldwide — cafés, gas stations, malls, and rest stops. Find the restroom, check the access details, and go. See community-shared door codes where available, and add ones you discover so the next traveler never has to ask.',
+      heroDesc: 'FlushPin helps you find nearby restrooms and community-shared door codes at cafés, gas stations, malls, and rest stops — 34,000+ locations updated by real people. Check access details, go, and add codes you discover so the next traveler never has to ask.',
       appStoreSmall: 'Available on',
       appStoreStrong: 'App Store',
       webMapSmall: 'Use instantly',

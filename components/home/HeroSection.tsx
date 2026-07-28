@@ -11,10 +11,9 @@ export default function HeroSection() {
           Restroom codes. Anywhere on Earth.
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-lg text-fp-gray-600">
-          FlushPin taps into live location data covering millions of places worldwide — cafés, gas
-          stations, malls, and rest stops. Find the restroom, check the access details, and go. See
-          community-shared door codes where available, and add ones you discover so the next traveler
-          never has to ask.
+          FlushPin helps you find nearby restrooms and community-shared door codes at cafés, gas
+          stations, malls, and rest stops — 34,000+ locations updated by real people. Check access
+          details, go, and add codes you discover so the next traveler never has to ask.
         </p>
 
         <div className="mt-10">
