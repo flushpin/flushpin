@@ -48,10 +48,27 @@ const PLACEHOLDER_PINS = new Set([
   'empty', 'no code', 'none', 'open', 'n/a', 'na', 'no pin', 'nocode',
 ])
 
+/** Status phrases stored in `pin` that are NOT keypad codes (never display as a PIN). */
+const STATUS_PINS = new Set([
+  'closed',
+  'temporarily closed',
+  'out of order',
+  'unavailable',
+])
+
 const PIN_TEXT_TO_ACCESS: Record<string, AccessType> = {
   'ask staff': 'ask_staff',
   'customers only': 'customers_only',
   locked: 'locked',
+}
+
+function normalizePinText(pin: string): string {
+  return pin.trim().toLowerCase().replace(/[!?.]/g, '').trim()
+}
+
+function isStatusPin(pin: string | null | undefined): boolean {
+  if (!pin?.trim()) return false
+  return STATUS_PINS.has(normalizePinText(pin))
 }
 
 export type AccessEditState = {
@@ -147,6 +164,9 @@ export function parseAccessRecord(record: {
     if (isPlaceholderPin(record.pin)) {
       return { customersOnly: false, method: 'no_code_needed', displayPin: null }
     }
+    if (isStatusPin(record.pin)) {
+      return { customersOnly: false, method: 'no_code_needed', displayPin: null }
+    }
   }
 
   if (record.has_code === true) {
@@ -199,14 +219,14 @@ export function resolveRestroomAccess(record: {
 
 export function isPlaceholderPin(pin: string | null | undefined): boolean {
   if (!pin?.trim()) return true
-  const normalized = pin.trim().toLowerCase().replace(/[!?.]/g, '').trim()
+  const normalized = normalizePinText(pin)
   if (PLACEHOLDER_PINS.has(normalized)) return true
   return normalized.replace(/\s/g, '') === 'nocode'
 }
 
 export function hasRealPin(pin: string | null | undefined): boolean {
-  if (!pin || isPlaceholderPin(pin)) return false
-  const normalized = pin.trim().toLowerCase().replace(/[!?.]/g, '').trim()
+  if (!pin || isPlaceholderPin(pin) || isStatusPin(pin)) return false
+  const normalized = normalizePinText(pin)
   return !PIN_TEXT_TO_ACCESS[normalized]
 }
 
