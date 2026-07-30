@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { supabase } from '../../lib/supabase'
 
 function getEmailTrust(email: string): 'generic' | 'business' {
   const genericDomains = ['gmail.com','yahoo.com','hotmail.com','outlook.com','aol.com','icloud.com','me.com','mac.com']
@@ -35,26 +34,26 @@ export default function OptOutPage() {
 
     setLoading(true)
 
-    const trust = getEmailTrust(form.email)
-    const status = 'pending'
-
-    await supabase.from('optout_requests').insert({
-      business_name: form.business_name.trim(),
-      contact_name: form.contact_name.trim(),
-      contact_title: form.contact_title.trim(),
-      city: form.city.trim(),
-      email: form.email.trim(),
-      reason: form.reason.trim(),
-      status,
-      email_trust: trust,
-    })
-
-    await supabase.from('restroom')
-      .update({ opt_out: true, status: 'opted_out' })
-      .ilike('name', `%${form.business_name.trim()}%`)
-
-    setLoading(false)
-    setSubmitted(true)
+    try {
+      const response = await fetch('/api/optout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      if (!response.ok) {
+        setError(
+          response.status === 429
+            ? 'Too many requests. Please try again later.'
+            : 'We could not submit your request. Please try again.',
+        )
+        return
+      }
+      setSubmitted(true)
+    } catch {
+      setError('We could not submit your request. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const inputStyle = {
@@ -76,7 +75,7 @@ export default function OptOutPage() {
             <div style={{background:"#E1F5EE",borderRadius:"12px",padding:"20px",marginBottom:"20px",border:"1px solid #9FE1CB",textAlign:"left"}}>
               <p style={{fontSize:"14px",color:"#0F6E56",fontWeight:"700",margin:"0 0 8px"}}>Status: Pending verification</p>
               <p style={{fontSize:"14px",color:"#555",lineHeight:"1.7",margin:0}}>
-                <strong>{form.business_name}</strong> will be marked as <strong>"Restroom not publicly available"</strong> on FlushPin. Our team will verify your request and update the listing accordingly.
+                <strong>{form.business_name}</strong> will be marked as <strong>&quot;Restroom not publicly available&quot;</strong> on FlushPin. Our team will verify your request and update the listing accordingly.
               </p>
             </div>
             {getEmailTrust(form.email) === 'business' && (
@@ -94,7 +93,7 @@ export default function OptOutPage() {
             <div style={{marginBottom:"28px"}}>
               <h1 style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:"clamp(24px,5vw,34px)",fontWeight:"700",color:"#0A2E1F",marginBottom:"12px"}}>Business Opt-Out</h1>
               <p style={{fontSize:"15px",color:"#666",lineHeight:"1.7",margin:0}}>
-                If you prefer your business restroom not to be listed on FlushPin, submit this form. Your listing will be updated to show <strong>"Restroom not publicly available"</strong> — your business remains on the map but users will not be directed there for restroom access.
+                If you prefer your business restroom not to be listed on FlushPin, submit this form. Your listing will be updated to show <strong>&quot;Restroom not publicly available&quot;</strong> — your business remains on the map but users will not be directed there for restroom access.
               </p>
             </div>
 

@@ -53,6 +53,7 @@ export default function SiteHeader() {
 
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || ''
   const profileColor = user?.user_metadata?.profile_color || '#00A886'
+  const isRestroomDetail = pathname.startsWith('/restroom/')
 
   const navLinks = (
     <>
@@ -85,6 +86,7 @@ export default function SiteHeader() {
 
   return (
     <>
+      {!isRestroomDetail && (
       <header
         className={`fp-safe-top sticky top-0 z-50 border-b ${
           isHome ? 'border-white/10 bg-[#0a0f0e]/95 backdrop-blur-md' : 'border-fp-border bg-fp-white'
@@ -233,6 +235,7 @@ export default function SiteHeader() {
           </nav>
         )}
       </header>
+      )}
 
       <AuthModal
         open={showAuth}

@@ -40,6 +40,11 @@ import {
   stripSensitivePinFields,
   type AccessRpcClient,
 } from '../../lib/restroomAccessSecurity'
+import {
+  MAP_DEFAULT_CENTER,
+  requestMapGeolocationOnce,
+  resolveMapMountLocation,
+} from '../../lib/mapLocationInit'
 
 async function recordPinView(restroom: { id?: unknown }) {
   if (!hasDbRestroomId(restroom.id)) return
@@ -114,7 +119,7 @@ function MapPageContent() {
   const [user, setUser] = useState<any>(null)
   const [userLat, setUserLat] = useState<number|null>(null)
   const [userLng, setUserLng] = useState<number|null>(null)
-  const [locationName, setLocationName] = useState('Locating...')
+  const [locationName, setLocationName] = useState(MAP_DEFAULT_CENTER.label)
   const [filter, setFilter] = useState('all')
   const [unit, setUnit] = useState<'mi'|'km'>('mi')
   const [selected, setSelected] = useState<any>(null)
@@ -128,7 +133,7 @@ function MapPageContent() {
   const [showEditForm, setShowEditForm] = useState(false)
   const [editTarget, setEditTarget] = useState<any>(null)
   const [editMode, setEditMode] = useState<'update'|'correct'|'share'>('update')
-  const [editEntry, setEditEntry] = useState<AccessEditState>({pin:'',accessible:false,customersOnly:false,method:'no_code_needed'})
+  const [editEntry, setEditEntry] = useState<AccessEditState>({pin:'',accessible:false,hasBabyChanging:false,customersOnly:false,method:'no_code_needed'})
   const [savingEdit, setSavingEdit] = useState(false)
   const [editError, setEditError] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
@@ -141,6 +146,7 @@ function MapPageContent() {
   const [showRetry, setShowRetry] = useState(false)
   const loadRequestIdRef = useRef(0)
   const unmountAbortRef = useRef<AbortController | null>(null)
+  const locatingInFlightRef = useRef(false)
 
   const resolveCityLabel = async (lat: number, lng: number) => {
     try {
@@ -193,7 +199,8 @@ function MapPageContent() {
       stars: 0,
       score: 0,
       verified: p.verified ? 'Community verified' : '',
-      accessible: false,
+      accessible: p.accessible === true,
+      has_baby_changing: p.has_baby_changing === true,
     }
   }
 
@@ -311,30 +318,34 @@ function MapPageContent() {
   }
 
   const getLocation = (onSuccess: (lat: number, lng: number) => void) => {
-    const applyLocation = async (lat: number, lng: number, fallbackLabel?: string) => {
+    // User-gesture only. One in-flight request max; denial falls back once (no retry).
+    if (locatingInFlightRef.current) return
+    locatingInFlightRef.current = true
+
+    const finish = async (lat: number, lng: number, fallbackLabel?: string) => {
       setUserLat(lat)
       setUserLng(lng)
       setLocating(false)
+      locatingInFlightRef.current = false
       await applyAnchor(lat, lng, fallbackLabel)
       onSuccess(lat, lng)
     }
 
-    if (!navigator.geolocation) {
-      applyLocation(33.6846, -117.7892, 'Irvine, CA')
-      return
-    }
     setLocating(true)
-    navigator.geolocation.getCurrentPosition(
-      pos => applyLocation(pos.coords.latitude, pos.coords.longitude),
-      () => applyLocation(33.6846, -117.7892, 'Irvine, CA'),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    )
+    requestMapGeolocationOnce(navigator.geolocation, {
+      onSuccess: (lat, lng) => {
+        void finish(lat, lng)
+      },
+      onError: () => {
+        void finish(MAP_DEFAULT_CENTER.lat, MAP_DEFAULT_CENTER.lng, MAP_DEFAULT_CENTER.label)
+      },
+    })
   }
 
-  const queryLat = anchorLat ?? userLat ?? 33.6846
-  const queryLng = anchorLng ?? userLng ?? -117.7892
-  const sortLat = userLat ?? anchorLat ?? 33.6846
-  const sortLng = userLng ?? anchorLng ?? -117.7892
+  const queryLat = anchorLat ?? userLat ?? MAP_DEFAULT_CENTER.lat
+  const queryLng = anchorLng ?? userLng ?? MAP_DEFAULT_CENTER.lng
+  const sortLat = userLat ?? anchorLat ?? MAP_DEFAULT_CENTER.lat
+  const sortLng = userLng ?? anchorLng ?? MAP_DEFAULT_CENTER.lng
 
   const categoryParam = searchParams.get('category')
   const activeCategory: MapCategorySlug | null = isMapCategorySlug(categoryParam) ? categoryParam : null
@@ -378,26 +389,19 @@ function MapPageContent() {
     })
 
     const init = async () => {
-      if (urlLat && urlLng) {
-        const lat = parseFloat(urlLat)
-        const lng = parseFloat(urlLng)
-        if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
-          await applyAnchor(lat, lng, near || undefined)
-          await loadData(lat, lng, '', false)
-          return
-        }
-      }
-
-      if (q) {
-        const located = await resolveSearchLocation(q)
-        if (located) {
-          await applyAnchor(located.lat, located.lng, located.label)
-          await loadData(located.lat, located.lng, '', false)
-          return
-        }
-      }
-
-      getLocation((lat, lng) => { loadData(lat, lng, '', false, { force: true }) })
+      const mounted = await resolveMapMountLocation(
+        {
+          lat: urlLat,
+          lng: urlLng,
+          q,
+          near,
+          category: params.get('category'),
+        },
+        { resolveSearchLocation },
+      )
+      // Mount never requests geolocation — only URL, geocode, or default center.
+      await applyAnchor(mounted.lat, mounted.lng, mounted.label)
+      await loadData(mounted.lat, mounted.lng, '', false)
     }
 
     init()
@@ -448,9 +452,13 @@ function MapPageContent() {
   const statusFiltered = withDistance.filter(r => {
     if (emergency) return r.status==='green'
     if (filter==='verified') return r.status==='green'
-    if (filter==='accessible') return r.accessible
+    if (filter==='accessible') return r.accessible === true
     if (filter==='pin') return restroomHasAccessInfo(r)
     if (filter==='baby') return r.has_baby_changing === true
+    if (filter==='nocode') {
+      const type = typeof r.access_type === 'string' ? r.access_type : ''
+      return type.includes('no_code_needed') && !type.includes('customers_only')
+    }
     if (filter==='ev') return r.hasNearbyEVCharging === true
     return true
   })
@@ -861,8 +869,9 @@ function MapPageContent() {
             {id:'all',label:t.allFilter},
             {id:'verified',label:t.verifiedFilter},
             {id:'accessible',label:t.accessibleFilter},
-            {id:'pin',label:t.pinFilter},
             {id:'baby',label:lang === 'es' ? '🍼 Bebé' : '🍼 Baby'},
+            {id:'nocode',label:lang === 'es' ? 'Sin código' : 'No code'},
+            {id:'pin',label:t.pinFilter},
             {id:'ev',label:lang === 'es' ? 'EV cerca' : 'EV nearby'},
           ].map(f=>(
             <button key={f.id} onClick={()=>setFilter(f.id)} style={{background:filter===f.id?'#0A2E1F':'#f5f5f5',color:filter===f.id?'white':'#555',border:'none',padding:'8px 16px',borderRadius:'20px',fontSize:'13px',fontWeight:'600',cursor:'pointer',whiteSpace:'nowrap',flexShrink:0}}>{f.label}</button>
@@ -1128,6 +1137,10 @@ function MapPageContent() {
               <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
                 <input type="checkbox" id="acc-edit" checked={editEntry.accessible} onChange={e=>setEditEntry(p=>({...p,accessible:e.target.checked}))} style={{width:'18px',height:'18px',cursor:'pointer'}}/>
                 <label htmlFor="acc-edit" style={{fontSize:'15px',color:'#555',cursor:'pointer'}}>{t.wheelchair}</label>
+              </div>
+              <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
+                <input type="checkbox" id="baby-edit" checked={!!editEntry.hasBabyChanging} onChange={e=>setEditEntry(p=>({...p,hasBabyChanging:e.target.checked}))} style={{width:'18px',height:'18px',cursor:'pointer'}}/>
+                <label htmlFor="baby-edit" style={{fontSize:'15px',color:'#555',cursor:'pointer'}}>{lang === 'es' ? '🍼 Cambiador de bebés' : '🍼 Baby changing station'}</label>
               </div>
               {editError&&<p style={{fontSize:'14px',color:'#DC2626',margin:0,fontWeight:'600'}}>{editError}</p>}
               <button type="button" onClick={handleEditSave} disabled={savingEdit} style={{background:savingEdit?'#9CA3AF':'#1D9E75',color:'white',border:'none',padding:'16px',borderRadius:'10px',fontSize:'16px',fontWeight:'700',cursor:savingEdit?'wait':'pointer'}}>{savingEdit?t.publishing:t.publishNow}</button>

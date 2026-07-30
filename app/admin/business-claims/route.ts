@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { authorizeAdminRequest } from '@/lib/adminRequestAuth'
 import { getServiceClient } from '@/lib/supabaseService'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const authorization = await authorizeAdminRequest(request)
+  if (!authorization.authorized) return authorization.response
+
   const service = getServiceClient()
   if (!service.client) {
     return NextResponse.json({ error: service.error }, { status: service.status })
@@ -46,6 +50,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const authorization = await authorizeAdminRequest(request)
+  if (!authorization.authorized) return authorization.response
+
   const service = getServiceClient()
   if (!service.client) {
     return NextResponse.json({ error: service.error }, { status: service.status })
@@ -73,7 +80,7 @@ export async function POST(request: NextRequest) {
     const { error } = await service.client.from('business_claim_requests').update({ status }).eq('id', id)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     await service.client.from('admin_logs').insert({
-      admin_email: 'admin@flushpin.com',
+      admin_email: authorization.email,
       action: 'business_claim_status',
       target_type: 'business_claim_requests',
       target_id: String(id),

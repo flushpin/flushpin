@@ -76,6 +76,8 @@ export type AccessEditState = {
   method: AccessMethod
   pin: string
   accessible: boolean
+  /** Optional — omitted on older clients; only written when explicitly boolean. */
+  hasBabyChanging?: boolean
 }
 
 export type ParsedAccess = {
@@ -181,13 +183,15 @@ export function parseAccessEditState(record: {
   access_type?: string | null
   has_code?: boolean | null
   accessible?: boolean | null
+  has_baby_changing?: boolean | null
 }): AccessEditState {
   const parsed = parseAccessRecord(record)
   return {
     customersOnly: parsed.customersOnly,
     method: parsed.method === 'unknown' ? 'no_code_needed' : parsed.method,
     pin: parsed.displayPin || '',
-    accessible: record.accessible || false,
+    accessible: record.accessible === true,
+    hasBabyChanging: record.has_baby_changing === true,
   }
 }
 
@@ -271,7 +275,9 @@ export function getAccessListLabel(record: {
   return { label, color, bg }
 }
 
-export function buildAccessPayload(entry: Pick<AccessEditState, 'customersOnly' | 'method' | 'pin' | 'accessible'>) {
+export function buildAccessPayload(
+  entry: Pick<AccessEditState, 'customersOnly' | 'method' | 'pin' | 'accessible' | 'hasBabyChanging'>,
+) {
   const now = new Date().toISOString()
   const customersOnly = entry.method === 'locked' ? false : entry.customersOnly
   const access_type = encodeAccessType(customersOnly, entry.method)
@@ -291,6 +297,7 @@ export function buildAccessPayload(entry: Pick<AccessEditState, 'customersOnly' 
     access_type,
     pin,
     accessible: entry.accessible,
+    has_baby_changing: entry.hasBabyChanging === true,
     status: hasInfo ? 'green' : 'red',
     verified: buildVerifiedLabel(customersOnly, entry.method, now),
     pin_updated_at: now,

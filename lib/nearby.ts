@@ -189,6 +189,8 @@ export type NearbyPlaceResult = {
   verified: boolean
   has_gendered_pins: boolean
   access_available: boolean
+  accessible: boolean | null
+  has_baby_changing: boolean | null
   source: string | null
   provenance?: PlaceProvenance[]
 }
@@ -249,6 +251,9 @@ export type RestroomOverlayRow = {
   has_code: boolean | null
   verified: string | null
   status: string | null
+  accessible?: boolean | null
+  has_baby_changing?: boolean | null
+  access_type?: string | null
 }
 
 export type PublicRestroomRow = {
@@ -263,6 +268,8 @@ export type PublicRestroomRow = {
   has_code: boolean | null
   verified: string | null
   status: string | null
+  accessible?: boolean | null
+  has_baby_changing?: boolean | null
 }
 
 export type NearbyDeps = {
@@ -291,6 +298,8 @@ type KnownRestroomRow = {
   access_type: string | null
   pin_updated_at: string | null
   last_verified_at: string | null
+  accessible?: boolean | null
+  has_baby_changing?: boolean | null
 }
 
 export type NearbyDevTelemetry = {
@@ -367,6 +376,8 @@ export function overlayBooleans(row: RestroomOverlayRow | null | undefined): {
   verified: boolean
   has_gendered_pins: boolean
   access_available: boolean
+  accessible: boolean | null
+  has_baby_changing: boolean | null
 } {
   if (!row) {
     return {
@@ -374,13 +385,23 @@ export function overlayBooleans(row: RestroomOverlayRow | null | undefined): {
       verified: false,
       has_gendered_pins: false,
       access_available: false,
+      accessible: null,
+      has_baby_changing: null,
     }
   }
   const has_code = row.has_code === true
   const verified = mapNearbyVerifiedBoolean(row)
   const has_gendered_pins = false
   const access_available = has_code || verified
-  return { has_code, verified, has_gendered_pins, access_available }
+  return {
+    has_code,
+    verified,
+    has_gendered_pins,
+    access_available,
+    accessible: row.accessible === true ? true : row.accessible === false ? false : null,
+    has_baby_changing:
+      row.has_baby_changing === true ? true : row.has_baby_changing === false ? false : null,
+  }
 }
 
 export function isBlacklistedGoogleName(name: string): boolean {
@@ -547,6 +568,8 @@ export function mapGoogleRawToCandidate(
     verified: false,
     has_gendered_pins: false,
     access_available: false,
+    accessible: null,
+    has_baby_changing: null,
     source: 'google',
     provenance: [
       {
@@ -639,6 +662,9 @@ function knownRowToNearbyPlace(
     verified,
     has_gendered_pins: false,
     access_available: hasCode || verified || !!row.access_type,
+    accessible: row.accessible === true ? true : row.accessible === false ? false : null,
+    has_baby_changing:
+      row.has_baby_changing === true ? true : row.has_baby_changing === false ? false : null,
     source: row.source ?? 'flushpin',
     provenance: [
       row.source == null || row.source === 'manual'
@@ -673,7 +699,7 @@ export async function fetchKnownFlushPinPlaces(
   const { data, error } = await supabase
     .from('restroom')
     .select(
-      'id,name,address,lat,lng,type,source,external_id,place_id,has_code,verified,status,access_type,pin_updated_at,last_verified_at',
+      'id,name,address,lat,lng,type,source,external_id,place_id,has_code,verified,status,access_type,pin_updated_at,last_verified_at,accessible,has_baby_changing',
     )
     .or('opt_out.is.null,opt_out.eq.false')
     .gte('lat', userLat - latDelta)
@@ -811,7 +837,7 @@ export async function fetchRestroomOverlay(
 
   const { data, error } = await supabase
     .from('restroom')
-    .select('place_id, has_code, verified, status')
+    .select('place_id, has_code, verified, status, accessible, has_baby_changing, access_type')
     .in('place_id', ids)
 
   if (error) {
@@ -844,7 +870,7 @@ export async function fetchPublicRestrooms(
   const { data, error } = await supabase
     .from('restroom')
     .select(
-      'id, name, address, lat, lng, type, source, place_id, has_code, verified, status',
+      'id, name, address, lat, lng, type, source, place_id, has_code, verified, status, accessible, has_baby_changing',
     )
     .in('type', [...PUBLIC_RESTROOM_TYPES])
     .or('opt_out.is.null,opt_out.eq.false')

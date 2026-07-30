@@ -1,12 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import AdminBarChart from './components/AdminBarChart'
 import LiveActivityMap from './components/LiveActivityMap'
 import { adminTheme, type DashboardMetrics, type LiveActivityPayload } from './theme'
-
-const ADMIN_USER = 'admin@flushpin.com'
-const ADMIN_PASS = 'Exxa2020@'
 
 const BAD_WORDS = [
   'fuck', 'shit', 'bitch', 'nigga', 'nigger', 'negro', 'faggot', 'retard', 'spic', 'chink', 'rape', 'bomb',
@@ -18,10 +16,49 @@ type TabKey = 'overview' | 'live' | 'pins' | 'flagged' | 'optout' | 'logs'
 type DashboardData = {
   metrics: DashboardMetrics
   metricsError: string | null
-  optouts: any[]
-  flagged: any[]
-  logs: any[]
-  supabase: any
+  optouts: OptOutRequest[]
+  flagged: FlaggedItem[]
+  logs: AdminLog[]
+  supabase: SupabaseClient
+}
+
+type FlaggedItem = {
+  id: string
+  content_type?: string | null
+  flag_reason?: string | null
+  content_text?: string | null
+}
+
+type AdminLog = {
+  id: string
+  action?: string | null
+  target_type?: string | null
+  created_at: string
+}
+
+type OptOutRequest = {
+  id: string | number
+  business_name?: string | null
+  city?: string | null
+  reason?: string | null
+  contact_name?: string | null
+  email?: string | null
+  created_at?: string | null
+  status?: string | null
+}
+
+type BusinessClaimRequest = {
+  id: string | number
+  request_type: string
+  status?: string | null
+  business_name?: string | null
+  business_address?: string | null
+  message?: string | null
+  contact_name?: string | null
+  contact_email?: string | null
+  contact_phone?: string | null
+  created_at?: string | null
+  email_trust?: string | null
 }
 
 type ModerationSubmission = {
@@ -65,8 +102,8 @@ type ModerationQueue = {
 }
 
 type BusinessClaimsQueue = {
-  claims: any[]
-  optouts: any[]
+  claims: BusinessClaimRequest[]
+  optouts: OptOutRequest[]
   summary: {
     pendingClaims: number
     pendingOptouts: number
@@ -233,19 +270,24 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (!loggedIn || activeTab !== 'live') return
-    loadLiveActivity()
+    const initialLoad = window.setTimeout(() => void loadLiveActivity(), 0)
     const interval = setInterval(loadLiveActivity, 60_000)
-    return () => clearInterval(interval)
+    return () => {
+      window.clearTimeout(initialLoad)
+      clearInterval(interval)
+    }
   }, [loggedIn, activeTab])
 
   useEffect(() => {
     if (!loggedIn || activeTab !== 'pins') return
-    loadModeration()
+    const initialLoad = window.setTimeout(() => void loadModeration(), 0)
+    return () => window.clearTimeout(initialLoad)
   }, [loggedIn, activeTab])
 
   useEffect(() => {
     if (!loggedIn || activeTab !== 'optout') return
-    loadBusinessClaims()
+    const initialLoad = window.setTimeout(() => void loadBusinessClaims(), 0)
+    return () => window.clearTimeout(initialLoad)
   }, [loggedIn, activeTab])
 
   const loadData = async () => {
@@ -307,12 +349,7 @@ export default function AdminDashboard() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
-    if (email === ADMIN_USER && password === ADMIN_PASS) {
-      setLoggedIn(true)
-      loadData()
-    } else {
-      setError('Wrong email or password.')
-    }
+    setError('Admin access requires server-validated Supabase authentication and is disabled in this release.')
   }
 
   const handleAction = async (table: string, id: string, update: Record<string, unknown>) => {
@@ -943,7 +980,7 @@ export default function AdminDashboard() {
             {data.flagged.length === 0 ? (
               <div style={{ ...cardStyle(), padding: 40, textAlign: 'center', color: adminTheme.textMuted }}>No flagged content</div>
             ) : (
-              data.flagged.map((item: any) => (
+              data.flagged.map((item) => (
                 <div key={item.id} style={{ ...cardStyle(), padding: 16, marginBottom: 12, borderColor: 'rgba(248, 113, 113, 0.35)' }}>
                   <div style={{ fontWeight: 700, color: adminTheme.danger, marginBottom: 6 }}>
                     {item.content_type} — {item.flag_reason}
@@ -1007,7 +1044,7 @@ export default function AdminDashboard() {
                     No claim portal requests yet
                   </div>
                 ) : (
-                  businessClaims?.claims.map((item: any) => (
+                  businessClaims?.claims.map((item) => (
                     <div
                       key={item.id}
                       style={{
@@ -1083,7 +1120,7 @@ export default function AdminDashboard() {
                     No opt-out requests
                   </div>
                 ) : (
-                  (businessClaims?.optouts ?? data.optouts).map((item: any) => (
+                  (businessClaims?.optouts ?? data.optouts).map((item) => (
                     <div
                       key={item.id}
                       style={{
@@ -1135,7 +1172,7 @@ export default function AdminDashboard() {
             {data.logs.length === 0 ? (
               <div style={{ ...cardStyle(), padding: 40, textAlign: 'center', color: adminTheme.textMuted }}>No logs yet</div>
             ) : (
-              data.logs.map((log: any) => (
+              data.logs.map((log) => (
                 <div key={log.id} style={{ ...cardStyle(), padding: 14, marginBottom: 10 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center' }}>
                     <div>

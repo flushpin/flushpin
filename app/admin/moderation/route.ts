@@ -4,6 +4,7 @@ import {
   buildApprovedRestroomPatch,
   restroomMatchKey,
 } from '@/lib/adminModeration'
+import { authorizeAdminRequest } from '@/lib/adminRequestAuth'
 import { getServiceClient } from '@/lib/supabaseService'
 
 export const dynamic = 'force-dynamic'
@@ -32,13 +33,14 @@ type SubmissionRow = {
 
 async function logAdminAction(
   supabase: SupabaseClient,
+  adminEmail: string,
   action: string,
   targetType: string,
   targetId: string,
   details: Record<string, unknown>,
 ) {
   await supabase.from('admin_logs').insert({
-    admin_email: 'admin@flushpin.com',
+    admin_email: adminEmail,
     action,
     target_type: targetType,
     target_id: targetId,
@@ -93,7 +95,10 @@ function groupDuplicateRestrooms(rows: RestroomRow[]) {
     .slice(0, 25)
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const authorization = await authorizeAdminRequest(request)
+  if (!authorization.authorized) return authorization.response
+
   const service = getServiceClient()
   if (!service.client) {
     return NextResponse.json({ error: service.error }, { status: service.status })
@@ -167,6 +172,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const authorization = await authorizeAdminRequest(request)
+  if (!authorization.authorized) return authorization.response
+
   const service = getServiceClient()
   if (!service.client) {
     return NextResponse.json({ error: service.error }, { status: service.status })
@@ -223,7 +231,7 @@ export async function POST(request: NextRequest) {
 
       const dedupe = await mergeDuplicateRestrooms(supabase, submission.restroom_id)
 
-      await logAdminAction(supabase, 'approve_submission', 'pin_submission', String(submissionId), {
+      await logAdminAction(supabase, authorization.email, 'approve_submission', 'pin_submission', String(submissionId), {
         restroom_id: submission.restroom_id,
         dedupe,
       })
@@ -240,7 +248,7 @@ export async function POST(request: NextRequest) {
       const { error } = await supabase.from('pin_submissions').update({ status: 'rejected' }).eq('id', submissionId)
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-      await logAdminAction(supabase, 'reject_submission', 'pin_submission', String(submissionId), {})
+      await logAdminAction(supabase, authorization.email, 'reject_submission', 'pin_submission', String(submissionId), {})
       return NextResponse.json({ ok: true })
     }
 
@@ -269,7 +277,7 @@ export async function POST(request: NextRequest) {
       if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
 
       const dedupe = await mergeDuplicateRestrooms(supabase, restroomId)
-      await logAdminAction(supabase, 'approve_restroom', 'restroom', restroomId, { dedupe })
+      await logAdminAction(supabase, authorization.email, 'approve_restroom', 'restroom', restroomId, { dedupe })
       return NextResponse.json({ ok: true, restroomId: dedupe.keeperId, dedupeDeleted: dedupe.deleted })
     }
 
@@ -280,7 +288,7 @@ export async function POST(request: NextRequest) {
       }
 
       const dedupe = await mergeDuplicateRestrooms(supabase, keeperId)
-      await logAdminAction(supabase, 'dedupe_restroom', 'restroom', keeperId, dedupe)
+      await logAdminAction(supabase, authorization.email, 'dedupe_restroom', 'restroom', keeperId, dedupe)
       return NextResponse.json({ ok: true, ...dedupe })
     }
 
@@ -293,7 +301,7 @@ export async function POST(request: NextRequest) {
       const { error } = await supabase.from('restroom').delete().eq('id', restroomId)
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-      await logAdminAction(supabase, 'delete_restroom', 'restroom', restroomId, {})
+      await logAdminAction(supabase, authorization.email, 'delete_restroom', 'restroom', restroomId, {})
       return NextResponse.json({ ok: true })
     }
 

@@ -68,6 +68,8 @@ function mkPlace(id: string, distance_m: number): NearbyPlaceResult {
     verified: false,
     has_gendered_pins: false,
     access_available: false,
+    accessible: null,
+    has_baby_changing: null,
     source: 'google',
   }
 }
