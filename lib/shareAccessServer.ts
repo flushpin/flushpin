@@ -5,6 +5,7 @@ import {
   publishRestroomAccess,
   type PublishTarget,
 } from '@/lib/publishAccess'
+import { stripSensitivePinFields } from '@/lib/restroomAccessSecurity'
 
 export type ShareAccessTarget = {
   id?: unknown
@@ -60,10 +61,10 @@ export async function persistShareAccess(
   return {
     ok: true as const,
     restroomId: result.restroomId,
-    restroom: {
+    restroom: stripSensitivePinFields({
       ...target,
       ...result.payload,
       id: result.restroomId,
-    },
+    }),
   }
 }

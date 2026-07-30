@@ -1,10 +1,8 @@
 import { supabase } from './supabase'
+import { PUBLIC_RESTROOM_ACCESS_FIELDS } from './restroomAccessSecurity'
 
 /** ~150m in degrees — match same venue without grabbing neighbors. */
 const NEAR_DEG = 0.0015
-
-const ACCESS_LOOKUP_FIELDS =
-  'id, name, address, score, pin_updated_at, status, verified, accessible, has_baby_changing, access_type, has_code, lat, lng, place_id, pin'
 
 function normalizeVenueName(name: string): string {
   return name
@@ -52,7 +50,7 @@ export async function findExistingRestroomId(opts: {
   const placeId = (opts.placeId && String(opts.placeId).trim()) || ''
   if (placeId) {
     const { data, error } = await supabase
-      .from('restroom')
+      .from('restroom_public')
       .select('id')
       .eq('place_id', placeId)
       .maybeSingle()
@@ -76,7 +74,7 @@ export async function findExistingRestroomId(opts: {
   }
 
   const { data, error } = await supabase
-    .from('restroom')
+    .from('restroom_public')
     .select('id, name, lat, lng')
     .gte('lat', lat - NEAR_DEG)
     .lte('lat', lat + NEAR_DEG)
@@ -95,23 +93,16 @@ export async function findExistingRestroomId(opts: {
   return Number.isFinite(id) ? id : null
 }
 
-/** Load pin / access_type for a numeric restroom id (public view, then table). */
+/** Load public-safe access metadata. Access codes are available only through the authorized RPC. */
 export async function loadRestroomAccessById(restroomId: number) {
-  const { data: pub } = await supabase
+  const { data, error } = await supabase
     .from('restroom_public')
-    .select(ACCESS_LOOKUP_FIELDS)
-    .eq('id', restroomId)
-    .maybeSingle()
-  if (pub) return pub
-
-  const { data: row, error } = await supabase
-    .from('restroom')
-    .select(ACCESS_LOOKUP_FIELDS)
+    .select(PUBLIC_RESTROOM_ACCESS_FIELDS)
     .eq('id', restroomId)
     .maybeSingle()
   if (error) {
-    console.error('[findRestroom] load by id error:', error)
+    console.error('[findRestroom] public access metadata lookup error:', error)
     return null
   }
-  return row
+  return data
 }

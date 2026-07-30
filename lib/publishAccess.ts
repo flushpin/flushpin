@@ -38,8 +38,8 @@ export type AccessUpdatePayload = {
   accessible?: boolean
 }
 
-const RESTROOM_ACCESS_FIELDS =
-  'id, access_type, pin, pin_updated_at, status, verified, name, address, accessible'
+const RESTROOM_POST_PUBLISH_FIELDS =
+  'id, access_type, pin_updated_at, status, verified, name, address, accessible'
 
 function eqRestroomId(restroomId: string | number) {
   return normalizeRestroomId(restroomId) ?? restroomId
@@ -134,7 +134,6 @@ export function buildAccessPayload(
 function toAccessPayload(
   row: {
     access_type?: string | null
-    pin?: string | null
     pin_updated_at?: string | null
     status?: string | null
     verified?: string | null
@@ -143,10 +142,11 @@ function toAccessPayload(
     accessible?: boolean | null
   },
   fallbackType: string,
+  submittedPin: string | null,
 ): AccessUpdatePayload {
   return {
     access_type: row.access_type ?? fallbackType,
-    pin: row.pin ?? null,
+    pin: submittedPin,
     pin_updated_at: row.pin_updated_at ?? new Date().toISOString(),
     status: row.status ?? 'green',
     verified: getVerifiedDisplayLabel(row),
@@ -157,7 +157,7 @@ function toAccessPayload(
 async function fetchRestroomAccessRow(db: SupabaseClient, restroomId: string) {
   const { data, error } = await db
     .from('restroom')
-    .select(RESTROOM_ACCESS_FIELDS)
+    .select(RESTROOM_POST_PUBLISH_FIELDS)
     .eq('id', eqRestroomId(restroomId))
     .maybeSingle()
 
@@ -326,7 +326,10 @@ export async function publishRestroomAccess(
   }
 
   const fresh = await fetchRestroomAccessRow(db, restroomId)
-  const payload = fresh ? toAccessPayload(fresh, input.accessType) : buildOptimisticPayload(input)
+  const optimistic = buildOptimisticPayload(input)
+  const payload = fresh
+    ? toAccessPayload(fresh, input.accessType, optimistic.pin)
+    : optimistic
 
   return { ok: true, restroomId, payload }
 }

@@ -34,16 +34,24 @@ import {
   findExistingRestroomId,
   loadRestroomAccessById,
 } from '../../lib/findRestroom'
+import {
+  PUBLIC_RESTROOM_ACCESS_FIELDS,
+  requestAuthorizedRestroomAccess,
+  stripSensitivePinFields,
+  type AccessRpcClient,
+} from '../../lib/restroomAccessSecurity'
 
-const RESTROOM_PUBLIC_FIELDS =
-  'id, name, address, score, pin_updated_at, status, verified, accessible, has_baby_changing, access_type, has_code, lat, lng, place_id, pin'
-
-function recordPinView(restroom: { id?: unknown }, userId?: string | null) {
+async function recordPinView(restroom: { id?: unknown }) {
   if (!hasDbRestroomId(restroom.id)) return
-  fetch('/api/pin-view', {
+  const { data } = await supabase.auth.getSession()
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  const accessToken = data.session?.access_token
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`
+
+  await fetch('/api/pin-view', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ restroom_id: restroom.id, user_id: userId ?? null }),
+    headers,
+    body: JSON.stringify({ restroom_id: restroom.id }),
   }).catch(() => {})
 }
 
@@ -181,7 +189,6 @@ function MapPageContent() {
       category_group: p.category_group,
       distance_m: p.distance_m,
       discovery_only: discoveryOnly,
-      pin: '',
       stars: 0,
       score: 0,
       verified: p.verified ? 'Community verified' : '',
@@ -208,7 +215,7 @@ function MapPageContent() {
   }
 
   const hydrateRestroomForAccess = async (target: Record<string, unknown>) => {
-    if (target.access_type || (typeof target.pin === 'string' && target.pin.trim())) {
+    if (target.access_type && hasDbRestroomId(target.id)) {
       return target
     }
 
@@ -221,7 +228,7 @@ function MapPageContent() {
     if (placeId) {
       const { data } = await supabase
         .from('restroom_public')
-        .select(RESTROOM_PUBLIC_FIELDS)
+        .select(PUBLIC_RESTROOM_ACCESS_FIELDS)
         .eq('place_id', placeId)
         .maybeSingle()
       if (data) {
@@ -352,7 +359,22 @@ function MapPageContent() {
     setSearchQuery(q)
     setSearchInput(q)
     supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null))
-    supabase.auth.onAuthStateChange((_, session) => setUser(session?.user ?? null))
+    const {
+      data: { subscription: authSubscription },
+    } = supabase.auth.onAuthStateChange((_, session) => {
+      setUser(session?.user ?? null)
+      if (!session) {
+        setShowPin(false)
+        setShowPromo(false)
+        setPromoTarget(null)
+        setSelected((current: Record<string, unknown> | null) =>
+          current ? stripSensitivePinFields(current) : null,
+        )
+        setRestrooms((current) =>
+          current.map((item) => stripSensitivePinFields(item)),
+        )
+      }
+    })
 
     const init = async () => {
       if (urlLat && urlLng) {
@@ -381,6 +403,7 @@ function MapPageContent() {
 
     return () => {
       abortController.abort()
+      authSubscription.unsubscribe()
       registerNearbyUnmountAbort(null)
       unmountAbortRef.current = null
     }
@@ -481,20 +504,6 @@ function MapPageContent() {
     setEditError('')
   }
 
-  const findExistingRestroomId = async (target: any) => {
-    const { data } = await supabase
-      .from('restroom')
-      .select('id')
-      .ilike('name', target.name)
-      .gte('lat', target.lat - 0.0005)
-      .lte('lat', target.lat + 0.0005)
-      .gte('lng', target.lng - 0.0005)
-      .lte('lng', target.lng + 0.0005)
-      .limit(1)
-      .maybeSingle()
-    return data?.id ?? null
-  }
-
   const persistAccessUpdate = async (target: any, entry: typeof editEntry, userId?: string | null) => {
     if (!userId) {
       throw new Error('SIGN_IN_REQUIRED')
@@ -564,7 +573,6 @@ function MapPageContent() {
         String(item.id) === String(r.id)
           ? {
               ...item,
-              pin: (hydrated as { pin?: string }).pin ?? item.pin,
               access_type: (hydrated as { access_type?: string }).access_type ?? (item as { access_type?: string }).access_type,
               status: (hydrated as { status?: string }).status ?? item.status,
               pin_updated_at: (hydrated as { pin_updated_at?: string }).pin_updated_at ?? (item as { pin_updated_at?: string }).pin_updated_at,
@@ -581,6 +589,52 @@ function MapPageContent() {
     } else {
       handleEditOpen(hydrated, e, 'share')
     }
+  }
+
+  const completePromoAccess = async () => {
+    const target = promoTarget as Record<string, unknown> | null
+    setShowPromo(false)
+    if (!target) return
+
+    const safeTarget = stripSensitivePinFields(target)
+    const parsed = parseAccessRecord(safeTarget)
+    const requiresCode = safeTarget.has_code === true || parsed.method === 'keypad_code'
+
+    if (!requiresCode) {
+      setSelected(safeTarget)
+      setShowPin(true)
+      void recordPinView(safeTarget)
+      return
+    }
+
+    const restroomId = Number(safeTarget.id)
+    const result = await requestAuthorizedRestroomAccess(
+      restroomId,
+      supabase as unknown as AccessRpcClient,
+    )
+    if (result.status === 'unauthenticated') {
+      setShowPin(false)
+      setNearbyError('Sign in to view restroom access codes.')
+      return
+    }
+    if (result.status !== 'success') {
+      setShowPin(false)
+      setNearbyError(
+        result.status === 'denied'
+          ? result.message
+          : 'This restroom access code could not be loaded securely.',
+      )
+      return
+    }
+
+    const authorizedTarget = {
+      ...safeTarget,
+      ...(result.pin ? { pin: result.pin } : {}),
+    }
+    setSelected(authorizedTarget)
+    setShowPin(true)
+    setPromoTarget(safeTarget)
+    void recordPinView(safeTarget)
   }
 
   const handleEditSave = async () => {
@@ -602,19 +656,23 @@ function MapPageContent() {
     try {
       const updated = await persistAccessUpdate(target, entry, user.id)
       const payload = buildAccessPayload(entry)
+      const safeUpdated = stripSensitivePinFields(updated as Record<string, unknown>)
 
       setRestrooms(prev => {
         const idx = prev.findIndex(r => r.id === target.id || r.id === updated.id)
-        if (idx < 0) return [...prev, updated]
+        if (idx < 0) return [...prev, safeUpdated]
         const next = [...prev]
-        next[idx] = { ...prev[idx], ...updated, distance: prev[idx].distance }
+        next[idx] = { ...prev[idx], ...safeUpdated, distance: prev[idx].distance }
         return next
       })
 
       closeEditForm()
-      setSelected(updated)
+      setSelected({
+        ...safeUpdated,
+        ...(entry.method === 'keypad_code' && entry.pin.trim() ? { pin: entry.pin.trim() } : {}),
+      })
       setShowPin(true)
-      recordPinView(updated, user.id)
+      void recordPinView(safeUpdated)
       setSuccessMsg(
         `${t.liveNow} — ${getAccessListLabel(updated).label} · ${formatUpdatedAt(payload.pin_updated_at)}`,
       )
@@ -1006,7 +1064,9 @@ function MapPageContent() {
         ))}
       </div>
 
-      {showPromo&&promoTarget&&(<PromoModal restroom={promoTarget} onComplete={()=>{recordPinView(promoTarget, user?.id);setShowPromo(false);setShowPin(true)}}/>)}
+      {showPromo&&promoTarget&&(
+        <PromoModal restroom={promoTarget} onComplete={()=>{ void completePromoAccess() }}/>
+      )}
       {showRating&&ratingTarget&&(<RatingModal restroom={ratingTarget} user={user} onClose={()=>setShowRating(false)} onDone={()=>{setShowRating(false);setSuccessMsg('✅ Thank you!');setTimeout(()=>setSuccessMsg(''),3000);loadData(queryLat,queryLng,searchQuery,false)}} initialPinWorked={ratingTarget?._pinWorked}/>)}
 
       {showEditForm&&editTarget&&(

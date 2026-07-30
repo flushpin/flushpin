@@ -3,6 +3,10 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { directionsLinks, isIOS } from '@/lib/restroomAccess'
+import {
+  requestAuthorizedRestroomAccess,
+  type AccessRpcClient,
+} from '@/lib/restroomAccessSecurity'
 import styles from './page.module.css'
 
 type Phase = 'idle' | 'checking' | 'need-login' | 'promo' | 'loading' | 'done' | 'error'
@@ -31,11 +35,18 @@ export default function AccessPanel({ id, name, lat, lng, hasRevealableCode }: P
     await new Promise((r) => setTimeout(r, 3000))
 
     setPhase('loading')
-    const { data, error } = await supabase.rpc('get_restroom_access_code', { restroom_id: id })
-    if (error) { setErr(error.message || 'Could not load the access code.'); setPhase('error'); return }
+    const result = await requestAuthorizedRestroomAccess(
+      id,
+      supabase as unknown as AccessRpcClient,
+    )
+    if (result.status === 'unauthenticated') { setPhase('need-login'); return }
+    if (result.status !== 'success') {
+      setErr(result.status === 'denied' ? result.message : 'Could not load the access code.')
+      setPhase('error')
+      return
+    }
 
-    const row = Array.isArray(data) ? data[0] : data
-    const pin: string | null = row?.pin ?? null
+    const pin = result.pin
     if (!pin || pin === 'open') { setOpenAccess(true); setCode(null) }
     else setCode(pin)
     setPhase('done')
