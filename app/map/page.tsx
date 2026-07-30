@@ -40,6 +40,11 @@ import {
   stripSensitivePinFields,
   type AccessRpcClient,
 } from '../../lib/restroomAccessSecurity'
+import {
+  MAP_DEFAULT_CENTER,
+  requestMapGeolocationOnce,
+  resolveMapMountLocation,
+} from '../../lib/mapLocationInit'
 
 async function recordPinView(restroom: { id?: unknown }) {
   if (!hasDbRestroomId(restroom.id)) return
@@ -114,7 +119,7 @@ function MapPageContent() {
   const [user, setUser] = useState<any>(null)
   const [userLat, setUserLat] = useState<number|null>(null)
   const [userLng, setUserLng] = useState<number|null>(null)
-  const [locationName, setLocationName] = useState('Locating...')
+  const [locationName, setLocationName] = useState(MAP_DEFAULT_CENTER.label)
   const [filter, setFilter] = useState('all')
   const [unit, setUnit] = useState<'mi'|'km'>('mi')
   const [selected, setSelected] = useState<any>(null)
@@ -141,6 +146,7 @@ function MapPageContent() {
   const [showRetry, setShowRetry] = useState(false)
   const loadRequestIdRef = useRef(0)
   const unmountAbortRef = useRef<AbortController | null>(null)
+  const locatingInFlightRef = useRef(false)
 
   const resolveCityLabel = async (lat: number, lng: number) => {
     try {
@@ -311,30 +317,34 @@ function MapPageContent() {
   }
 
   const getLocation = (onSuccess: (lat: number, lng: number) => void) => {
-    const applyLocation = async (lat: number, lng: number, fallbackLabel?: string) => {
+    // User-gesture only. One in-flight request max; denial falls back once (no retry).
+    if (locatingInFlightRef.current) return
+    locatingInFlightRef.current = true
+
+    const finish = async (lat: number, lng: number, fallbackLabel?: string) => {
       setUserLat(lat)
       setUserLng(lng)
       setLocating(false)
+      locatingInFlightRef.current = false
       await applyAnchor(lat, lng, fallbackLabel)
       onSuccess(lat, lng)
     }
 
-    if (!navigator.geolocation) {
-      applyLocation(33.6846, -117.7892, 'Irvine, CA')
-      return
-    }
     setLocating(true)
-    navigator.geolocation.getCurrentPosition(
-      pos => applyLocation(pos.coords.latitude, pos.coords.longitude),
-      () => applyLocation(33.6846, -117.7892, 'Irvine, CA'),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    )
+    requestMapGeolocationOnce(navigator.geolocation, {
+      onSuccess: (lat, lng) => {
+        void finish(lat, lng)
+      },
+      onError: () => {
+        void finish(MAP_DEFAULT_CENTER.lat, MAP_DEFAULT_CENTER.lng, MAP_DEFAULT_CENTER.label)
+      },
+    })
   }
 
-  const queryLat = anchorLat ?? userLat ?? 33.6846
-  const queryLng = anchorLng ?? userLng ?? -117.7892
-  const sortLat = userLat ?? anchorLat ?? 33.6846
-  const sortLng = userLng ?? anchorLng ?? -117.7892
+  const queryLat = anchorLat ?? userLat ?? MAP_DEFAULT_CENTER.lat
+  const queryLng = anchorLng ?? userLng ?? MAP_DEFAULT_CENTER.lng
+  const sortLat = userLat ?? anchorLat ?? MAP_DEFAULT_CENTER.lat
+  const sortLng = userLng ?? anchorLng ?? MAP_DEFAULT_CENTER.lng
 
   const categoryParam = searchParams.get('category')
   const activeCategory: MapCategorySlug | null = isMapCategorySlug(categoryParam) ? categoryParam : null
@@ -378,26 +388,19 @@ function MapPageContent() {
     })
 
     const init = async () => {
-      if (urlLat && urlLng) {
-        const lat = parseFloat(urlLat)
-        const lng = parseFloat(urlLng)
-        if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
-          await applyAnchor(lat, lng, near || undefined)
-          await loadData(lat, lng, '', false)
-          return
-        }
-      }
-
-      if (q) {
-        const located = await resolveSearchLocation(q)
-        if (located) {
-          await applyAnchor(located.lat, located.lng, located.label)
-          await loadData(located.lat, located.lng, '', false)
-          return
-        }
-      }
-
-      getLocation((lat, lng) => { loadData(lat, lng, '', false, { force: true }) })
+      const mounted = await resolveMapMountLocation(
+        {
+          lat: urlLat,
+          lng: urlLng,
+          q,
+          near,
+          category: params.get('category'),
+        },
+        { resolveSearchLocation },
+      )
+      // Mount never requests geolocation — only URL, geocode, or default center.
+      await applyAnchor(mounted.lat, mounted.lng, mounted.label)
+      await loadData(mounted.lat, mounted.lng, '', false)
     }
 
     init()
