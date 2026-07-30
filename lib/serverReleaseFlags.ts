@@ -16,3 +16,10 @@ export function isTripStopsEnabled(
   assertServerRuntime()
   return explicitlyEnabled(env.TRIP_STOPS_ENABLED)
 }
+
+export function isAdminDashboardEnabled(
+  env: ReleaseEnvironment = process.env,
+): boolean {
+  assertServerRuntime()
+  return explicitlyEnabled(env.ADMIN_DASHBOARD_ENABLED)
+}

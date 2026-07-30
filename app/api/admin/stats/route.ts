@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { authorizeAdminRequest } from '@/lib/adminRequestAuth'
 
 export const dynamic = 'force-dynamic'
 
@@ -50,6 +51,9 @@ async function countAuthUsers(todayStart: string) {
 }
 
 export async function GET(request: NextRequest) {
+  const authorization = await authorizeAdminRequest(request)
+  if (!authorization.authorized) return authorization.response
+
   const supabase = getServiceClient()
   if (!supabase) {
     return NextResponse.json(
@@ -93,7 +97,7 @@ export async function GET(request: NextRequest) {
       ].filter(Boolean),
     })
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to load admin stats'
-    return NextResponse.json({ error: message }, { status: 500 })
+    console.error('[api/admin/stats] request failed', err)
+    return NextResponse.json({ error: 'admin_stats_unavailable' }, { status: 500 })
   }
 }

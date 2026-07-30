@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { authorizeAdminRequest } from '@/lib/adminRequestAuth'
 import { getServiceClient } from '@/lib/supabaseService'
 
 export const dynamic = 'force-dynamic'
@@ -31,10 +32,6 @@ function last7DayKeys(): string[] {
 function formatChartLabel(ymd: string): string {
   const d = new Date(`${ymd}T12:00:00`)
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-}
-
-function emptyDaySeries() {
-  return last7DayKeys().map((date) => ({ date, label: formatChartLabel(date), count: 0 }))
 }
 
 function countByDay(rows: { ts: string }[], dayKeys: string[]) {
@@ -119,9 +116,12 @@ async function fetchRestroomCreatedSince(supabase: SupabaseClient, since: Date) 
 }
 
 export async function GET(request: NextRequest) {
+  const authorization = await authorizeAdminRequest(request)
+  if (!authorization.authorized) return authorization.response
+
   const service = getServiceClient()
   if (!service.client) {
-    return NextResponse.json({ error: service.error }, { status: service.status })
+    return NextResponse.json({ error: 'admin_service_unavailable' }, { status: 503 })
   }
   const supabase = service.client
 
@@ -169,11 +169,7 @@ export async function GET(request: NextRequest) {
       recentAdminLogs: recentLogsRes.data ?? [],
     })
   } catch (err) {
-    let message = err instanceof Error ? err.message : 'Failed to load admin dashboard data'
-    if (/invalid api key/i.test(message)) {
-      message =
-        'Invalid API key — Vercel likely has the anon key or a truncated copy. Supabase → Project Settings → API → copy service_role (secret), not anon (public).'
-    }
-    return NextResponse.json({ error: message }, { status: 500 })
+    console.error('[admin/data] request failed', err)
+    return NextResponse.json({ error: 'admin_data_unavailable' }, { status: 500 })
   }
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { authorizeAdminRequest } from '@/lib/adminRequestAuth'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,6 +20,9 @@ function getServiceClient() {
 type RestroomRow = { id: number | string; lat: number | null; lng: number | null; name: string | null; address: string | null }
 
 export async function GET(request: NextRequest) {
+  const authorization = await authorizeAdminRequest(request)
+  if (!authorization.authorized) return authorization.response
+
   const supabase = getServiceClient()
   if (!supabase) {
     return NextResponse.json({ error: 'SUPABASE_SERVICE_ROLE_KEY is not configured.' }, { status: 503 })
@@ -107,7 +111,7 @@ export async function GET(request: NextRequest) {
       mapAttribution: '© OpenStreetMap contributors',
     })
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to load live activity'
-    return NextResponse.json({ error: message }, { status: 500 })
+    console.error('[admin/live] request failed', err)
+    return NextResponse.json({ error: 'admin_live_unavailable' }, { status: 500 })
   }
 }
