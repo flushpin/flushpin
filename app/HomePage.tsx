@@ -4,12 +4,17 @@ import HomeHero from '../components/home/HomeHero'
 import HowItWorks from '../components/home/HowItWorks'
 import RecentUpdates from '../components/home/RecentUpdates'
 import StatsStrip from '../components/home/StatsStrip'
+import TripStopsCard from '../components/home/TripStopsCard'
+import { isTripStopsEnabled } from '../lib/serverReleaseFlags'
 
 export default function HomePage() {
+  const tripStopsEnabled = isTripStopsEnabled()
+
   return (
     <main className="bg-[#0a0f0e]">
       <HomeHero />
       <div className="bg-fp-white">
+        {tripStopsEnabled ? <TripStopsCard /> : null}
         <BuiltForTheRoad />
         <StatsStrip />
         <RecentUpdates />

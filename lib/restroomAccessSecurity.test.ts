@@ -7,6 +7,7 @@ import {
   stripSensitivePinFields,
   type AccessRpcClient,
 } from './restroomAccessSecurity'
+import type { TripStopsResponse } from './tripStops'
 
 // Anonymous map hydration is metadata-only.
 assert.equal(PUBLIC_RESTROOM_ACCESS_FIELDS.split(',').map((field) => field.trim()).includes('pin'), false)
@@ -90,6 +91,22 @@ assert.deepEqual(
   }),
   { id: 1, name: 'Restroom' },
 )
+
+// Trip Stops remains PIN-free under the shared response guard.
+const tripStopsFixture: TripStopsResponse = {
+  mode: 'destination',
+  anchor: { lat: 33.8, lng: -117.9, label: 'Anaheim, CA' },
+  stops: [],
+  partialWarnings: [],
+  meta: {
+    sampledPoints: 1,
+    candidateCount: 0,
+    displayedCount: 0,
+    radiusMiles: 2,
+    mapDisplay: 'maplibre',
+  },
+}
+assert.doesNotThrow(() => assertPinFreePayload(tripStopsFixture, 'Trip Stops response'))
 
 runAuthorizationTests()
   .then(() => console.log('lib/restroomAccessSecurity.test.ts passed'))
