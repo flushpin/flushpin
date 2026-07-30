@@ -19,7 +19,7 @@ type Props = {
  */
 export default function BusinessStickerVisual({
   src = BUSINESS_STICKER_VISUAL_SRC,
-  alt = 'FlushPin restroom access sticker with PIN code on a restroom door inside a modern café',
+  alt = 'FlushPin restroom access sticker with QR code on a restroom door inside a modern café',
 }: Props) {
   return (
     <div
@@ -30,7 +30,7 @@ export default function BusinessStickerVisual({
           src={src}
           alt={alt}
           fill
-          className="object-cover object-[46%_42%]"
+          className="object-cover object-center"
           sizes="(max-width: 768px) 92vw, (max-width: 1024px) 44vw, 480px"
         />
       ) : null}
