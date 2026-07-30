@@ -25,6 +25,7 @@ export type PublishAccessInput = {
   accessType: string
   cleanedPin: string | null
   accessible?: boolean
+  hasBabyChanging?: boolean
   customersOnly?: boolean
   method?: AccessMethod
 }
@@ -35,11 +36,12 @@ export type AccessUpdatePayload = {
   pin_updated_at: string
   status: string
   verified: string
-  accessible?: boolean
+  accessible?: boolean | null
+  has_baby_changing?: boolean | null
 }
 
 const RESTROOM_POST_PUBLISH_FIELDS =
-  'id, access_type, pin_updated_at, status, verified, name, address, accessible'
+  'id, access_type, pin_updated_at, status, verified, name, address, accessible, has_baby_changing'
 
 function eqRestroomId(restroomId: string | number) {
   return normalizeRestroomId(restroomId) ?? restroomId
@@ -140,6 +142,7 @@ function toAccessPayload(
     verified_note?: string | null
     status_note?: string | null
     accessible?: boolean | null
+    has_baby_changing?: boolean | null
   },
   fallbackType: string,
   submittedPin: string | null,
@@ -150,7 +153,9 @@ function toAccessPayload(
     pin_updated_at: row.pin_updated_at ?? new Date().toISOString(),
     status: row.status ?? 'green',
     verified: getVerifiedDisplayLabel(row),
-    accessible: row.accessible ?? false,
+    // Canonical DB values only — never invent amenities from the request.
+    accessible: row.accessible ?? null,
+    has_baby_changing: row.has_baby_changing ?? null,
   }
 }
 
@@ -283,7 +288,9 @@ function buildOptimisticPayload(
     pin_updated_at: new Date().toISOString(),
     status: 'green',
     verified: 'Access info shared',
-    accessible: input.accessible ?? false,
+    // Amenities must come from a confirmed DB read — leave unknown here.
+    accessible: null,
+    has_baby_changing: null,
   }
 }
 
@@ -292,10 +299,18 @@ export function buildPublishAccessInput(
   method: AccessMethod,
   pin: string,
   accessible: boolean,
+  hasBabyChanging?: boolean,
 ): PublishAccessInput {
   const accessType = encodeAccessType(method === 'locked' ? false : customersOnly, method)
   const cleanedPin = method === 'keypad_code' ? pin.trim() || null : null
-  return { accessType, cleanedPin, accessible, customersOnly, method }
+  return {
+    accessType,
+    cleanedPin,
+    accessible,
+    hasBabyChanging,
+    customersOnly,
+    method,
+  }
 }
 
 export async function publishRestroomAccess(

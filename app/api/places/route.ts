@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
     const lngDelta = radius / (111_320 * Math.max(0.2, Math.cos((center.lat * Math.PI) / 180)))
     const query = service.client
       .from('restroom_public')
-      .select('id,name,address,lat,lng,status,verified,accessible,access_type,has_code,source,external_id,pin_updated_at')
+      .select('id,name,address,lat,lng,status,verified,accessible,has_baby_changing,access_type,has_code,source,external_id,pin_updated_at')
       .gte('lat', center.lat - latDelta)
       .lte('lat', center.lat + latDelta)
       .gte('lng', center.lng - lngDelta)
@@ -116,6 +116,7 @@ export async function GET(request: NextRequest) {
         score: 0,
         verified: row.verified || 'Not yet verified',
         accessible: row.accessible === true,
+        has_baby_changing: row.has_baby_changing === true,
         access_type: row.access_type,
         has_code: row.has_code === true,
         source: row.source || 'flushpin',
@@ -243,7 +244,8 @@ export async function GET(request: NextRequest) {
       stars: 0,
       score: 0,
       verified: 'Not yet verified',
-      accessible: false,
+      accessible: null,
+      has_baby_changing: null,
       source: 'google',
       provenance: [
         {

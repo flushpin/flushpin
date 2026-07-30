@@ -5,6 +5,7 @@ import {
   publishRestroomAccess,
   type PublishTarget,
 } from '@/lib/publishAccess'
+import { persistRestroomAmenities } from '@/lib/persistRestroomAmenities'
 import { stripSensitivePinFields } from '@/lib/restroomAccessSecurity'
 
 export type ShareAccessTarget = {
@@ -43,6 +44,7 @@ export async function persistShareAccess(
     entry.method,
     entry.pin,
     entry.accessible,
+    entry.hasBabyChanging,
   )
 
   const result = await publishRestroomAccess(
@@ -56,6 +58,35 @@ export async function persistShareAccess(
 
   if (!result.ok || !result.payload || !result.restroomId) {
     return { ok: false as const, error: result.error ?? 'Save failed' }
+  }
+
+  // Production apply_restroom_access does not accept amenity params.
+  // Only write amenities when the client explicitly included baby-changing
+  // (map edit form). Code-only submits omit hasBabyChanging and must not
+  // overwrite existing amenity columns with coerced false values.
+  if (typeof entry.hasBabyChanging === 'boolean') {
+    const amenities = await persistRestroomAmenities({
+      restroomId: result.restroomId,
+      userId,
+      accessible: entry.accessible,
+      has_baby_changing: entry.hasBabyChanging,
+    })
+
+    if (!amenities.ok) {
+      return { ok: false as const, error: amenities.error }
+    }
+
+    return {
+      ok: true as const,
+      restroomId: result.restroomId,
+      restroom: stripSensitivePinFields({
+        ...target,
+        ...result.payload,
+        id: result.restroomId,
+        accessible: amenities.accessible,
+        has_baby_changing: amenities.has_baby_changing,
+      }),
+    }
   }
 
   return {

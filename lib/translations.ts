@@ -188,6 +188,16 @@ export const translations = {
     submitLocation: 'Submit location ✓',
     addedMsg: '✅ Location added — thank you for contributing!',
 
+    amenityThanks: {
+      title: 'Thank You',
+      body: 'Because of you, the next person will have a better experience.',
+      support: 'Your contribution helps families, travelers, and people with accessibility needs.',
+      button: 'Thanks',
+      footer: 'Every contribution makes FlushPin better.',
+      persistedHint: 'Update recorded for this restroom.',
+      closeAria: 'Close thank you message',
+    },
+
     // Auth
     joinFlushPin: 'Join FlushPin',
     fullName: 'Full Name',
@@ -591,6 +601,16 @@ export const translations = {
     wheelchair: '♿ Accesible en silla de ruedas',
     submitLocation: 'Enviar lugar ✓',
     addedMsg: '✅ Lugar agregado — ¡gracias por contribuir!',
+
+    amenityThanks: {
+      title: 'Gracias',
+      body: 'Gracias a ti, la próxima persona tendrá una mejor experiencia.',
+      support: 'Tu contribución ayuda a familias, viajeros y personas con necesidades de accesibilidad.',
+      button: 'Gracias',
+      footer: 'Cada contribución mejora FlushPin.',
+      persistedHint: 'Actualización registrada para este baño.',
+      closeAria: 'Cerrar mensaje de agradecimiento',
+    },
 
     // Auth
     joinFlushPin: 'Únete a FlushPin',
