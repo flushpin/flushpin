@@ -1,11 +1,13 @@
 'use client'
+
 import { useEffect } from 'react'
 
 export default function SwRegister() {
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
-    }
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // Non-fatal: page still works without SW registration.
+    })
   }, [])
   return null
 }

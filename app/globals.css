@@ -37,6 +37,18 @@ body {
   font-size: 16px;
   line-height: 1.5;
   margin: 0;
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+.fp-safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+@media (display-mode: standalone) {
+  .fp-standalone-body {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
 }
 
 .fp-card {

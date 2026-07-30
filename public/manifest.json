@@ -1,30 +1,32 @@
 {
+  "id": "/",
   "name": "FlushPin",
   "short_name": "FlushPin",
   "description": "Community restroom access information",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#1D9E75",
-  "orientation": "portrait",
+  "background_color": "#0a0f0e",
+  "theme_color": "#00a886",
+  "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/flushpin-logo-teal.png",
-      "sizes": "180x180",
+      "src": "/icon-192.png",
+      "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/flushpin-logo-teal.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/flushpin-logo-teal.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

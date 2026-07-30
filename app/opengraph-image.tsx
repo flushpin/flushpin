@@ -36,7 +36,20 @@ export default function OpenGraphImage() {
               fontWeight: 800,
             }}
           >
-            ⌖
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
+              <circle cx="12" cy="10" r="2.5" />
+            </svg>
           </div>
           <div style={{ fontSize: 40, fontWeight: 800, letterSpacing: -1 }}>FlushPin</div>
         </div>
@@ -52,7 +65,7 @@ export default function OpenGraphImage() {
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 24, opacity: 0.95 }}>
           <span>www.flushpin.com</span>
-          <span>Free on the App Store</span>
+          <span>Web &amp; PWA</span>
         </div>
       </div>
     ),

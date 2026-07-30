@@ -1,23 +1,21 @@
-'use client'
-
 import BusinessCta from '../components/home/BusinessCta'
 import BuiltForTheRoad from '../components/home/BuiltForTheRoad'
-import CategoryGrid from '../components/home/CategoryGrid'
-import HeroSection from '../components/home/HeroSection'
+import HomeHero from '../components/home/HomeHero'
 import HowItWorks from '../components/home/HowItWorks'
 import RecentUpdates from '../components/home/RecentUpdates'
 import StatsStrip from '../components/home/StatsStrip'
 
 export default function HomePage() {
   return (
-    <main className="bg-fp-white">
-      <HeroSection />
-      <BuiltForTheRoad />
-      <CategoryGrid />
-      <StatsStrip />
-      <RecentUpdates />
-      <HowItWorks />
-      <BusinessCta />
+    <main className="bg-[#0a0f0e]">
+      <HomeHero />
+      <div className="bg-fp-white">
+        <BuiltForTheRoad />
+        <StatsStrip />
+        <RecentUpdates />
+        <HowItWorks />
+        <BusinessCta />
+      </div>
     </main>
   )
 }

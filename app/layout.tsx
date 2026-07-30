@@ -1,11 +1,19 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { LanguageProvider } from '../lib/LanguageContext'
 import ConditionalFooter from '../components/ConditionalFooter'
 import SiteHeader from '../components/SiteHeader'
+import SwRegister from './sw-register'
 import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME, SITE_TAGLINE, SITE_URL } from '../lib/seo'
 
 const googleVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#00a886',
+}
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -24,13 +32,18 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    title: 'FlushPin',
+    statusBarStyle: 'black-translucent',
+  },
   icons: {
     icon: [
       { url: '/favicon-48.png', sizes: '48x48', type: 'image/png' },
       { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
       { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
     ],
-    apple: '/apple-touch-icon.png',
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
   openGraph: {
     title: `${SITE_NAME} — ${SITE_TAGLINE}`,
@@ -64,12 +77,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      <body className="fp-standalone-body">
         <LanguageProvider>
           <SiteHeader />
           {children}
         </LanguageProvider>
         <ConditionalFooter />
+        <SwRegister />
       </body>
     </html>
   )
