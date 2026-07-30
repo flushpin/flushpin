@@ -1,7 +1,6 @@
 'use client'
 
 import Image from 'next/image'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useState } from 'react'
 import {
@@ -12,6 +11,7 @@ import {
   Users,
 } from 'lucide-react'
 import AddFlushPinToPhone from './AddFlushPinToPhone'
+import BusinessStickerSection from './BusinessStickerSection'
 import CategoryShortcuts from './CategoryShortcuts'
 import LocationSearch from './LocationSearch'
 import NearbySearchButton from './NearbySearchButton'
@@ -177,20 +177,7 @@ export default function HomeHero() {
 
         <AddFlushPinToPhone />
 
-        <Link
-          href="/map"
-          className="mt-8 block overflow-hidden rounded-2xl border border-white/10 bg-[#0f1412] no-underline shadow-inner"
-          aria-label="Open map preview"
-        >
-          <div className="relative aspect-[16/10] w-full">
-            <div className="absolute inset-0 bg-[linear-gradient(135deg,#0f1412_0%,#162420_50%,#0f1412_100%)]" />
-            <div className="absolute inset-0 opacity-30 [background-image:radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.15)_1px,transparent_0)] [background-size:24px_24px]" />
-            <div className="absolute left-[18%] top-[28%] h-3 w-3 rounded-full bg-fp-teal shadow-[0_0_12px_rgba(0,168,134,0.8)]" />
-            <div className="absolute left-[42%] top-[55%] h-3 w-3 rounded-full bg-fp-teal/80" />
-            <div className="absolute right-[22%] top-[38%] h-3 w-3 rounded-full bg-fp-teal/70" />
-            <div className="absolute left-[55%] top-[42%] h-4 w-4 rounded-full border-2 border-white/30 bg-[#3b82f6] shadow-[0_0_16px_rgba(59,130,246,0.7)]" />
-          </div>
-        </Link>
+        <BusinessStickerSection />
 
         <div className="mt-8 rounded-2xl border border-fp-teal/30 bg-[#121816] p-4">
           <div className="flex items-start gap-3">
