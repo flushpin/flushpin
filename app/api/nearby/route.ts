@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { buildNearbyResponse, parseCoordinates } from '../../../lib/nearby'
+import { getPlaceIntelligenceConfig } from '../../../lib/placeIntelligence'
 import { getServiceClient } from '../../../lib/supabaseService'
 
 const RATE_LIMIT_WINDOW_MS = 60_000
@@ -40,8 +41,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: coords.error }, { status: 400 })
   }
 
-  const googleApiKey = process.env.GOOGLE_MAPS_KEY
-  if (!googleApiKey?.trim()) {
+  const providerConfig = getPlaceIntelligenceConfig()
+  const googleApiKey = process.env.GOOGLE_MAPS_KEY?.trim() ?? ''
+  if (
+    providerConfig.externalFallbackEnabled &&
+    providerConfig.googlePlacesEnabled &&
+    !googleApiKey
+  ) {
     console.error('[nearby] GOOGLE_MAPS_KEY is not configured')
     return NextResponse.json({ error: 'server_configuration_error' }, { status: 500 })
   }
@@ -68,7 +74,9 @@ export async function GET(request: NextRequest) {
         googleFetch: fetch,
         supabase,
         now: () => Date.now(),
-        googleApiKey: googleApiKey.trim(),
+        googleApiKey,
+        providerConfig,
+        sessionKey: `nearby:${clientKey}`,
       },
     )
     return NextResponse.json(response)

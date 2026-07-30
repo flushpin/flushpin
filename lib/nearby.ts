@@ -4,13 +4,21 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { mapNearbyVerifiedBoolean } from './restroomVerified'
+import {
+  PLACE_PROVIDER_FIELD_MASKS,
+  assertPlaceIntelligencePinFree,
+  assessCoverage,
+  dedupeIdentityCandidates,
+  executeProviderCall,
+  getPlaceIntelligenceConfig,
+  providerRequestFingerprint,
+  type CoverageCandidate,
+  type PlaceIntelligenceConfig,
+  type PlaceProvenance,
+} from './placeIntelligence'
 
 /** ~140m grid cell; actual ground distance varies with latitude. */
 export const CELL_SIZE = 0.00125
-
-export const CACHE_TTL_MS = 24 * 60 * 60 * 1000
-
-export const CACHE_STALE_DISTANCE_M = 200
 
 export const NEARBY_RADIUS_TIER1_M = 200
 
@@ -159,7 +167,13 @@ export const GOOGLE_NAME_BLACKLIST_PATTERNS = [
 
 export type NearbyCategoryGroup = 'business_restroom' | 'public_restroom'
 
-export type NearbySourceKind = 'google' | 'cache' | 'cache_stale'
+export type NearbySourceKind =
+  | 'google'
+  | 'cache'
+  | 'cache_stale'
+  | 'internal'
+  | 'mixed'
+  | 'provider_disabled'
 
 /** Stable API contract — Faz 2/3 depend on these fields. brand_name/logo_url intentionally omitted. */
 export type NearbyPlaceResult = {
@@ -176,6 +190,7 @@ export type NearbyPlaceResult = {
   has_gendered_pins: boolean
   access_available: boolean
   source: string | null
+  provenance?: PlaceProvenance[]
 }
 
 export type NearbyApiResponse = {
@@ -184,6 +199,13 @@ export type NearbyApiResponse = {
   source: NearbySourceKind
   count: number
   places: NearbyPlaceResult[]
+  coverage?: {
+    sufficient: boolean
+    confidence: number
+    result_count: number
+    fresh_result_count: number
+    external_fallback_used: boolean
+  }
   /** Preview-only diagnostic block when debug=1 is requested. */
   _preview_audit?: NearbyPreviewAudit
 }
@@ -222,18 +244,11 @@ export type GooglePlaceFilterAudit = {
   exclusion_reason: string | null
 }
 
-export type CachePayload = {
-  center: { lat: number; lng: number }
-  places: GoogleRawPlace[]
-}
-
 export type RestroomOverlayRow = {
   place_id: string | null
   has_code: boolean | null
   verified: string | null
   status: string | null
-  pin_male: string | null
-  pin_female: string | null
 }
 
 export type PublicRestroomRow = {
@@ -248,8 +263,6 @@ export type PublicRestroomRow = {
   has_code: boolean | null
   verified: string | null
   status: string | null
-  pin_male: string | null
-  pin_female: string | null
 }
 
 export type NearbyDeps = {
@@ -258,21 +271,26 @@ export type NearbyDeps = {
   now: () => number
   googleApiKey: string
   onGoogleCall?: (radiusMeters: number) => void
+  providerConfig?: PlaceIntelligenceConfig
+  sessionKey?: string
 }
 
-let cacheTablesMissingWarned = false
-
-function isCacheTableMissingError(error: { code?: string; message?: string }): boolean {
-  if (error.code === 'PGRST205') return true
-  const msg = error.message ?? ''
-  return msg.includes('google_nearby_cache') || msg.includes('google_places_seen')
-}
-
-function warnCacheTablesMissingOnce() {
-  if (!cacheTablesMissingWarned) {
-    cacheTablesMissingWarned = true
-    console.warn('[nearby] cache tables not found — running in degrade mode without DB cache')
-  }
+type KnownRestroomRow = {
+  id: number | string
+  name: string | null
+  address: string | null
+  lat: number | null
+  lng: number | null
+  type: string | null
+  source: string | null
+  external_id: string | null
+  place_id: string | null
+  has_code: boolean | null
+  verified: string | null
+  status: string | null
+  access_type: string | null
+  pin_updated_at: string | null
+  last_verified_at: string | null
 }
 
 export type NearbyDevTelemetry = {
@@ -287,10 +305,6 @@ export type NearbyDevTelemetry = {
 export function logNearbyDevTelemetry(telemetry: NearbyDevTelemetry): void {
   if (process.env.NODE_ENV === 'production') return
   console.log('[nearby:telemetry]', JSON.stringify(telemetry))
-}
-
-export function resetNearbyCacheWarningsForTests() {
-  cacheTablesMissingWarned = false
 }
 
 export type NearbyRequest = {
@@ -348,15 +362,6 @@ export function parseCoordinates(
   return { lat, lng }
 }
 
-export function hasGenderedPins(row: {
-  pin_male?: string | null
-  pin_female?: string | null
-}): boolean {
-  const male = row.pin_male?.trim()
-  const female = row.pin_female?.trim()
-  return !!(male || female)
-}
-
 export function overlayBooleans(row: RestroomOverlayRow | null | undefined): {
   has_code: boolean
   verified: boolean
@@ -373,7 +378,7 @@ export function overlayBooleans(row: RestroomOverlayRow | null | undefined): {
   }
   const has_code = row.has_code === true
   const verified = mapNearbyVerifiedBoolean(row)
-  const has_gendered_pins = hasGenderedPins(row)
+  const has_gendered_pins = false
   const access_available = has_code || verified
   return { has_code, verified, has_gendered_pins, access_available }
 }
@@ -489,33 +494,6 @@ export function shouldFallbackNearby(
   return closest > NEARBY_FALLBACK_DISTANCE_M
 }
 
-export function parseCachePayload(raw: unknown): CachePayload | null {
-  if (Array.isArray(raw)) {
-    return null
-  }
-  if (!raw || typeof raw !== 'object') return null
-  const obj = raw as Record<string, unknown>
-  const center = obj.center as { lat?: number; lng?: number } | undefined
-  const places = obj.places
-  if (
-    !center ||
-    typeof center.lat !== 'number' ||
-    typeof center.lng !== 'number' ||
-    !Array.isArray(places)
-  ) {
-    return null
-  }
-  return { center: { lat: center.lat, lng: center.lng }, places: places as GoogleRawPlace[] }
-}
-
-export function cacheCenterTooFar(
-  userLat: number,
-  userLng: number,
-  center: { lat: number; lng: number },
-): boolean {
-  return haversineDistanceMeters(userLat, userLng, center.lat, center.lng) > CACHE_STALE_DISTANCE_M
-}
-
 export function mergeGooglePlaces(...groups: GoogleRawPlace[][]): GoogleRawPlace[] {
   const seen = new Set<string>()
   const merged: GoogleRawPlace[] = []
@@ -570,6 +548,13 @@ export function mapGoogleRawToCandidate(
     has_gendered_pins: false,
     access_available: false,
     source: 'google',
+    provenance: [
+      {
+        provider: 'google',
+        ownership: 'temporary_provider',
+        providerObjectId: place_id,
+      },
+    ],
   }
 }
 
@@ -605,139 +590,215 @@ export function assertNoPinFieldsInResponse(payload: unknown): void {
   }
 }
 
-const GOOGLE_FIELD_MASK =
-  'places.id,places.displayName,places.formattedAddress,places.location,places.types,places.primaryType'
+function hasUsefulRestroomEvidence(row: KnownRestroomRow): boolean {
+  if (row.type && PUBLIC_RESTROOM_TYPES.includes(row.type as (typeof PUBLIC_RESTROOM_TYPES)[number])) {
+    return true
+  }
+  if (row.has_code || row.status === 'green') return true
+  if (row.access_type && !['unknown', 'pin'].includes(row.access_type)) return true
+  return !!(
+    row.verified?.trim() &&
+    !/unknown|unverified|pending|not yet verified/i.test(row.verified)
+  )
+}
+
+function knownRowToNearbyPlace(
+  row: KnownRestroomRow,
+  userLat: number,
+  userLng: number,
+): NearbyPlaceResult | null {
+  if (
+    row.id == null ||
+    !row.name?.trim() ||
+    !Number.isFinite(row.lat) ||
+    !Number.isFinite(row.lng) ||
+    !hasUsefulRestroomEvidence(row)
+  ) {
+    return null
+  }
+  const isPublic =
+    row.type != null &&
+    PUBLIC_RESTROOM_TYPES.includes(row.type as (typeof PUBLIC_RESTROOM_TYPES)[number])
+  const providerId = normalizeGooglePlaceId(row.place_id)
+  const verified = mapNearbyVerifiedBoolean(row)
+  const hasCode = row.has_code === true
+  return {
+    place_id:
+      providerId ??
+      (row.source && row.external_id
+        ? `${row.source}:${row.external_id}`
+        : `flushpin:${row.id}`),
+    name: row.name.trim(),
+    address: row.address?.trim() ?? '',
+    lat: row.lat as number,
+    lng: row.lng as number,
+    types: row.type ? [row.type] : [],
+    distance_m: haversineDistanceMeters(userLat, userLng, row.lat as number, row.lng as number),
+    category_group: isPublic ? 'public_restroom' : 'business_restroom',
+    has_code: hasCode,
+    verified,
+    has_gendered_pins: false,
+    access_available: hasCode || verified || !!row.access_type,
+    source: row.source ?? 'flushpin',
+    provenance: [
+      row.source == null || row.source === 'manual'
+        ? { provider: 'flushpin', ownership: 'flushpin_owned' }
+        : {
+            provider:
+              row.source === 'google'
+                ? 'google'
+                : row.source === 'openstreetmap' || row.source === 'osm'
+                  ? 'openstreetmap'
+                  : row.source === 'overture'
+                    ? 'overture'
+                    : 'flushpin',
+            ownership:
+              row.source === 'openstreetmap' || row.source === 'osm'
+                ? 'open_public'
+                : 'legacy_unknown',
+            providerObjectId: row.external_id ?? row.place_id ?? undefined,
+            sourceDataset: row.source,
+          },
+    ],
+  }
+}
+
+export async function fetchKnownFlushPinPlaces(
+  supabase: SupabaseClient,
+  userLat: number,
+  userLng: number,
+  radiusMeters: number,
+): Promise<{ places: NearbyPlaceResult[]; coverageCandidates: CoverageCandidate[] }> {
+  const { latDelta, lngDelta } = bboxDeltas(userLat, radiusMeters)
+  const { data, error } = await supabase
+    .from('restroom')
+    .select(
+      'id,name,address,lat,lng,type,source,external_id,place_id,has_code,verified,status,access_type,pin_updated_at,last_verified_at',
+    )
+    .or('opt_out.is.null,opt_out.eq.false')
+    .gte('lat', userLat - latDelta)
+    .lte('lat', userLat + latDelta)
+    .gte('lng', userLng - lngDelta)
+    .lte('lng', userLng + lngDelta)
+    .limit(200)
+
+  if (error) {
+    console.warn('[nearby] internal coverage query unavailable:', error.message)
+    return { places: [], coverageCandidates: [] }
+  }
+
+  const rows = (data ?? []) as KnownRestroomRow[]
+  const places = rows
+    .map((row) => knownRowToNearbyPlace(row, userLat, userLng))
+    .filter((place): place is NearbyPlaceResult => !!place)
+    .filter((place) => place.distance_m <= radiusMeters)
+  const includedIds = new Set(places.map((place) => place.place_id))
+  const coverageCandidates = rows.flatMap((row): CoverageCandidate[] => {
+    const mapped = knownRowToNearbyPlace(row, userLat, userLng)
+    if (!mapped || !includedIds.has(mapped.place_id) || mapped.distance_m > radiusMeters) return []
+    return [
+      {
+        lat: mapped.lat,
+        lng: mapped.lng,
+        verifiedAt: row.last_verified_at ?? row.pin_updated_at,
+        confidence: mapped.verified ? 'verified' : mapped.access_available ? 'community' : 'unverified',
+      },
+    ]
+  })
+  return { places, coverageCandidates }
+}
+
+export function dedupeNearbyPlacesWithIdentity(
+  places: NearbyPlaceResult[],
+): NearbyPlaceResult[] {
+  const byId = new Map<string, NearbyPlaceResult>()
+  for (const place of places) {
+    if (!byId.has(place.place_id)) byId.set(place.place_id, place)
+  }
+  const identity = dedupeIdentityCandidates(
+    places.map((place) => ({
+      id: place.place_id,
+      name: place.name,
+      address: place.address,
+      lat: place.lat,
+      lng: place.lng,
+      categories: place.types.length ? place.types : [place.category_group],
+      provenance:
+        place.provenance ??
+        [
+          {
+            provider:
+              place.source === 'google'
+                ? 'google'
+                : place.source === 'open_charge_map'
+                  ? 'open_charge_map'
+                  : 'flushpin',
+            ownership: place.source === 'google' ? 'temporary_provider' : 'legacy_unknown',
+            providerObjectId: place.source === 'google' ? place.place_id : undefined,
+          },
+        ],
+    })),
+  )
+  return identity.places
+    .map((place) => byId.get(place.id))
+    .filter((place): place is NearbyPlaceResult => !!place)
+}
 
 export async function fetchGoogleSearchNearby(
   lat: number,
   lng: number,
   radiusMeters: number,
-  deps: Pick<NearbyDeps, 'googleFetch' | 'googleApiKey' | 'onGoogleCall'>,
+  deps: Pick<
+    NearbyDeps,
+    'googleFetch' | 'googleApiKey' | 'onGoogleCall' | 'providerConfig' | 'sessionKey'
+  >,
 ): Promise<GoogleRawPlace[]> {
-  deps.onGoogleCall?.(radiusMeters)
-  const res = await deps.googleFetch('https://places.googleapis.com/v1/places:searchNearby', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Goog-Api-Key': deps.googleApiKey,
-      'X-Goog-FieldMask': GOOGLE_FIELD_MASK,
-    },
-    body: JSON.stringify({
-      includedTypes: [...INCLUDED_TYPES],
-      maxResultCount: 20,
-      rankPreference: 'DISTANCE',
-      locationRestriction: {
-        circle: {
-          center: { latitude: lat, longitude: lng },
-          radius: radiusMeters,
+  const config = deps.providerConfig ?? getPlaceIntelligenceConfig()
+  const requestKey = `places_nearby:${providerRequestFingerprint({
+    lat: lat.toFixed(4),
+    lng: lng.toFixed(4),
+    radiusMeters,
+    types: INCLUDED_TYPES,
+  })}`
+  return executeProviderCall({
+    provider: 'google',
+    feature: 'places_nearby',
+    requestKey,
+    sessionKey: deps.sessionKey,
+    config,
+    log: (event) => console.info('[place-intelligence]', JSON.stringify(event)),
+    call: async (signal) => {
+      deps.onGoogleCall?.(radiusMeters)
+      const res = await deps.googleFetch('https://places.googleapis.com/v1/places:searchNearby', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': deps.googleApiKey,
+          'X-Goog-FieldMask': PLACE_PROVIDER_FIELD_MASKS.nearby,
         },
-      },
-    }),
-  })
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => '')
-    throw new Error(`Google Places searchNearby failed (${res.status}): ${text.slice(0, 200)}`)
-  }
-
-  const data = (await res.json()) as { places?: GoogleRawPlace[] }
-  return data.places ?? []
-}
-
-export async function readNearbyCache(
-  supabase: SupabaseClient,
-  key: string,
-  now: number,
-  options?: { allowStale?: boolean },
-): Promise<{ payload: CachePayload; fetchedAt: number } | null> {
-  const { data, error } = await supabase
-    .from('google_nearby_cache')
-    .select('cell_key, payload, fetched_at')
-    .eq('cell_key', key)
-    .maybeSingle()
-
-  if (error) {
-    if (isCacheTableMissingError(error)) {
-      warnCacheTablesMissingOnce()
-    } else {
-      console.error('[nearby] cache read error:', error.message)
-    }
-    return null
-  }
-  if (!data?.payload || !data.fetched_at) return null
-
-  const fetchedAt = new Date(data.fetched_at as string).getTime()
-  if (!Number.isFinite(fetchedAt)) return null
-  if (!options?.allowStale && now - fetchedAt > CACHE_TTL_MS) return null
-
-  const payload = parseCachePayload(data.payload)
-  if (!payload) {
-    console.warn('[nearby] legacy cache payload ignored for cell', key)
-    return null
-  }
-
-  return { payload, fetchedAt }
-}
-
-export async function writeNearbyCache(
-  supabase: SupabaseClient,
-  key: string,
-  payload: CachePayload,
-  now: number,
-): Promise<void> {
-  const { error } = await supabase.from('google_nearby_cache').upsert({
-    cell_key: key,
-    payload,
-    fetched_at: new Date(now).toISOString(),
-  })
-  if (error) {
-    if (isCacheTableMissingError(error)) {
-      warnCacheTablesMissingOnce()
-    } else {
-      console.error('[nearby] cache write error:', error.message)
-    }
-  }
-}
-
-export async function upsertPlacesSeen(
-  supabase: SupabaseClient,
-  placeIds: string[],
-  now: number,
-): Promise<void> {
-  if (!placeIds.length) return
-  const iso = new Date(now).toISOString()
-
-  for (const place_id of placeIds) {
-    const { data: existing, error: readError } = await supabase
-      .from('google_places_seen')
-      .select('place_id')
-      .eq('place_id', place_id)
-      .maybeSingle()
-
-    if (readError) {
-      if (isCacheTableMissingError(readError)) {
-        warnCacheTablesMissingOnce()
-        return
-      }
-      console.error('[nearby] places_seen read error:', readError.message)
-      continue
-    }
-
-    if (existing) {
-      const { error } = await supabase
-        .from('google_places_seen')
-        .update({ last_seen: iso })
-        .eq('place_id', place_id)
-      if (error) console.error('[nearby] places_seen update error:', error.message)
-    } else {
-      const { error } = await supabase.from('google_places_seen').insert({
-        place_id,
-        first_seen: iso,
-        last_seen: iso,
+        body: JSON.stringify({
+          includedTypes: [...INCLUDED_TYPES],
+          maxResultCount: 20,
+          rankPreference: 'DISTANCE',
+          locationRestriction: {
+            circle: {
+              center: { latitude: lat, longitude: lng },
+              radius: radiusMeters,
+            },
+          },
+        }),
+        signal,
       })
-      if (error) console.error('[nearby] places_seen insert error:', error.message)
-    }
-  }
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => '')
+        throw new Error(`Google Places searchNearby failed (${res.status}): ${text.slice(0, 200)}`)
+      }
+
+      const data = (await res.json()) as { places?: GoogleRawPlace[] }
+      return data.places ?? []
+    },
+  })
 }
 
 export async function fetchRestroomOverlay(
@@ -750,7 +811,7 @@ export async function fetchRestroomOverlay(
 
   const { data, error } = await supabase
     .from('restroom')
-    .select('place_id, has_code, verified, status, pin_male, pin_female')
+    .select('place_id, has_code, verified, status')
     .in('place_id', ids)
 
   if (error) {
@@ -783,7 +844,7 @@ export async function fetchPublicRestrooms(
   const { data, error } = await supabase
     .from('restroom')
     .select(
-      'id, name, address, lat, lng, type, source, place_id, has_code, verified, status, pin_male, pin_female',
+      'id, name, address, lat, lng, type, source, place_id, has_code, verified, status',
     )
     .in('type', [...PUBLIC_RESTROOM_TYPES])
     .or('opt_out.is.null,opt_out.eq.false')
@@ -825,6 +886,25 @@ export function mapPublicRestroomRow(
     category_group: 'public_restroom',
     ...booleans,
     source: row.source ?? 'supabase',
+    provenance: [
+      {
+        provider:
+          row.source === 'google'
+            ? 'google'
+            : row.source === 'openstreetmap' || row.source === 'osm'
+              ? 'openstreetmap'
+              : row.source === 'overture'
+                ? 'overture'
+                : 'flushpin',
+        ownership:
+          row.source == null || row.source === 'manual'
+            ? 'flushpin_owned'
+            : row.source === 'openstreetmap' || row.source === 'osm'
+              ? 'open_public'
+            : 'legacy_unknown',
+        sourceDataset: row.source ?? undefined,
+      },
+    ],
   }
 }
 
@@ -853,7 +933,10 @@ export function googleRawToBusinessPlaces(
 export async function runGoogleNearbySearch(
   userLat: number,
   userLng: number,
-  deps: Pick<NearbyDeps, 'googleFetch' | 'googleApiKey' | 'onGoogleCall'>,
+  deps: Pick<
+    NearbyDeps,
+    'googleFetch' | 'googleApiKey' | 'onGoogleCall' | 'providerConfig' | 'sessionKey'
+  >,
   audit?: {
     tiers: Array<{ radius_m: number; raw_count: number; passed_filter_count: number }>
     raw_names_by_tier: Array<{ radius_m: number; names: string[] }>
@@ -915,94 +998,73 @@ export async function buildNearbyResponse(
   const { lat, lng } = request
   const cell = cellKey(lat, lng)
   const now = deps.now()
-  let cacheAvailable = true
-  let cached = false
+  const providerConfig = deps.providerConfig ?? getPlaceIntelligenceConfig()
+  const known =
+    deps.supabase != null
+      ? await fetchKnownFlushPinPlaces(
+          deps.supabase,
+          lat,
+          lng,
+          PUBLIC_RESTROOM_RADIUS_M,
+        )
+      : { places: [], coverageCandidates: [] }
+  const coverage = assessCoverage(
+    { lat, lng },
+    known.coverageCandidates,
+    providerConfig.nearbyCoverage,
+    now,
+  )
+  const providerAllowed =
+    providerConfig.externalFallbackEnabled && providerConfig.googlePlacesEnabled
+  if (coverage.sufficient || !providerAllowed) {
+    const places = trimNearbyResults(
+      sortNearbyPlaces(dedupeNearbyPlacesWithIdentity(known.places)),
+    )
+    const response: NearbyApiResponse = {
+      cell,
+      cached: false,
+      source: coverage.sufficient ? 'internal' : 'provider_disabled',
+      count: places.length,
+      places,
+      coverage: {
+        sufficient: coverage.sufficient,
+        confidence: coverage.confidence,
+        result_count: coverage.resultCount,
+        fresh_result_count: coverage.freshResultCount,
+        external_fallback_used: false,
+      },
+    }
+    assertNoPinFieldsInResponse(response)
+    assertPlaceIntelligencePinFree(response)
+    return response
+  }
+  const cached = false
   let source: NearbySourceKind = 'google'
   let rawGoogle: GoogleRawPlace[] = []
-  let cacheCenter: { lat: number; lng: number } | null = null
   const googleTiersUsed = new Set<number>()
   let tierAudit: {
     tiers: Array<{ radius_m: number; raw_count: number; passed_filter_count: number }>
     raw_names_by_tier: Array<{ radius_m: number; names: string[] }>
   } | null = null
 
-  if (deps.supabase) {
-    try {
-      const cachedEntry = await readNearbyCache(deps.supabase, cell, now)
-      if (cachedEntry) {
-        cacheCenter = cachedEntry.payload.center
-        const staleCenter = cacheCenterTooFar(lat, lng, cachedEntry.payload.center)
-        if (!staleCenter) {
-          rawGoogle = cachedEntry.payload.places
-          cached = true
-          source = 'cache'
-        }
-      }
-    } catch (err) {
-      cacheAvailable = false
-      console.warn('[nearby] cache unavailable — degrade mode', err)
-    }
-  } else {
-    cacheAvailable = false
-    console.warn('[nearby] cache unavailable — no supabase client')
-  }
-
-  if (!cached) {
-    try {
-      tierAudit = request.previewAudit
-        ? { tiers: [], raw_names_by_tier: [] }
-        : null
-      rawGoogle = await runGoogleNearbySearch(lat, lng, {
-        ...deps,
-        onGoogleCall: (radiusM) => {
-          googleTiersUsed.add(radiusM)
-          deps.onGoogleCall?.(radiusM)
-        },
-      }, tierAudit ?? undefined)
-      source = 'google'
-
-      if (deps.supabase && cacheAvailable) {
-        await writeNearbyCache(
-          deps.supabase,
-          cell,
-          { center: { lat, lng }, places: rawGoogle },
-          now,
-        )
-        cacheCenter = { lat, lng }
-        const ids = rawGoogle
-          .map((p) => normalizeGooglePlaceId(p.id))
-          .filter((id): id is string => !!id)
-        await upsertPlacesSeen(deps.supabase, ids, now)
-      }
-    } catch (googleErr) {
-      console.error('[nearby] Google fetch failed:', googleErr)
-      if (deps.supabase && cacheAvailable) {
-        const stale = await readNearbyCache(deps.supabase, cell, now, { allowStale: true })
-        if (stale) {
-          rawGoogle = stale.payload.places
-          cacheCenter = stale.payload.center
-          cached = true
-          source = 'cache_stale'
-        } else {
-          throw googleErr
-        }
-      } else {
-        throw googleErr
-      }
-    }
+  try {
+    tierAudit = request.previewAudit
+      ? { tiers: [], raw_names_by_tier: [] }
+      : null
+    rawGoogle = await runGoogleNearbySearch(lat, lng, {
+      ...deps,
+      onGoogleCall: (radiusM) => {
+        googleTiersUsed.add(radiusM)
+        deps.onGoogleCall?.(radiusM)
+      },
+    }, tierAudit ?? undefined)
+    source = known.places.length ? 'mixed' : 'google'
+  } catch (googleErr) {
+    console.error('[nearby] Google fetch failed; returning internal results:', googleErr)
+    source = known.places.length ? 'internal' : 'provider_disabled'
   }
 
   let businessPlaces = googleRawToBusinessPlaces(rawGoogle, lat, lng)
-
-  if (
-    source === 'cache_stale' ||
-    (cacheCenter != null && cacheCenterTooFar(lat, lng, cacheCenter))
-  ) {
-    businessPlaces = businessPlaces.map((p) => ({
-      ...p,
-      distance_m: haversineDistanceMeters(lat, lng, p.lat, p.lng),
-    }))
-  }
 
   const googleIds = businessPlaces.map((p) => p.place_id)
   const overlay =
@@ -1022,7 +1084,8 @@ export async function buildNearbyResponse(
   const businessIds = new Set(businessPlaces.map((p) => p.place_id))
   const merged = trimNearbyResults(
     sortNearbyPlaces(
-      dedupeNearbyPlaces([
+      dedupeNearbyPlacesWithIdentity([
+        ...known.places,
         ...businessPlaces,
         ...publicPlaces.filter((p) => !businessIds.has(p.place_id)),
       ]),
@@ -1035,9 +1098,16 @@ export async function buildNearbyResponse(
     source,
     count: merged.length,
     places: merged,
+    coverage: {
+      sufficient: coverage.sufficient,
+      confidence: coverage.confidence,
+      result_count: coverage.resultCount,
+      fresh_result_count: coverage.freshResultCount,
+      external_fallback_used: true,
+    },
   }
-
   assertNoPinFieldsInResponse(response)
+  assertPlaceIntelligencePinFree(response)
 
   if (request.previewAudit) {
     const filteredOut: NearbyPreviewAudit['filtered_out'] = []

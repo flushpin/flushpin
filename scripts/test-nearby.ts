@@ -12,7 +12,6 @@ import {
   PUBLIC_RESTROOM_RADIUS_M,
   assertNoPinFieldsInResponse,
   auditGooglePlaceFilter,
-  cacheCenterTooFar,
   cellKey,
   dedupeNearbyPlaces,
   googleRawToBusinessPlaces,
@@ -25,7 +24,6 @@ import {
   nearbyResultPriority,
   normalizeGooglePlaceId,
   overlayBooleans,
-  parseCachePayload,
   runGoogleNearbySearch,
   shouldFallbackNearby,
   sortNearbyPlaces,
@@ -357,8 +355,6 @@ void NEARBY_FALLBACK_DISTANCE_M
 void googleRawToBusinessPlaces
 void dedupeNearbyPlaces
 void cellKey
-void cacheCenterTooFar
-void parseCachePayload
 void haversineDistanceMeters
 void isBlacklistedGoogleName
 void nearbyCoordKey
@@ -373,8 +369,6 @@ const overlay = overlayBooleans({
   has_code: true,
   verified: 'Not yet verified',
   status: 'red',
-  pin_male: '1234',
-  pin_female: null,
 })
 assert('overlay has no pin fields', !('pin' in overlay) && !('pin_male' in overlay))
 try {

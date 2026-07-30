@@ -183,6 +183,7 @@ function MapPageContent() {
       lat: p.lat,
       lng: p.lng,
       type: p.types[0] ?? 'other',
+      types: p.types ?? [],
       status: discoveryOnly ? 'neutral' : p.verified ? 'green' : p.access_available ? 'amber' : 'red',
       source: p.source ?? (isPublic ? 'supabase' : 'google'),
       has_code: p.has_code,
@@ -924,6 +925,13 @@ function MapPageContent() {
               {lang === 'es' ? 'Mostrar todo cerca' : 'Show all nearby'}
             </button>
           </div>
+        )}
+
+        {displayed.some((restroom) => restroom.source === 'google') && (
+          <p style={{color:'#777',fontSize:'12px',margin:'0 0 10px'}}>
+            Place details provided by Google Maps. FlushPin access facts are community and
+            first-party data.
+          </p>
         )}
 
         {displayed.map(r=>(
