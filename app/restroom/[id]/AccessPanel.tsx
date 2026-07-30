@@ -2,9 +2,14 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useMemo, useState } from 'react'
 import { useLang } from '@/lib/LanguageContext'
 import ContributionThankYouModal from '@/components/ContributionThankYouModal'
+import {
+  buildMapHrefFromDetailParams,
+  parseMapAccessIntent,
+} from '@/lib/mapRestroomNavigation'
 import {
   Accessibility,
   Baby,
@@ -114,6 +119,8 @@ export default function AccessPanel({
   confidenceLabel,
   isVerified,
 }: Props) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [phase, setPhase] = useState<Phase>('idle')
   const [code, setCode] = useState<string | null>(null)
   const [openAccess, setOpenAccess] = useState(false)
@@ -130,6 +137,31 @@ export default function AccessPanel({
   const [persistedHint, setPersistedHint] = useState(false)
   const [availability, setAvailability] = useState<RestroomAvailability | ''>('')
   const [confirmAvailability, setConfirmAvailability] = useState<RestroomAvailability | null>(null)
+  const [intentApplied, setIntentApplied] = useState(false)
+
+  useEffect(() => {
+    if (intentApplied) return
+    const intent = parseMapAccessIntent(searchParams.get('intent'))
+    if (intent === 'share' || intent === 'update' || intent === 'correct') {
+      setPhase('add')
+      setIntentApplied(true)
+    } else if (intent === 'view') {
+      setIntentApplied(true)
+    }
+  }, [searchParams, intentApplied])
+
+  function handleBack() {
+    const from = searchParams.get('from')
+    if (from === 'map') {
+      if (typeof window !== 'undefined' && window.history.length > 1) {
+        router.back()
+        return
+      }
+      router.push(buildMapHrefFromDetailParams(searchParams))
+      return
+    }
+    router.push('/map')
+  }
 
   const attributes = useMemo(
     () =>
@@ -365,9 +397,9 @@ export default function AccessPanel({
 
   const header = (
     <div className={styles.topBar}>
-      <Link href="/map" className={styles.iconBtn} aria-label="Back to map">
+      <button type="button" className={styles.iconBtn} onClick={handleBack} aria-label="Back to map">
         <ChevronLeft size={22} />
-      </Link>
+      </button>
       <Link href="/" className={styles.brandMark} aria-label="FlushPin home">
         <Image src="/flushpin-logo-new.png" alt="" width={28} height={28} />
         <span>flushpin</span>

@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
@@ -80,22 +81,24 @@ export default async function RestroomDetailPage({
   return (
     <main className={styles.page}>
       <div className={styles.inner}>
-        <AccessPanel
-          id={r.id}
-          name={name}
-          address={r.address}
-          lat={r.lat}
-          lng={r.lng}
-          hasRevealableCode={access.hasRevealableCode}
-          accessType={r.access_type}
-          hasCode={r.has_code}
-          accessible={r.accessible}
-          hasBabyChanging={r.has_baby_changing}
-          access={access}
-          confidenceDetail={conf.detail}
-          confidenceLabel={conf.label}
-          isVerified={isVerified}
-        />
+        <Suspense fallback={<p className={styles.signInHint}>Loading…</p>}>
+          <AccessPanel
+            id={r.id}
+            name={name}
+            address={r.address}
+            lat={r.lat}
+            lng={r.lng}
+            hasRevealableCode={access.hasRevealableCode}
+            accessType={r.access_type}
+            hasCode={r.has_code}
+            accessible={r.accessible}
+            hasBabyChanging={r.has_baby_changing}
+            access={access}
+            confidenceDetail={conf.detail}
+            confidenceLabel={conf.label}
+            isVerified={isVerified}
+          />
+        </Suspense>
       </div>
     </main>
   )

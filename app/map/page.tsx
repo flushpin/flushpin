@@ -35,6 +35,11 @@ import {
   loadRestroomAccessById,
 } from '../../lib/findRestroom'
 import {
+  buildRestroomDetailHref,
+  resolveCanonicalRestroomId,
+  type MapAccessIntent,
+} from '../../lib/mapRestroomNavigation'
+import {
   PUBLIC_RESTROOM_ACCESS_FIELDS,
   requestAuthorizedRestroomAccess,
   stripSensitivePinFields,
@@ -144,9 +149,11 @@ function MapPageContent() {
   const [nearbyError, setNearbyError] = useState<string | null>(null)
   const [nearbyEmpty, setNearbyEmpty] = useState(false)
   const [showRetry, setShowRetry] = useState(false)
+  const [openingCardId, setOpeningCardId] = useState<string | null>(null)
   const loadRequestIdRef = useRef(0)
   const unmountAbortRef = useRef<AbortController | null>(null)
   const locatingInFlightRef = useRef(false)
+  const openingInFlightRef = useRef(false)
 
   const resolveCityLabel = async (lat: number, lng: number) => {
     try {
@@ -350,6 +357,8 @@ function MapPageContent() {
   const categoryParam = searchParams.get('category')
   const activeCategory: MapCategorySlug | null = isMapCategorySlug(categoryParam) ? categoryParam : null
   const categoryApplies = !!activeCategory && !searchQuery.trim()
+  const filterParam = searchParams.get('filter')
+  const MAP_FILTER_IDS = new Set(['all', 'verified', 'accessible', 'pin', 'baby', 'nocode', 'ev'])
 
   const clearCategory = () => {
     const params = new URLSearchParams(searchParams.toString())
@@ -357,6 +366,12 @@ function MapPageContent() {
     const next = params.toString()
     router.replace(next ? `${pathname}?${next}` : pathname)
   }
+
+  useEffect(() => {
+    if (filterParam && MAP_FILTER_IDS.has(filterParam)) {
+      setFilter(filterParam)
+    }
+  }, [filterParam])
 
   useEffect(() => {
     const abortController = new AbortController()
@@ -368,8 +383,10 @@ function MapPageContent() {
     const near = params.get('near') || ''
     const urlLat = params.get('lat')
     const urlLng = params.get('lng')
+    const urlFilter = params.get('filter')
     setSearchQuery(q)
     setSearchInput(q)
+    if (urlFilter && MAP_FILTER_IDS.has(urlFilter)) setFilter(urlFilter)
     supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null))
     const {
       data: { subscription: authSubscription },
@@ -559,45 +576,110 @@ function MapPageContent() {
     return `❌ ${error}`
   }
 
-  const handleEditOpen = (r: any, e: React.MouseEvent, mode: 'update' | 'correct' | 'share' = 'update') => {
-    e.stopPropagation()
-    const parsed = parseAccessEditState(r)
-    setEditTarget(r)
-    setEditMode(mode)
-    setEditError('')
-    setEditEntry({
-      ...parsed,
-      pin: mode === 'correct' ? '' : parsed.pin,
-      method: mode === 'share' && parsed.method === 'no_code_needed' ? 'no_code_needed' : parsed.method,
+  const ensureRestroomViaApi = async (target: Record<string, unknown>): Promise<number | null> => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) return null
+
+    const res = await fetch('/api/ensure-restroom', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        id: target.id,
+        name: target.name,
+        address: target.address,
+        lat: target.lat,
+        lng: target.lng,
+        type: target.type,
+        source: target.source,
+        place_id: target.place_id ?? extractPlaceIdFromCard(target),
+        google_place_id: target.google_place_id,
+      }),
     })
-    setShowEditForm(true)
+    if (!res.ok) return null
+    const json = (await res.json()) as { restroomId?: number }
+    return typeof json.restroomId === 'number' ? json.restroomId : null
   }
 
-  const handleAccessAction = async (r: any, e: React.MouseEvent) => {
-    e.stopPropagation()
-    const hydrated = await hydrateRestroomForAccess(r)
-    // Keep list card in sync so the button flips Share → View after hydrate.
-    setRestrooms((prev) =>
-      prev.map((item) =>
-        String(item.id) === String(r.id)
-          ? {
-              ...item,
-              access_type: (hydrated as { access_type?: string }).access_type ?? (item as { access_type?: string }).access_type,
-              status: (hydrated as { status?: string }).status ?? item.status,
-              pin_updated_at: (hydrated as { pin_updated_at?: string }).pin_updated_at ?? (item as { pin_updated_at?: string }).pin_updated_at,
-              has_code: (hydrated as { has_code?: boolean }).has_code ?? item.has_code,
-              verified: (hydrated as { verified?: string }).verified ?? item.verified,
-            }
-          : item,
-      ),
-    )
-    if (restroomHasAccessInfo(hydrated)) {
-      setSelected(hydrated)
-      setPromoTarget(hydrated)
-      setShowPromo(true)
-    } else {
-      handleEditOpen(hydrated, e, 'share')
+  const openRestroomDetail = async (
+    r: Record<string, unknown>,
+    intent: MapAccessIntent,
+    e?: React.MouseEvent,
+  ) => {
+    e?.stopPropagation()
+    if (openingInFlightRef.current) return
+    openingInFlightRef.current = true
+    setOpeningCardId(String(r.id ?? ''))
+    setNearbyError(null)
+    // Phase 1: never open the legacy access modal / inline PIN reveal from these actions.
+    setShowEditForm(false)
+    setShowPromo(false)
+    setShowPin(false)
+
+    try {
+      const hydrated = await hydrateRestroomForAccess(r)
+      setRestrooms((prev) =>
+        prev.map((item) =>
+          String(item.id) === String(r.id)
+            ? {
+                ...item,
+                access_type:
+                  (hydrated as { access_type?: string }).access_type ??
+                  (item as { access_type?: string }).access_type,
+                status: (hydrated as { status?: string }).status ?? item.status,
+                pin_updated_at:
+                  (hydrated as { pin_updated_at?: string }).pin_updated_at ??
+                  (item as { pin_updated_at?: string }).pin_updated_at,
+                has_code: (hydrated as { has_code?: boolean }).has_code ?? item.has_code,
+                verified: (hydrated as { verified?: string }).verified ?? item.verified,
+                id: (hydrated as { id?: unknown }).id ?? item.id,
+              }
+            : item,
+        ),
+      )
+
+      const canonicalId = await resolveCanonicalRestroomId(
+        hydrated as Record<string, unknown>,
+        {
+          findExisting: findExistingRestroomId,
+          ensureRestroom: ensureRestroomViaApi,
+        },
+      )
+      if (canonicalId == null) {
+        setNearbyError(t.openRestroomFailed)
+        openingInFlightRef.current = false
+        setOpeningCardId(null)
+        return
+      }
+
+      const href = buildRestroomDetailHref(canonicalId, {
+        intent,
+        discovery: {
+          lat: queryLat,
+          lng: queryLng,
+          q: searchQuery,
+          filter,
+          category: activeCategory,
+        },
+      })
+      router.push(href)
+      // Keep Opening… until this page unmounts after navigation.
+    } catch {
+      setNearbyError(t.openRestroomFailed)
+      openingInFlightRef.current = false
+      setOpeningCardId(null)
     }
+  }
+
+  const handleEditOpen = (r: any, e: React.MouseEvent, mode: 'update' | 'correct' | 'share' = 'update') => {
+    void openRestroomDetail(r, mode, e)
+  }
+
+  const handleAccessAction = (r: any, e: React.MouseEvent) => {
+    const intent: MapAccessIntent = restroomHasAccessInfo(r) ? 'view' : 'share'
+    void openRestroomDetail(r, intent, e)
   }
 
   const completePromoAccess = async () => {
@@ -1021,7 +1103,14 @@ function MapPageContent() {
                 <div style={{textAlign:'right',flexShrink:0,marginLeft:'12px',display:'flex',flexDirection:'column',alignItems:'flex-end',gap:'6px'}}>
                   <p style={{fontSize:'15px',fontWeight:'700',color:'#0A2E1F',margin:'0 0 2px'}}>{formatDist(r.distance)}</p>
                   <p style={{fontSize:'12px',color:'#bbb',margin:0}}>away</p>
-                  <button onClick={e=>handleEditOpen(r,e,'update')} style={{background:'#f5f5f5',border:'none',borderRadius:'6px',padding:'5px 9px',fontSize:'12px',fontWeight:'600',color:'#555',cursor:'pointer'}}>{t.edit}</button>
+                  <button
+                    type="button"
+                    disabled={openingCardId === String(r.id)}
+                    onClick={e=>handleEditOpen(r,e,'update')}
+                    style={{background:'#f5f5f5',border:'none',borderRadius:'6px',padding:'5px 9px',fontSize:'12px',fontWeight:'600',color:'#555',cursor:openingCardId === String(r.id)?'wait':'pointer',opacity:openingCardId === String(r.id)?0.7:1}}
+                  >
+                    {openingCardId === String(r.id) ? t.openingRestroom : t.edit}
+                  </button>
                 </div>
               </div>
             </div>
@@ -1059,20 +1148,23 @@ function MapPageContent() {
                     </span>
                   </button>
                 )}
-                {!showPin?(
-                  <div style={{display:'flex',gap:'8px'}}>
-                    {r.opt_out?(
-                      <div style={{flex:1,background:'#FEE2E2',borderRadius:'9px',padding:'12px',textAlign:'center',fontSize:'14px',color:'#DC2626',fontWeight:'600'}}>🚫 This business has opted out of FlushPin</div>
-                    ):(<>
-                      <button onClick={e=>handleAccessAction(r,e)} style={{flex:1,background:'#1D9E75',color:'white',border:'none',padding:'12px',borderRadius:'9px',fontSize:'15px',fontWeight:'700',cursor:'pointer'}}>{restroomHasAccessInfo(r)?t.viewAccess:t.shareAccess}</button>
+                {r.opt_out?(
+                  <div style={{flex:1,background:'#FEE2E2',borderRadius:'9px',padding:'12px',textAlign:'center',fontSize:'14px',color:'#DC2626',fontWeight:'600'}}>🚫 This business has opted out of FlushPin</div>
+                ):(
+                  <div onClick={e=>e.stopPropagation()} style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+                    <div style={{display:'flex',gap:'8px'}}>
+                      <button
+                        type="button"
+                        disabled={openingCardId === String(r.id)}
+                        onClick={e=>handleAccessAction(r,e)}
+                        style={{flex:1,background:'#1D9E75',color:'white',border:'none',padding:'12px',borderRadius:'9px',fontSize:'15px',fontWeight:'700',cursor:openingCardId === String(r.id)?'wait':'pointer',opacity:openingCardId === String(r.id)?0.85:1}}
+                      >
+                        {openingCardId === String(r.id) ? t.openingRestroom : (restroomHasAccessInfo(r)?t.viewAccess:t.shareAccess)}
+                      </button>
                       <button onClick={e=>{e.stopPropagation();setRatingTarget({...r,_pinWorked:undefined});setShowRating(true)}} style={{flex:1,background:'#F59E0B',color:'white',border:'none',padding:'12px',borderRadius:'9px',fontSize:'15px',fontWeight:'700',cursor:'pointer'}}>{t.rate}</button>
                       <button onClick={e=>{e.stopPropagation();openDirections(r)}} style={{flex:1,background:'#0A2E1F',color:'white',border:'none',padding:'12px',borderRadius:'9px',fontSize:'15px',fontWeight:'700',cursor:'pointer'}}>{t.go}</button>
-                    </>)}
-                  </div>
-                ):(
-                  <div onClick={e=>e.stopPropagation()}>
-                    {renderAccessPanel(r)}
-                    {renderAccessActions(r)}
+                    </div>
+                    {restroomHasAccessInfo(r) && renderAccessActions(r)}
                   </div>
                 )}
               </div>
