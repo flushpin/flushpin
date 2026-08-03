@@ -1,10 +1,17 @@
 import type { Metadata, Viewport } from 'next'
+import { Inter } from 'next/font/google'
 import './globals.css'
 import { LanguageProvider } from '../lib/LanguageContext'
 import ConditionalFooter from '../components/ConditionalFooter'
 import SiteHeader from '../components/SiteHeader'
 import SwRegister from './sw-register'
 import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME, SITE_TAGLINE, SITE_URL } from '../lib/seo'
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+})
 
 const googleVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
 
@@ -76,7 +83,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={inter.variable}>
       <body className="fp-standalone-body">
         <LanguageProvider>
           <SiteHeader />
