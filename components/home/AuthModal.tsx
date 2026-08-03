@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Logo from '../Logo'
 import { supabase } from '../../lib/supabase'
 import { useLang } from '../../lib/LanguageContext'
 import {
@@ -9,12 +8,15 @@ import {
   isAlreadyRegisteredError,
   isUnconfirmedEmailError,
 } from '../../lib/auth-errors'
-
-const COLOR_OPTIONS = [
-  '#E74C3C', '#E67E22', '#F1C40F', '#2ECC71', '#1ABC9C',
-  '#3498DB', '#9B59B6', '#E91E63', '#FF5722', '#00BCD4',
-  '#8BC34A', '#FF9800', '#795548', '#607D8B', '#0A2E1F',
-]
+import AuthShell, {
+  PROFILE_COLORS,
+  authInputClass,
+  authPrimaryButtonClass,
+  authTitleClass,
+} from '../auth/AuthShell'
+import AuthStatus from '../auth/AuthStatus'
+import GoogleSignInButton from '../auth/GoogleSignInButton'
+import AppleSignInButton from '../auth/AppleSignInButton'
 
 type AuthModalProps = {
   open: boolean
@@ -31,6 +33,7 @@ export default function AuthModal({ open, mode, onClose, onModeChange }: AuthMod
   const [selectedColor, setSelectedColor] = useState('#00A886')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [statusKind, setStatusKind] = useState<'idle' | 'loading' | 'error' | 'success'>('idle')
   const [view, setView] = useState<'form' | 'confirm'>('form')
   const [pendingEmail, setPendingEmail] = useState('')
 
@@ -38,49 +41,74 @@ export default function AuthModal({ open, mode, onClose, onModeChange }: AuthMod
     if (!open) {
       setView('form')
       setMessage('')
+      setStatusKind('idle')
+      setLoading(false)
     }
   }, [open])
 
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+
   if (!open) return null
 
+  const setError = (text: string) => {
+    setStatusKind('error')
+    setMessage(text)
+  }
+
   const handleOAuthSignIn = async (provider: 'google') => {
-    setMessage('')
-    const redirectTo = typeof window !== 'undefined' ? window.location.origin : 'https://www.flushpin.com'
-    const { error } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo } })
-    if (error) setMessage(error.message)
+    setStatusKind('loading')
+    setMessage('Connecting to Google…')
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.flushpin.com'
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: `${origin}/map` },
+    })
+    if (error) setError(error.message)
   }
 
   const handleSignUp = async () => {
     if (!fullName.trim()) {
-      setMessage(t.home.enterFullName)
+      setError(t.home.enterFullName)
       return
     }
     setLoading(true)
-    setMessage('')
+    setStatusKind('loading')
+    setMessage('Creating your account…')
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { full_name: fullName.trim(), profile_color: selectedColor } },
     })
     if (error) {
-      setMessage(isAlreadyRegisteredError(error) ? t.home.emailRegistered : error.message)
+      setError(isAlreadyRegisteredError(error) ? t.home.emailRegistered : error.message)
     } else {
       if (data.session) await supabase.auth.signOut()
       setPendingEmail(email)
       setView('confirm')
+      setStatusKind('success')
+      setMessage('')
     }
     setLoading(false)
   }
 
   const handleSignIn = async () => {
     setLoading(true)
-    setMessage('')
+    setStatusKind('loading')
+    setMessage('Signing you in…')
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
-      setMessage(isUnconfirmedEmailError(error) ? t.home.confirmEmailRequired : error.message)
+      setError(isUnconfirmedEmailError(error) ? t.home.confirmEmailRequired : error.message)
     } else if (data.session) {
+      setStatusKind('success')
+      setMessage('Signed in')
       onClose()
-      setMessage('')
     }
     setLoading(false)
   }
@@ -88,74 +116,81 @@ export default function AuthModal({ open, mode, onClose, onModeChange }: AuthMod
   const handleBackToSignIn = () => {
     setView('form')
     setMessage('')
+    setStatusKind('idle')
     setPassword('')
     onModeChange('signin')
   }
 
-  const inputClass =
-    'w-full rounded-lg border border-fp-border px-4 py-3 text-base text-fp-ink outline-none focus:ring-2 focus:ring-fp-teal'
-
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-fp-ink/60 p-4"
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-[#1b1b21]/45 p-0 backdrop-blur-[2px] sm:items-center sm:p-4"
       onClick={onClose}
       role="presentation"
     >
       <div
-        className="fp-card max-h-[92vh] w-full max-w-md overflow-y-auto bg-fp-white"
+        className="max-h-[min(92vh,880px)] w-full overflow-y-auto sm:w-auto"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="auth-modal-title"
       >
-        <div className="flex items-center justify-between border-b border-fp-border px-6 py-4">
-          <Logo height={34} href="" />
-          <button
-            type="button"
-            aria-label={t.home.close}
-            onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-fp-border text-fp-gray-600 hover:text-fp-ink"
-          >
-            ×
-          </button>
-        </div>
-
-        <div className="px-6 py-6">
+        <AuthShell
+          onClose={onClose}
+          closeLabel={t.home.close}
+          showLanguage={false}
+          logoHref=""
+          className="mx-auto max-h-[min(92vh,880px)] rounded-b-none sm:rounded-[28px]"
+        >
           {view === 'confirm' ? (
             <div className="text-center">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-fp-teal">
+              <div
+                className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-2xl text-emerald-700"
+                aria-hidden="true"
+              >
+                ✓
+              </div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-fp-teal">
                 {t.home.authAccountLabel}
               </p>
-              <h2 id="auth-modal-title" className="mb-4 text-2xl font-bold text-fp-ink">
+              <h2 id="auth-modal-title" className={`${authTitleClass} mb-3`}>
                 {t.home.confirmAlmostDone}
               </h2>
-              <p className="mb-8 text-sm leading-relaxed text-fp-gray-600">
-                {formatEmailTemplate(t.home.confirmEmailSent, pendingEmail)}
-              </p>
-              <button
-                type="button"
-                onClick={handleBackToSignIn}
-                className="w-full rounded-lg bg-fp-teal px-4 py-3 text-base font-semibold text-white hover:bg-fp-teal-dark"
-              >
+              <AuthStatus
+                kind="success"
+                message={formatEmailTemplate(t.home.confirmEmailSent, pendingEmail)}
+              />
+              <button type="button" onClick={handleBackToSignIn} className={`${authPrimaryButtonClass} mt-6`}>
                 {t.home.backToSignIn}
               </button>
             </div>
           ) : (
             <>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-fp-teal">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-fp-teal">
                 {t.home.authAccountLabel}
               </p>
-              <h2 id="auth-modal-title" className="mb-6 text-2xl font-bold text-fp-ink">
+              <h2 id="auth-modal-title" className={`${authTitleClass} mb-2`}>
                 {mode === 'signup' ? t.joinFlushPin : t.welcomeBack}
               </h2>
+              <p className="mb-6 text-sm leading-relaxed text-fp-gray-600">
+                {mode === 'signup'
+                  ? 'Create a free account to save PINs and share updates.'
+                  : 'Sign in to continue finding restrooms near you.'}
+              </p>
 
-              <button
-                type="button"
-                onClick={() => handleOAuthSignIn('google')}
-                className="mb-5 w-full rounded-lg border border-fp-border bg-fp-white px-4 py-3 text-sm font-semibold text-fp-ink hover:border-fp-teal"
-              >
-                {t.continueGoogle}
-              </button>
+              <div className="flex flex-col gap-3">
+                <GoogleSignInButton
+                  onClick={() => handleOAuthSignIn('google')}
+                  disabled={loading}
+                  label={t.continueGoogle}
+                />
+                <AppleSignInButton available={false} />
+              </div>
+
+              <div className="my-5 flex items-center gap-3" aria-hidden="true">
+                <div className="h-px flex-1 bg-fp-border" />
+                <span className="text-xs font-medium uppercase tracking-wide text-fp-gray-400">or</span>
+                <div className="h-px flex-1 bg-fp-border" />
+              </div>
 
               <div className="flex flex-col gap-4">
                 {mode === 'signup' && (
@@ -166,28 +201,38 @@ export default function AuthModal({ open, mode, onClose, onModeChange }: AuthMod
                       </label>
                       <input
                         id="auth-full-name"
-                        className={inputClass}
+                        className={authInputClass}
                         placeholder={t.home.namePlaceholder}
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
+                        autoComplete="name"
                       />
                     </div>
                     <div>
                       <span className="mb-2 block text-sm font-semibold text-fp-ink">{t.home.profileColor}</span>
-                      <div className="flex flex-wrap gap-2">
-                        {COLOR_OPTIONS.map((color) => (
-                          <button
-                            key={color}
-                            type="button"
-                            onClick={() => setSelectedColor(color)}
-                            className="h-8 w-8 rounded-full"
-                            style={{
-                              background: color,
-                              border: selectedColor === color ? '3px solid var(--fp-ink)' : '3px solid transparent',
-                            }}
-                            aria-label={`Select color ${color}`}
-                          />
-                        ))}
+                      <div className="flex flex-wrap gap-2.5" role="listbox" aria-label={t.home.profileColor}>
+                        {PROFILE_COLORS.map((color) => {
+                          const selected = selectedColor === color.hex
+                          return (
+                            <button
+                              key={color.id}
+                              type="button"
+                              role="option"
+                              aria-selected={selected}
+                              title={color.label}
+                              onClick={() => setSelectedColor(color.hex)}
+                              className="h-9 w-9 rounded-full transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fp-teal"
+                              style={{
+                                background: color.hex,
+                                boxShadow: selected
+                                  ? '0 0 0 3px #fff, 0 0 0 5px #1b1b21'
+                                  : '0 0 0 2px transparent',
+                                transform: selected ? 'scale(1.06)' : undefined,
+                              }}
+                              aria-label={color.label}
+                            />
+                          )
+                        })}
                       </div>
                     </div>
                   </>
@@ -199,10 +244,11 @@ export default function AuthModal({ open, mode, onClose, onModeChange }: AuthMod
                   <input
                     id="auth-email"
                     type="email"
-                    className={inputClass}
+                    className={authInputClass}
                     placeholder={t.home.emailPlaceholder}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
                   />
                 </div>
                 <div>
@@ -212,24 +258,26 @@ export default function AuthModal({ open, mode, onClose, onModeChange }: AuthMod
                   <input
                     id="auth-password"
                     type="password"
-                    className={inputClass}
+                    className={authInputClass}
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
                   />
                 </div>
 
-                {message && (
-                  <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{message}</p>
-                )}
+                <AuthStatus
+                  kind={loading ? 'loading' : statusKind === 'error' ? 'error' : statusKind}
+                  message={message}
+                />
 
                 <button
                   type="button"
                   onClick={mode === 'signup' ? handleSignUp : handleSignIn}
                   disabled={loading}
-                  className="rounded-lg bg-fp-teal px-4 py-3 text-base font-semibold text-white hover:bg-fp-teal-dark disabled:opacity-70"
+                  className={authPrimaryButtonClass}
                 >
-                  {loading ? '...' : mode === 'signup' ? t.createAccount : t.signIn}
+                  {loading ? (mode === 'signup' ? 'Creating…' : 'Signing in…') : mode === 'signup' ? t.createAccount : t.signIn}
                 </button>
 
                 <button
@@ -237,15 +285,26 @@ export default function AuthModal({ open, mode, onClose, onModeChange }: AuthMod
                   onClick={() => {
                     onModeChange(mode === 'signup' ? 'signin' : 'signup')
                     setMessage('')
+                    setStatusKind('idle')
                   }}
-                  className="bg-transparent text-sm font-semibold text-fp-teal hover:text-fp-teal-dark"
+                  className="bg-transparent text-center text-sm font-semibold text-fp-teal hover:text-fp-teal-dark"
                 >
                   {mode === 'signup' ? t.home.alreadyHaveAccount : t.home.needAccount}
                 </button>
+
+                {mode === 'signin' ? (
+                  <a
+                    href="/signup?view=forgot"
+                    className="text-center text-sm font-medium text-fp-gray-400 no-underline hover:text-fp-ink"
+                    onClick={onClose}
+                  >
+                    {t.signup.forgotPassword}
+                  </a>
+                ) : null}
               </div>
             </>
           )}
-        </div>
+        </AuthShell>
       </div>
     </div>
   )

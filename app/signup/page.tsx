@@ -1,8 +1,6 @@
 'use client'
 
-import { useState } from 'react'
-import Logo from '../../components/Logo'
-import LanguageToggle from '../../components/LanguageToggle'
+import { useEffect, useState, type ReactNode } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useLang } from '../../lib/LanguageContext'
 import {
@@ -10,19 +8,68 @@ import {
   isAlreadyRegisteredError,
   isUnconfirmedEmailError,
 } from '../../lib/auth-errors'
+import { validatePasswordConfirmation } from '../../lib/authPassword'
+import {
+  cleanAuthParamsFromUrl,
+  getPasswordResetRedirectUrl,
+  isPasswordRecoveryEvent,
+  isRecoveryHash,
+  isRecoverySearch,
+} from '../../lib/authRecovery'
+import AuthShell, {
+  PROFILE_COLORS,
+  authInputClass,
+  authPrimaryButtonClass,
+  authSecondaryButtonClass,
+  authTitleClass,
+} from '../../components/auth/AuthShell'
+import AuthStatus from '../../components/auth/AuthStatus'
+import GoogleSignInButton from '../../components/auth/GoogleSignInButton'
+import AppleSignInButton from '../../components/auth/AppleSignInButton'
 
-const COLORS = [
-  { id: 'emerald', hex: '#10B981', label: 'Emerald' },
-  { id: 'sky', hex: '#0EA5E9', label: 'Sky' },
-  { id: 'violet', hex: '#8B5CF6', label: 'Violet' },
-  { id: 'rose', hex: '#F43F5E', label: 'Rose' },
-  { id: 'amber', hex: '#F59E0B', label: 'Amber' },
-  { id: 'slate', hex: '#64748B', label: 'Slate' },
-  { id: 'teal', hex: '#1D9E75', label: 'Teal' },
-  { id: 'pride', hex: 'linear-gradient(135deg,#FF6B6B,#FFD93D,#6BCB77,#4D96FF,#C77DFF)', label: 'Pride' },
-]
+type Screen = 'main' | 'email' | 'signin' | 'confirm' | 'forgot' | 'update'
 
-type Screen = 'main' | 'email' | 'signin' | 'confirm' | 'forgot'
+function AuthPage({ children }: { children: ReactNode }) {
+  return (
+    <main className="relative flex min-h-[100dvh] items-center justify-center overflow-x-hidden px-4 py-8 sm:px-6 sm:py-12">
+      <div
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,#f4fbf9_0%,#ffffff_48%,#f7faf9_100%)]"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute -left-24 top-16 h-64 w-64 rounded-full bg-fp-teal/10 blur-3xl"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute -right-20 bottom-10 h-72 w-72 rounded-full bg-[#b8ebe0]/35 blur-3xl"
+        aria-hidden="true"
+      />
+      <div className="relative w-full max-w-[420px]">{children}</div>
+    </main>
+  )
+}
+
+function Divider({ label }: { label: string }) {
+  return (
+    <div className="my-5 flex items-center gap-3" aria-hidden="true">
+      <div className="h-px flex-1 bg-fp-border" />
+      <span className="text-xs font-medium uppercase tracking-wide text-fp-gray-400">{label}</span>
+      <div className="h-px flex-1 bg-fp-border" />
+    </div>
+  )
+}
+
+function TextLink({ children, onClick }: { children: ReactNode; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="font-semibold text-fp-teal hover:text-fp-teal-dark"
+    >
+      {children}
+    </button>
+  )
+}
 
 export default function SignUp() {
   const { t } = useLang()
@@ -31,30 +78,110 @@ export default function SignUp() {
   const [selectedColor, setSelectedColor] = useState('teal')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [name, setName] = useState('')
   const [message, setMessage] = useState('')
+  const [statusKind, setStatusKind] = useState<'idle' | 'loading' | 'error' | 'success'>('idle')
   const [loading, setLoading] = useState(false)
   const [pendingEmail, setPendingEmail] = useState('')
+  const [recoveryReady, setRecoveryReady] = useState(false)
 
-  const selectedColorHex = COLORS.find((c) => c.id === selectedColor)?.hex ?? '#1D9E75'
+  const selectedColorHex = PROFILE_COLORS.find((c) => c.id === selectedColor)?.hex ?? '#00A886'
+
+  const clearStatus = () => {
+    setMessage('')
+    setStatusKind('idle')
+  }
+
+  const setError = (text: string) => {
+    setStatusKind('error')
+    setMessage(text)
+  }
+
+  useEffect(() => {
+    let cancelled = false
+
+    const enterRecovery = () => {
+      if (cancelled) return
+      setRecoveryReady(true)
+      setScreen('update')
+      clearStatus()
+    }
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (isPasswordRecoveryEvent(event)) enterRecovery()
+    })
+
+    async function bootstrapRecovery() {
+      if (typeof window === 'undefined') return
+
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('view') === 'forgot') {
+        setScreen('forgot')
+      }
+
+      if (isRecoveryHash(window.location.hash) || isRecoverySearch(window.location.search)) {
+        enterRecovery()
+      }
+
+      // PKCE: exchange ?code= when present (safe if already consumed — show update if session exists).
+      const code = params.get('code')
+      if (code) {
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+        if (cancelled) return
+        if (error) {
+          // Client may have already exchanged via detectSessionInUrl — check session.
+          const { data: sessionData } = await supabase.auth.getSession()
+          if (sessionData.session) {
+            enterRecovery()
+          } else {
+            setScreen('forgot')
+            setError(s.updateInvalidLink)
+          }
+        } else if (data.session) {
+          enterRecovery()
+        }
+        const cleaned = cleanAuthParamsFromUrl(window.location.href)
+        window.history.replaceState({}, '', cleaned)
+        return
+      }
+
+      if (isRecoveryHash(window.location.hash)) {
+        const cleaned = cleanAuthParamsFromUrl(window.location.href)
+        window.history.replaceState({}, '', cleaned)
+      }
+    }
+
+    void bootstrapRecovery()
+    return () => {
+      cancelled = true
+      subscription.unsubscribe()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bootstrap once on mount
+  }, [])
 
   const handleOAuthSignIn = async (provider: 'google') => {
-    setMessage('')
-    const redirectTo = typeof window !== 'undefined' ? window.location.origin : 'https://www.flushpin.com'
+    setStatusKind('loading')
+    setMessage('Connecting to Google…')
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.flushpin.com'
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo },
+      options: { redirectTo: `${origin}/map` },
     })
-    if (error) setMessage(error.message)
+    if (error) setError(error.message)
   }
 
   const handleSignUp = async () => {
     if (!name.trim()) {
-      setMessage(t.home.enterFullName)
+      setError(t.home.enterFullName)
       return
     }
     setLoading(true)
-    setMessage('')
+    setStatusKind('loading')
+    setMessage('Creating your account…')
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -66,172 +193,481 @@ export default function SignUp() {
       },
     })
     if (error) {
-      setMessage(isAlreadyRegisteredError(error) ? t.home.emailRegistered : error.message)
+      setError(isAlreadyRegisteredError(error) ? t.home.emailRegistered : error.message)
     } else {
       if (data.session) await supabase.auth.signOut()
       setPendingEmail(email)
       setScreen('confirm')
+      clearStatus()
     }
     setLoading(false)
   }
 
   const handleSignIn = async () => {
     setLoading(true)
-    setMessage('')
+    setStatusKind('loading')
+    setMessage('Signing you in…')
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
-      setMessage(isUnconfirmedEmailError(error) ? s.confirmEmailRequired : error.message)
+      setError(isUnconfirmedEmailError(error) ? s.confirmEmailRequired : error.message)
     } else if (data.session) {
+      setStatusKind('success')
+      setMessage('Signed in — opening the map…')
       window.location.href = '/map'
     }
     setLoading(false)
   }
 
-  const SignupLogo = () => (
-    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
-      <Logo height={36} />
-    </div>
-  )
+  const handlePasswordReset = async () => {
+    const trimmed = email.trim()
+    if (!trimmed) {
+      setError(s.yourEmail)
+      return
+    }
+    setLoading(true)
+    setStatusKind('loading')
+    setMessage('Sending reset link…')
+    const origin =
+      typeof window !== 'undefined' ? window.location.origin : 'https://www.flushpin.com'
+    const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {
+      redirectTo: getPasswordResetRedirectUrl(origin),
+    })
+    if (error) {
+      setError(error.message)
+    } else {
+      setStatusKind('success')
+      setMessage(s.resetSent)
+    }
+    setLoading(false)
+  }
 
-  const LangBar = () => (
-    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-      <LanguageToggle />
-    </div>
-  )
+  const handleUpdatePassword = async () => {
+    const check = validatePasswordConfirmation(newPassword, confirmPassword)
+    if (!check.ok) {
+      setError(check.message)
+      return
+    }
 
-  const card = { background: 'white', borderRadius: '20px', padding: '40px', width: '100%', maxWidth: '400px', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }
-  const wrap = { minHeight: '100vh', background: '#f8f9fa', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', fontFamily: "'Inter',system-ui,sans-serif" }
-  const input = { width: '100%', padding: '14px 16px', borderRadius: '10px', border: '1.5px solid #e5e5e5', fontSize: '15px', marginBottom: '12px', outline: 'none', boxSizing: 'border-box' as const }
-  const btnGreen = { width: '100%', background: '#1D9E75', color: 'white', border: 'none', padding: '14px', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', marginBottom: '14px' }
-  const h2style = { fontFamily: "'Space Grotesk','Inter',sans-serif", fontSize: '24px', fontWeight: '700', color: '#0A2E1F', textAlign: 'center' as const, marginBottom: '8px', letterSpacing: '-0.5px' }
-  const errorStyle = { fontSize: '13px', color: '#DC2626', fontWeight: '700', textAlign: 'center' as const, marginBottom: '14px', lineHeight: '1.5' }
+    setLoading(true)
+    setStatusKind('loading')
+    setMessage('Updating password…')
+
+    const { data: sessionData } = await supabase.auth.getSession()
+    if (!sessionData.session && !recoveryReady) {
+      setError(s.updateInvalidLink)
+      setLoading(false)
+      return
+    }
+
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) {
+      setError(error.message)
+      setLoading(false)
+      return
+    }
+
+    // End recovery session so the user signs in with the new password.
+    await supabase.auth.signOut()
+    setNewPassword('')
+    setConfirmPassword('')
+    setPassword('')
+    setRecoveryReady(false)
+    setScreen('signin')
+    setStatusKind('success')
+    setMessage(s.updateSuccess)
+    setLoading(false)
+  }
+
+  const statusMessage = message
+  const statusDisplay =
+    loading && statusKind !== 'error'
+      ? ('loading' as const)
+      : statusKind === 'error'
+        ? ('error' as const)
+        : statusKind === 'success'
+          ? ('success' as const)
+          : statusKind === 'loading'
+            ? ('loading' as const)
+            : ('idle' as const)
+
+  if (screen === 'update') {
+    return (
+      <AuthPage>
+        <AuthShell>
+          <h1 className={`${authTitleClass} mb-2`}>{s.updateTitle}</h1>
+          <p className="mb-6 text-sm leading-relaxed text-fp-gray-600">{s.updateDesc}</p>
+          <AuthStatus kind={statusDisplay} message={statusMessage} />
+          <div className="mt-4 flex flex-col gap-4">
+            <div>
+              <label htmlFor="new-password" className="mb-2 block text-sm font-semibold text-fp-ink">
+                {s.newPassword}
+              </label>
+              <input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className={authInputClass}
+                autoComplete="new-password"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="confirm-password"
+                className="mb-2 block text-sm font-semibold text-fp-ink"
+              >
+                {s.confirmPassword}
+              </label>
+              <input
+                id="confirm-password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className={authInputClass}
+                autoComplete="new-password"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleUpdatePassword}
+              disabled={loading}
+              className={authPrimaryButtonClass}
+            >
+              {loading ? 'Updating…' : s.updatePassword}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                clearStatus()
+                setScreen('forgot')
+              }}
+              className="text-center text-sm font-semibold text-fp-gray-600 hover:text-fp-ink"
+            >
+              {s.forgotPassword}
+            </button>
+          </div>
+        </AuthShell>
+      </AuthPage>
+    )
+  }
 
   if (screen === 'confirm') {
     return (
-      <main style={wrap}>
-        <div style={card}>
-          <LangBar />
-          <SignupLogo />
-          <h2 style={h2style}>{s.confirmAlmostDone}</h2>
-          <p style={{ color: '#555', fontSize: '15px', textAlign: 'center', marginBottom: '28px', lineHeight: '1.6' }}>
-            {formatEmailTemplate(s.confirmEmailSent, pendingEmail)}
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              setPassword('')
-              setMessage('')
-              setScreen('signin')
-            }}
-            style={{ ...btnGreen, marginBottom: 0 }}
-          >
-            {s.backToSignIn}
-          </button>
-        </div>
-      </main>
+      <AuthPage>
+        <AuthShell>
+          <div className="text-center">
+            <div
+              className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-2xl text-emerald-700"
+              aria-hidden="true"
+            >
+              ✓
+            </div>
+            <h1 className={`${authTitleClass} mb-3`}>{s.confirmAlmostDone}</h1>
+            <AuthStatus
+              kind="success"
+              message={formatEmailTemplate(s.confirmEmailSent, pendingEmail)}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                setPassword('')
+                clearStatus()
+                setScreen('signin')
+              }}
+              className={`${authPrimaryButtonClass} mt-6`}
+            >
+              {s.backToSignIn}
+            </button>
+          </div>
+        </AuthShell>
+      </AuthPage>
     )
   }
 
   if (screen === 'forgot') {
     return (
-      <main style={wrap}>
-        <div style={card}>
-          <LangBar />
-          <SignupLogo />
-          <h2 style={h2style}>{s.resetTitle}</h2>
-          <p style={{ color: '#888', fontSize: '14px', textAlign: 'center', marginBottom: '28px', lineHeight: '1.6' }}>{s.resetDesc}</p>
-          <input value={email} onChange={e => setEmail(e.target.value)} placeholder={s.yourEmail} style={input} />
-          <button type="button" style={btnGreen}>{s.sendReset}</button>
-          <button type="button" onClick={() => setScreen('signin')} style={{ width: '100%', background: 'transparent', border: 'none', color: '#888', fontSize: '14px', cursor: 'pointer' }}>{s.backToSignIn}</button>
-        </div>
-      </main>
+      <AuthPage>
+        <AuthShell>
+          <h1 className={`${authTitleClass} mb-2`}>{s.resetTitle}</h1>
+          <p className="mb-6 text-sm leading-relaxed text-fp-gray-600">{s.resetDesc}</p>
+          <AuthStatus kind={statusDisplay} message={statusMessage} />
+          <div className="mt-4 flex flex-col gap-4">
+            <div>
+              <label htmlFor="reset-email" className="mb-2 block text-sm font-semibold text-fp-ink">
+                {s.yourEmail}
+              </label>
+              <input
+                id="reset-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={s.yourEmail}
+                className={authInputClass}
+                autoComplete="email"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handlePasswordReset}
+              disabled={loading}
+              className={authPrimaryButtonClass}
+            >
+              {loading ? 'Sending…' : s.sendReset}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                clearStatus()
+                setScreen('signin')
+              }}
+              className="text-center text-sm font-semibold text-fp-gray-600 hover:text-fp-ink"
+            >
+              {s.backToSignIn}
+            </button>
+          </div>
+        </AuthShell>
+      </AuthPage>
     )
   }
 
   if (screen === 'signin') {
     return (
-      <main style={wrap}>
-        <div style={card}>
-          <LangBar />
-          <SignupLogo />
-          <h2 style={h2style}>{t.welcomeBack}</h2>
-          <p style={{ color: '#888', fontSize: '14px', textAlign: 'center', marginBottom: '24px' }}>{s.welcomeDesc}</p>
-          <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder={s.emailAddress} style={input} />
-          <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder={s.password} style={{ ...input, marginBottom: '20px' }} />
-          {message && <p style={errorStyle}>{message}</p>}
-          <button type="button" onClick={handleSignIn} disabled={loading} style={{ ...btnGreen, marginBottom: '16px', opacity: loading ? 0.7 : 1 }}>
-            {loading ? '...' : s.signIn}
-          </button>
-          <p style={{ textAlign: 'center', fontSize: '13px', color: '#888', marginBottom: '8px' }}>
-            <span onClick={() => { setMessage(''); setScreen('email') }} style={{ color: '#1D9E75', cursor: 'pointer', fontWeight: '600' }}>{t.home.needAccount}</span>
-          </p>
-          <p onClick={() => setScreen('forgot')} style={{ textAlign: 'center', fontSize: '13px', color: '#bbb', cursor: 'pointer' }}>{s.forgotPassword}</p>
-        </div>
-      </main>
+      <AuthPage>
+        <AuthShell>
+          <h1 className={`${authTitleClass} mb-2`}>{t.welcomeBack}</h1>
+          <p className="mb-6 text-sm leading-relaxed text-fp-gray-600">{s.welcomeDesc}</p>
+
+          <div className="mb-5 flex flex-col gap-3">
+            <GoogleSignInButton
+              onClick={() => handleOAuthSignIn('google')}
+              disabled={loading}
+              label={t.continueGoogle}
+            />
+            <AppleSignInButton available={false} />
+          </div>
+          <Divider label={s.or} />
+
+          <div className="flex flex-col gap-4">
+            <div>
+              <label htmlFor="signin-email" className="mb-2 block text-sm font-semibold text-fp-ink">
+                {s.emailAddress}
+              </label>
+              <input
+                id="signin-email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                type="email"
+                placeholder={s.emailAddress}
+                className={authInputClass}
+                autoComplete="email"
+              />
+            </div>
+            <div>
+              <label htmlFor="signin-password" className="mb-2 block text-sm font-semibold text-fp-ink">
+                {s.password}
+              </label>
+              <input
+                id="signin-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                type="password"
+                placeholder={s.password}
+                className={authInputClass}
+                autoComplete="current-password"
+              />
+            </div>
+            <AuthStatus kind={statusDisplay} message={statusMessage} />
+            <button
+              type="button"
+              onClick={handleSignIn}
+              disabled={loading}
+              className={authPrimaryButtonClass}
+            >
+              {loading ? 'Signing in…' : s.signIn}
+            </button>
+            <p className="text-center text-sm text-fp-gray-600">
+              {t.home.needAccount}{' '}
+              <TextLink
+                onClick={() => {
+                  clearStatus()
+                  setScreen('email')
+                }}
+              >
+                {s.createAccount}
+              </TextLink>
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                clearStatus()
+                setScreen('forgot')
+              }}
+              className="text-center text-sm font-medium text-fp-gray-400 hover:text-fp-ink"
+            >
+              {s.forgotPassword}
+            </button>
+          </div>
+        </AuthShell>
+      </AuthPage>
     )
   }
 
   if (screen === 'email') {
     return (
-      <main style={wrap}>
-        <div style={card}>
-          <LangBar />
-          <SignupLogo />
-          <h2 style={h2style}>{s.createTitle}</h2>
-          <p style={{ color: '#888', fontSize: '14px', textAlign: 'center', marginBottom: '24px' }}>{s.createDesc}</p>
-          <p style={{ fontSize: '11px', fontWeight: '600', color: '#bbb', letterSpacing: '1px', marginBottom: '12px' }}>{s.pickColor}</p>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '22px' }}>
-            {COLORS.map(c => (
-              <div
-                key={c.id}
-                onClick={() => setSelectedColor(c.id)}
-                title={c.label}
-                style={{ width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', background: c.hex, border: selectedColor === c.id ? '3px solid #0A2E1F' : '3px solid transparent', boxSizing: 'border-box', flexShrink: 0 }}
-              />
-            ))}
+      <AuthPage>
+        <AuthShell>
+          <h1 className={`${authTitleClass} mb-2`}>{s.createTitle}</h1>
+          <p className="mb-6 text-sm leading-relaxed text-fp-gray-600">{s.createDesc}</p>
+
+          <div className="mb-5">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-fp-gray-400">
+              {s.pickColor}
+            </p>
+            <div className="flex flex-wrap gap-2.5" role="listbox" aria-label={s.pickColor}>
+              {PROFILE_COLORS.map((c) => {
+                const selected = selectedColor === c.id
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    role="option"
+                    aria-selected={selected}
+                    title={c.label}
+                    onClick={() => setSelectedColor(c.id)}
+                    className="h-9 w-9 rounded-full transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fp-teal"
+                    style={{
+                      background: c.hex,
+                      boxShadow: selected
+                        ? '0 0 0 3px #fff, 0 0 0 5px #1b1b21'
+                        : '0 0 0 2px transparent',
+                      transform: selected ? 'scale(1.06)' : undefined,
+                    }}
+                    aria-label={c.label}
+                  />
+                )
+              })}
+            </div>
           </div>
-          <input value={name} onChange={e => setName(e.target.value)} placeholder={s.yourName} style={input} />
-          <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder={s.emailAddress} style={input} />
-          <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder={s.password} style={{ ...input, marginBottom: '20px' }} />
-          {message && <p style={errorStyle}>{message}</p>}
-          <button type="button" onClick={handleSignUp} disabled={loading} style={{ ...btnGreen, marginBottom: '16px', opacity: loading ? 0.7 : 1 }}>
-            {loading ? '...' : s.createAccount}
-          </button>
-          <p style={{ textAlign: 'center', fontSize: '13px', color: '#888' }}>
-            {s.alreadyHave}{' '}
-            <span onClick={() => { setMessage(''); setScreen('signin') }} style={{ color: '#1D9E75', cursor: 'pointer', fontWeight: '600' }}>{s.signIn}</span>
-          </p>
-        </div>
-      </main>
+
+          <div className="flex flex-col gap-4">
+            <div>
+              <label htmlFor="signup-name" className="mb-2 block text-sm font-semibold text-fp-ink">
+                {s.yourName}
+              </label>
+              <input
+                id="signup-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={s.yourName}
+                className={authInputClass}
+                autoComplete="name"
+              />
+            </div>
+            <div>
+              <label htmlFor="signup-email" className="mb-2 block text-sm font-semibold text-fp-ink">
+                {s.emailAddress}
+              </label>
+              <input
+                id="signup-email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                type="email"
+                placeholder={s.emailAddress}
+                className={authInputClass}
+                autoComplete="email"
+              />
+            </div>
+            <div>
+              <label htmlFor="signup-password" className="mb-2 block text-sm font-semibold text-fp-ink">
+                {s.password}
+              </label>
+              <input
+                id="signup-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                type="password"
+                placeholder={s.password}
+                className={authInputClass}
+                autoComplete="new-password"
+              />
+            </div>
+            <AuthStatus kind={statusDisplay} message={statusMessage} />
+            <button
+              type="button"
+              onClick={handleSignUp}
+              disabled={loading}
+              className={authPrimaryButtonClass}
+            >
+              {loading ? 'Creating…' : s.createAccount}
+            </button>
+            <p className="text-center text-sm text-fp-gray-600">
+              {s.alreadyHave}{' '}
+              <TextLink
+                onClick={() => {
+                  clearStatus()
+                  setScreen('signin')
+                }}
+              >
+                {s.signIn}
+              </TextLink>
+            </p>
+          </div>
+        </AuthShell>
+      </AuthPage>
     )
   }
 
   return (
-    <main style={wrap}>
-      <div style={card}>
-        <LangBar />
-        <SignupLogo />
-        <h2 style={{ ...h2style, fontSize: '26px' }}>{s.welcomeTitle}</h2>
-        <p style={{ color: '#888', fontSize: '14px', textAlign: 'center', marginBottom: '32px', lineHeight: '1.6' }}>{s.welcomeDesc}</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
-          <button onClick={() => handleOAuthSignIn('google')} style={{ width: '100%', background: 'white', border: '1.5px solid #e5e5e5', borderRadius: '11px', padding: '14px', fontSize: '15px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', color: '#333' }}>
-            <svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg>
-            {t.continueGoogle}
-          </button>
+    <AuthPage>
+      <AuthShell>
+        <h1 className={`${authTitleClass} mb-2 text-center`}>{s.welcomeTitle}</h1>
+        <p className="mb-7 text-center text-sm leading-relaxed text-fp-gray-600">{s.welcomeDesc}</p>
+
+        <div className="flex flex-col gap-3">
+          <GoogleSignInButton
+            onClick={() => handleOAuthSignIn('google')}
+            disabled={loading}
+            label={t.continueGoogle}
+          />
+          <AppleSignInButton available={false} />
         </div>
-        {message && <p style={{ ...errorStyle, margin: '-10px 0 18px' }}>{message}</p>}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-          <div style={{ flex: 1, height: '1px', background: '#f0f0f0' }} />
-          <span style={{ color: '#ccc', fontSize: '13px' }}>{s.or}</span>
-          <div style={{ flex: 1, height: '1px', background: '#f0f0f0' }} />
-        </div>
-        <button onClick={() => setScreen('email')} style={{ width: '100%', background: '#f8f8f8', border: '1.5px solid #e5e5e5', borderRadius: '11px', padding: '14px', fontSize: '15px', fontWeight: '600', cursor: 'pointer', color: '#333', marginBottom: '16px' }}>{s.signUpWithEmail}</button>
-        <p style={{ textAlign: 'center', fontSize: '13px', color: '#888', marginBottom: '8px' }}>
+
+        <AuthStatus kind={statusDisplay} message={statusMessage} />
+        <Divider label={s.or} />
+
+        <button
+          type="button"
+          onClick={() => {
+            clearStatus()
+            setScreen('email')
+          }}
+          className={`${authSecondaryButtonClass} mb-5`}
+        >
+          {s.signUpWithEmail}
+        </button>
+
+        <p className="mb-3 text-center text-sm text-fp-gray-600">
           {s.alreadyHave}{' '}
-          <span onClick={() => setScreen('signin')} style={{ color: '#1D9E75', cursor: 'pointer', fontWeight: '600' }}>{s.signIn}</span>
+          <TextLink
+            onClick={() => {
+              clearStatus()
+              setScreen('signin')
+            }}
+          >
+            {s.signIn}
+          </TextLink>
         </p>
-        <p onClick={() => setScreen('forgot')} style={{ textAlign: 'center', fontSize: '13px', color: '#bbb', cursor: 'pointer' }}>{s.forgotPassword}</p>
-      </div>
-    </main>
+        <button
+          type="button"
+          onClick={() => {
+            clearStatus()
+            setScreen('forgot')
+          }}
+          className="mx-auto block text-center text-sm font-medium text-fp-gray-400 hover:text-fp-ink"
+        >
+          {s.forgotPassword}
+        </button>
+      </AuthShell>
+    </AuthPage>
   )
 }
