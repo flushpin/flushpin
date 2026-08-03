@@ -19,9 +19,11 @@ export default function BusinessHero() {
             href="/business/start"
             className="inline-flex items-center justify-center rounded-full bg-fp-teal px-8 py-3.5 text-base font-semibold text-white no-underline transition-colors hover:bg-fp-teal-dark"
           >
-            Start free for 90 days
+            List my business free
           </Link>
-          <p className="mt-4 text-sm text-fp-gray-400">No credit card. No contract. Cancel anytime.</p>
+          <p className="mt-4 text-sm text-fp-gray-400">
+            Free Listing is always free. Paid QR plans start at $9/mo. No long contract.
+          </p>
         </div>
       </div>
     </section>

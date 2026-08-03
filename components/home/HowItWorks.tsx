@@ -1,9 +1,9 @@
 const steps = [
   {
     number: 1,
-    title: 'Open the app first.',
+    title: 'Find restrooms nearby.',
     description:
-      'The mobile landing experience points iPhone users straight to the App Store path, then offers the web map for instant use.',
+      'Use your location or search an address to see places around you — cafés, gas stations, malls, and more.',
   },
   {
     number: 2,
@@ -15,7 +15,7 @@ const steps = [
     number: 3,
     title: 'Help the next person.',
     description:
-      'Signed-in users can improve access information so the map becomes sharper every day.',
+      'Signed-in users can add and update access information so the next traveler finds what they need faster.',
   },
 ]
 

@@ -43,3 +43,8 @@ supabase/.temp/
 *.tsbuildinfo
 next-env.d.ts
 seed-ev.mjs
+
+# UX/QA dogrulama ciktilari (kaynak kod degil)
+docs/auth-ui-verification/
+docs/restroom-ux-redesign/
+docs/deployment-review/

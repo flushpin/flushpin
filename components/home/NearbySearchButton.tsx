@@ -31,7 +31,9 @@ export default function NearbySearchButton({ loading = false, disabled = false, 
         {!loading && <ChevronRight className="h-5 w-5 shrink-0 opacity-90" aria-hidden="true" />}
       </button>
       {!loading && (
-        <p className="mt-2 text-center text-xs text-white/50">Using your current location</p>
+        <p className="mt-2 text-center text-xs text-white/50">
+          We&apos;ll ask for location access when you tap
+        </p>
       )}
     </div>
   )

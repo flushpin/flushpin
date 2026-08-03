@@ -139,7 +139,7 @@ export default async function CaliforniaRegionGuidePage({ params }: PageProps) {
                 <p className="mt-4 leading-8 text-white/70">{region.businessAngle}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/8 p-5">
-                <p className="text-sm font-extrabold uppercase tracking-wide text-white/60">FlushPin Gold flow</p>
+                <p className="text-sm font-extrabold uppercase tracking-wide text-white/60">FlushPin for businesses</p>
                 <ol className="mt-4 space-y-3 text-sm leading-6 text-white/75">
                   <li>1. Guest scans QR or finds the listing.</li>
                   <li>2. Guest sees a short coffee, pastry, sandwich, or return-visit offer.</li>

@@ -2,7 +2,6 @@ import BusinessCta from '../components/home/BusinessCta'
 import BuiltForTheRoad from '../components/home/BuiltForTheRoad'
 import HomeHero from '../components/home/HomeHero'
 import HowItWorks from '../components/home/HowItWorks'
-import RecentUpdates from '../components/home/RecentUpdates'
 import StatsStrip from '../components/home/StatsStrip'
 import TripStopsCard from '../components/home/TripStopsCard'
 import { isTripStopsEnabled } from '../lib/serverReleaseFlags'
@@ -17,7 +16,6 @@ export default function HomePage() {
         {tripStopsEnabled ? <TripStopsCard /> : null}
         <BuiltForTheRoad />
         <StatsStrip />
-        <RecentUpdates />
         <HowItWorks />
         <BusinessCta />
       </div>

@@ -21,7 +21,7 @@ const steps = [
 
 export default function BusinessHowItWorks() {
   return (
-    <section className="bg-fp-teal-tint px-4 py-16 md:px-6 md:py-20">
+    <section id="model" className="scroll-mt-24 bg-fp-teal-tint px-4 py-16 md:px-6 md:py-20">
       <div className="mx-auto max-w-6xl">
         <h2 className="text-center text-2xl font-bold text-fp-ink md:text-3xl">
           How FlushPin fixes it — 3 steps

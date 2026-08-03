@@ -108,7 +108,7 @@ const futurePlan = {
 
 export default function BusinessPricing() {
   return (
-    <section className="bg-fp-teal-tint px-4 py-16 md:px-6 md:py-20">
+    <section id="packages" className="scroll-mt-24 bg-fp-teal-tint px-4 py-16 md:px-6 md:py-20">
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-2xl font-bold text-fp-ink md:text-3xl">Simple pricing</h2>

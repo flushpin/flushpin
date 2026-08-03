@@ -8,6 +8,7 @@ import Logo from './Logo'
 import AuthModal from './home/AuthModal'
 import { supabase } from '../lib/supabase'
 import { useLang } from '../lib/LanguageContext'
+import { signOutSafely } from '../lib/authSignOut'
 
 export default function SiteHeader() {
   const pathname = usePathname()
@@ -17,6 +18,8 @@ export default function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [showAuth, setShowAuth] = useState(false)
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup')
+  const [signingOut, setSigningOut] = useState(false)
+  const [signOutError, setSignOutError] = useState('')
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null))
@@ -26,9 +29,19 @@ export default function SiteHeader() {
     return () => subscription.unsubscribe()
   }, [])
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
+  const handleSignOut = async (): Promise<boolean> => {
+    setSigningOut(true)
+    setSignOutError('')
+    const result = await signOutSafely(supabase)
+    if (!result.ok) {
+      setSignOutError(result.message || t.signup.signOutFailed)
+      setSigningOut(false)
+      return false
+    }
+    // Clear UI only after Supabase confirms sign-out succeeded.
     setUser(null)
+    setSigningOut(false)
+    return true
   }
 
   const openSignIn = () => {
@@ -111,10 +124,11 @@ export default function SiteHeader() {
                 </span>
                 <button
                   type="button"
-                  onClick={handleSignOut}
-                  className={`text-sm font-medium hover:text-fp-teal ${isHome ? 'text-white/80' : 'text-fp-ink'}`}
+                  onClick={() => void handleSignOut()}
+                  disabled={signingOut}
+                  className={`text-sm font-medium hover:text-fp-teal disabled:opacity-60 ${isHome ? 'text-white/80' : 'text-fp-ink'}`}
                 >
-                  {t.signOut}
+                  {signingOut ? 'Signing out…' : t.signOut}
                 </button>
               </div>
             ) : (
@@ -139,74 +153,85 @@ export default function SiteHeader() {
             )}
           </nav>
 
-          {isHome ? (
-            <div className="flex shrink-0 items-center lg:hidden">
-              {user ? (
-                <div className="flex min-h-11 items-center gap-2">
-                  <span
-                    className="h-9 w-9 shrink-0 rounded-full"
-                    style={{ background: profileColor }}
-                    aria-hidden="true"
-                  />
-                  <div className="flex flex-col items-end leading-tight">
-                    <span className="max-w-[80px] truncate text-xs font-semibold text-white sm:max-w-[112px]">
-                      {displayName}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handleSignOut}
-                      className="text-[11px] font-medium text-fp-teal hover:underline"
-                    >
-                      {t.signOut}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={openSignIn}
-                  className="flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white transition-colors hover:border-fp-teal/50 hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fp-teal"
-                >
-                  <User className="h-5 w-5 shrink-0" aria-hidden="true" />
-                  <span>Sign In</span>
-                </button>
-              )}
-            </div>
-          ) : (
+          <div className="flex shrink-0 items-center gap-2 lg:hidden">
+            {isHome && !user && (
+              <button
+                type="button"
+                onClick={openSignIn}
+                className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 text-sm font-semibold text-white transition-colors hover:border-fp-teal/50 hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fp-teal"
+              >
+                <User className="h-5 w-5 shrink-0" aria-hidden="true" />
+                <span className="sr-only sm:not-sr-only">Sign In</span>
+              </button>
+            )}
             <button
               type="button"
-              className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-1.5 p-2 lg:hidden"
+              className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-1.5 p-2"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-expanded={menuOpen}
               aria-label="Open menu"
             >
-              <span className="block h-0.5 w-6 bg-fp-ink" />
-              <span className="block h-0.5 w-6 bg-fp-ink" />
-              <span className="block h-0.5 w-6 bg-fp-ink" />
+              <span className={`block h-0.5 w-6 ${isHome ? 'bg-white' : 'bg-fp-ink'}`} />
+              <span className={`block h-0.5 w-6 ${isHome ? 'bg-white' : 'bg-fp-ink'}`} />
+              <span className={`block h-0.5 w-6 ${isHome ? 'bg-white' : 'bg-fp-ink'}`} />
             </button>
-          )}
+          </div>
         </div>
 
-        {menuOpen && !isHome && (
+        {menuOpen && (
           <nav
-            className="flex flex-col gap-4 border-t border-fp-border px-4 py-4 lg:hidden"
+            className={`flex flex-col gap-4 border-t px-4 py-4 lg:hidden ${
+              isHome ? 'border-white/10 bg-[#0a0f0e]' : 'border-fp-border bg-fp-white'
+            }`}
             aria-label="Mobile navigation"
           >
-            <Link href="/map" className="text-sm font-medium text-fp-ink no-underline" onClick={() => setMenuOpen(false)}>
+            <Link
+              href="/map"
+              className={`text-sm font-medium no-underline ${isHome ? 'text-white' : 'text-fp-ink'}`}
+              onClick={() => setMenuOpen(false)}
+            >
               Find a Restroom
             </Link>
-            <Link href="/business" className="text-sm font-medium text-fp-ink no-underline" onClick={() => setMenuOpen(false)}>
+            <Link
+              href="/business"
+              className={`text-sm font-medium no-underline ${isHome ? 'text-white' : 'text-fp-ink'}`}
+              onClick={() => setMenuOpen(false)}
+            >
               {t.forBusinesses}
             </Link>
-            <Link href="/restrooms/california" className="text-sm font-medium text-fp-ink no-underline" onClick={() => setMenuOpen(false)}>
+            <Link
+              href="/restrooms/california"
+              className={`text-sm font-medium no-underline ${isHome ? 'text-white' : 'text-fp-ink'}`}
+              onClick={() => setMenuOpen(false)}
+            >
               Guides
             </Link>
-            <Link href="/events" className="text-sm font-medium text-fp-ink no-underline" onClick={() => setMenuOpen(false)}>
+            <Link
+              href="/events"
+              className={`text-sm font-medium no-underline ${isHome ? 'text-white' : 'text-fp-ink'}`}
+              onClick={() => setMenuOpen(false)}
+            >
               {t.events}
             </Link>
+            <Link
+              href="/contact"
+              className={`text-sm font-medium no-underline ${isHome ? 'text-white' : 'text-fp-ink'}`}
+              onClick={() => setMenuOpen(false)}
+            >
+              Contact
+            </Link>
             {user ? (
-              <button type="button" onClick={handleSignOut} className="text-left text-sm font-medium text-fp-ink">
-                {t.signOut}
+              <button
+                type="button"
+                disabled={signingOut}
+                onClick={() => {
+                  void handleSignOut().then((ok) => {
+                    if (ok) setMenuOpen(false)
+                  })
+                }}
+                className={`text-left text-sm font-medium disabled:opacity-60 ${isHome ? 'text-white' : 'text-fp-ink'}`}
+              >
+                {signingOut ? 'Signing out…' : t.signOut}
               </button>
             ) : (
               <>
@@ -216,9 +241,9 @@ export default function SiteHeader() {
                     openSignIn()
                     setMenuOpen(false)
                   }}
-                  className="text-left text-sm font-medium text-fp-ink"
+                  className={`text-left text-sm font-medium ${isHome ? 'text-white' : 'text-fp-ink'}`}
                 >
-                  Log in
+                  Sign In
                 </button>
                 <button
                   type="button"
@@ -236,6 +261,15 @@ export default function SiteHeader() {
         )}
       </header>
       )}
+
+      {signOutError ? (
+        <div
+          role="alert"
+          className="border-b border-red-200 bg-red-50 px-4 py-2 text-center text-sm font-medium text-red-800"
+        >
+          {signOutError}
+        </div>
+      ) : null}
 
       <AuthModal
         open={showAuth}

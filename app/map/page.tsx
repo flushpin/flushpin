@@ -125,6 +125,9 @@ function MapPageContent() {
   const [userLat, setUserLat] = useState<number|null>(null)
   const [userLng, setUserLng] = useState<number|null>(null)
   const [locationName, setLocationName] = useState(MAP_DEFAULT_CENTER.label)
+  /** How the current results area was chosen — never imply GPS unless mode is 'gps'. */
+  const [locationMode, setLocationMode] = useState<'gps' | 'search' | 'example'>('example')
+  const [locationNotice, setLocationNotice] = useState<string | null>(null)
   const [filter, setFilter] = useState('all')
   const [unit, setUnit] = useState<'mi'|'km'>('mi')
   const [selected, setSelected] = useState<any>(null)
@@ -325,26 +328,47 @@ function MapPageContent() {
   }
 
   const getLocation = (onSuccess: (lat: number, lng: number) => void) => {
-    // User-gesture only. One in-flight request max; denial falls back once (no retry).
+    // User-gesture only. One in-flight request max. Never pretend denial = Irvine.
     if (locatingInFlightRef.current) return
     locatingInFlightRef.current = true
+    setLocationNotice(null)
+    setLocating(true)
 
-    const finish = async (lat: number, lng: number, fallbackLabel?: string) => {
-      setUserLat(lat)
-      setUserLng(lng)
+    const supported = typeof navigator !== 'undefined' && !!navigator.geolocation?.getCurrentPosition
+    if (!supported) {
       setLocating(false)
       locatingInFlightRef.current = false
-      await applyAnchor(lat, lng, fallbackLabel)
-      onSuccess(lat, lng)
+      setLocationMode('example')
+      setLocationNotice(
+        lang === 'es'
+          ? 'La ubicación no está disponible en este dispositivo. Busca una dirección o un lugar.'
+          : 'Location is unavailable on this device. Search by address or place name.',
+      )
+      return
     }
 
-    setLocating(true)
     requestMapGeolocationOnce(navigator.geolocation, {
       onSuccess: (lat, lng) => {
-        void finish(lat, lng)
+        void (async () => {
+          setUserLat(lat)
+          setUserLng(lng)
+          setLocating(false)
+          locatingInFlightRef.current = false
+          setLocationMode('gps')
+          setLocationNotice(null)
+          await applyAnchor(lat, lng)
+          onSuccess(lat, lng)
+        })()
       },
       onError: () => {
-        void finish(MAP_DEFAULT_CENTER.lat, MAP_DEFAULT_CENTER.lng, MAP_DEFAULT_CENTER.label)
+        setLocating(false)
+        locatingInFlightRef.current = false
+        setLocationMode((prev) => (prev === 'gps' ? 'example' : prev))
+        setLocationNotice(
+          lang === 'es'
+            ? 'Acceso a la ubicación denegado. Busca una dirección o un lugar, o activa la ubicación e inténtalo de nuevo.'
+            : 'Location access was denied. Search by address or place name, or enable location and try again.',
+        )
       },
     })
   }
@@ -416,7 +440,19 @@ function MapPageContent() {
         },
         { resolveSearchLocation },
       )
-      // Mount never requests geolocation — only URL, geocode, or default center.
+      // Mount never requests geolocation — only URL, geocode, or example center.
+      if (mounted.source === 'default') {
+        setLocationMode('example')
+        setLocationNotice(null)
+      } else if (near === 'Your location') {
+        setLocationMode('gps')
+        setUserLat(mounted.lat)
+        setUserLng(mounted.lng)
+        setLocationNotice(null)
+      } else {
+        setLocationMode('search')
+        setLocationNotice(null)
+      }
       await applyAnchor(mounted.lat, mounted.lng, mounted.label)
       await loadData(mounted.lat, mounted.lng, '', false)
     }
@@ -449,6 +485,10 @@ function MapPageContent() {
     setLoading(true)
     const located = await resolveSearchLocation(q)
     if (located) {
+      setLocationMode('search')
+      setLocationNotice(null)
+      setUserLat(null)
+      setUserLng(null)
       await applyAnchor(located.lat, located.lng, located.label)
       url.searchParams.set('q', q)
       url.searchParams.set('lat', String(located.lat))
@@ -940,12 +980,44 @@ function MapPageContent() {
 
       <div style={{background:'white',padding:'10px 16px',borderBottom:'1px solid #f0f0f0'}}>
         <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'10px'}}>
-          <span style={{fontSize:'14px',color:'#1D9E75'}}>📍</span>
+          <span style={{fontSize:'14px',color:'#00a886'}}>📍</span>
           <span style={{fontSize:'14px',color:'#555',fontWeight:'500'}}>
-            {locating ? t.findingLocation : `${lang === 'es' ? 'Cerca de' : 'Near'} ${locationName}`}
+            {locating
+              ? t.findingLocation
+              : locationMode === 'gps'
+                ? `${lang === 'es' ? 'Cerca de ti' : 'Near you'} · ${locationName}`
+                : locationMode === 'search'
+                  ? `${lang === 'es' ? 'Cerca de' : 'Near'} ${locationName}`
+                  : `${lang === 'es' ? 'Resultados de ejemplo cerca de' : 'Showing example results near'} ${locationName}`}
           </span>
-          <button onClick={()=>{window.history.replaceState({},'',window.location.pathname);getLocation((lat,lng)=>loadData(lat,lng,searchQuery,false,{force:true}))}} style={{background:'none',border:'none',color:'#1D9E75',fontSize:'13px',cursor:'pointer',fontWeight:'600',marginLeft:'auto'}}>{t.updateLocation}</button>
+          <button
+            type="button"
+            onClick={() => {
+              getLocation((lat, lng) => loadData(lat, lng, searchQuery, false, { force: true }))
+            }}
+            style={{background:'none',border:'none',color:'#00a886',fontSize:'13px',cursor:'pointer',fontWeight:'600',marginLeft:'auto'}}
+          >
+            {locationMode === 'gps' ? t.updateLocation : lang === 'es' ? 'Usar mi ubicación' : 'Use my location'}
+          </button>
         </div>
+        {locationNotice && (
+          <div
+            role="status"
+            style={{
+              marginBottom: '10px',
+              padding: '10px 12px',
+              borderRadius: '10px',
+              background: '#FEF3C7',
+              border: '1px solid #FCD34D',
+              color: '#92400E',
+              fontSize: '13px',
+              lineHeight: 1.45,
+              fontWeight: 600,
+            }}
+          >
+            {locationNotice}
+          </div>
+        )}
         <div style={{display:'flex',gap:'8px',overflowX:'auto',paddingBottom:'2px'}}>
           {[
             {id:'all',label:t.allFilter},
@@ -974,12 +1046,26 @@ function MapPageContent() {
         <p style={{fontSize:'14px',color:'#999',fontWeight:'500',margin:'0 0 12px'}}>
           {loading
             ? t.loading
-            : lang === 'es' ? `${displayed.length} lugar${displayed.length !== 1 ? 'es' : ''} dentro de ${RADIUS_MILES} mi de ${locationName}` : `${displayed.length} location${displayed.length !== 1 ? 's' : ''} within ${RADIUS_MILES} mi of ${locationName}`}
+            : (() => {
+                const radiusLabel = unit === 'km' ? `${Math.round(RADIUS_MILES * 1.60934)} km` : `${RADIUS_MILES} mi`
+                const placeWord =
+                  lang === 'es'
+                    ? `${displayed.length} lugar${displayed.length !== 1 ? 'es' : ''} dentro de ${radiusLabel}`
+                    : `${displayed.length} location${displayed.length !== 1 ? 's' : ''} within ${radiusLabel}`
+                if (locationMode === 'example') {
+                  return lang === 'es'
+                    ? `${placeWord} (ejemplo · ${locationName})`
+                    : `${placeWord} (example · ${locationName})`
+                }
+                return lang === 'es' ? `${placeWord} de ${locationName}` : `${placeWord} of ${locationName}`
+              })()}
         </p>
 
         {loading&&<div style={{textAlign:'center',padding:'60px 20px'}}>
           <div style={{fontSize:'40px',marginBottom:'12px'}}>🚽</div>
-          <p style={{color:'#999',fontSize:'15px'}}>{t.findingLocation}</p>
+          <p style={{color:'#999',fontSize:'15px'}}>
+            {locating ? t.findingLocation : t.loading}
+          </p>
         </div>}
 
         {!loading && !nearbyError && nearbyEmpty && displayed.length === 0 && !searchQuery && !categoryApplies && (
@@ -1069,9 +1155,9 @@ function MapPageContent() {
                   {r.opt_out&&<div style={{background:'#FEE2E2',borderRadius:'8px',padding:'6px 12px',marginLeft:'17px',marginBottom:'6px',display:'inline-flex',alignItems:'center',gap:'6px'}}><span>🚫</span><span style={{fontSize:'13px',fontWeight:'700',color:'#DC2626'}}>{lang === 'es' ? 'Baño no disponible al público' : 'Restroom not available to the public'}</span></div>}
                   <div style={{display:'flex',gap:'8px',alignItems:'center',paddingLeft:'17px',flexWrap:'wrap'}}>
                     {r.score>0&&r.stars>0&&!r.source&&<span style={{fontSize:'13px',color:'#D97706',fontWeight:'500'}}>{'★'.repeat(r.stars||0)}{'☆'.repeat(5-(r.stars||0))} {r.score}</span>}
-                    {r.discovery_only ? (
+                    {r.discovery_only || (!restroomHasAccessInfo(r) && r.category_group !== 'public_restroom' && !r.verified && !r.has_code) ? (
                       <span style={{fontSize:'12px',color:'#64748B',fontWeight:'500'}}>
-                        {lang === 'es' ? 'Detalles de acceso aún no agregados' : 'Access details not added yet'}
+                        {t.accessDetailsMissing} · {t.beFirstContribute}
                       </span>
                     ) : r.category_group === 'public_restroom' ? (
                       <span style={{fontSize:'12px',background:'#E0F2FE',color:'#0369A1',padding:'3px 9px',borderRadius:'10px',fontWeight:'600'}}>
@@ -1102,15 +1188,25 @@ function MapPageContent() {
                 </div>
                 <div style={{textAlign:'right',flexShrink:0,marginLeft:'12px',display:'flex',flexDirection:'column',alignItems:'flex-end',gap:'6px'}}>
                   <p style={{fontSize:'15px',fontWeight:'700',color:'#0A2E1F',margin:'0 0 2px'}}>{formatDist(r.distance)}</p>
-                  <p style={{fontSize:'12px',color:'#bbb',margin:0}}>away</p>
-                  <button
-                    type="button"
-                    disabled={openingCardId === String(r.id)}
-                    onClick={e=>handleEditOpen(r,e,'update')}
-                    style={{background:'#f5f5f5',border:'none',borderRadius:'6px',padding:'5px 9px',fontSize:'12px',fontWeight:'600',color:'#555',cursor:openingCardId === String(r.id)?'wait':'pointer',opacity:openingCardId === String(r.id)?0.7:1}}
-                  >
-                    {openingCardId === String(r.id) ? t.openingRestroom : t.edit}
-                  </button>
+                  <p style={{fontSize:'12px',color:'#bbb',margin:0}}>{lang === 'es' ? 'de distancia' : 'away'}</p>
+                  {(r.discovery_only || !restroomHasAccessInfo(r)) && !r.opt_out ? (
+                    <button
+                      type="button"
+                      onClick={(e) => handleEditOpen(r, e, 'share')}
+                      style={{
+                        background: '#E1F5EE',
+                        border: '1px solid #9FE1CB',
+                        borderRadius: '8px',
+                        padding: '6px 10px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        color: '#085041',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {t.addAccess}
+                    </button>
+                  ) : null}
                 </div>
               </div>
             </div>

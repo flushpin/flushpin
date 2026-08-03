@@ -19,7 +19,7 @@ const footerGroups = {
       title: 'For Shops',
       links: [
         { href: '/business#model', label: 'How it works' },
-        { href: '/business#packages', label: 'Free and Gold plans' },
+        { href: '/business#packages', label: 'Free and paid plans' },
         { href: '/business/claim', label: 'Claim a business' },
         { href: '/contact', label: 'Talk to FlushPin' },
       ],
@@ -59,7 +59,7 @@ const footerGroups = {
       title: 'Para tiendas',
       links: [
         { href: '/business#model', label: 'Cómo funciona' },
-        { href: '/business#packages', label: 'Planes Free y Gold' },
+        { href: '/business#packages', label: 'Planes Free y de pago' },
         { href: '/business/claim', label: 'Reclamar negocios' },
         { href: '/contact', label: 'Hablar con FlushPin' },
       ],
