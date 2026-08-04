@@ -17,7 +17,6 @@ import {
   formatUpdatedAt,
   getAccessListLabel,
   hasDbRestroomId,
-  parseAccessEditState,
   parseAccessRecord,
   restroomHasAccessInfo,
   type AccessEditState,
@@ -74,6 +73,44 @@ function getDistance(lat1:number, lng1:number, lat2:number, lng2:number) {
 }
 
 const RADIUS_MILES = 12
+const MAP_FILTER_IDS = new Set(['all', 'verified', 'accessible', 'pin', 'baby', 'nocode', 'ev'])
+
+type MapPlace = { name?: string; address?: string; lat: number; lng: number; [key: string]: unknown }
+
+/** Map list/card row — avoids `any` while remaining compatible with nearby payloads. */
+type MapRestroom = {
+  name?: string
+  address?: string
+  lat: number
+  lng: number
+  id?: number | string
+  status?: string | null
+  accessible?: boolean | null
+  access_type?: string | null
+  has_code?: boolean | null
+  pin?: string | null
+  pin_updated_at?: string | null
+  verified?: string | null
+  has_baby_changing?: boolean | null
+  hasNearbyEVCharging?: boolean
+  nearbyEV?: {
+    latitude: number
+    longitude: number
+    distanceMeters?: number
+    operatorName?: string | null
+  }
+  distance?: number
+  source?: string | null
+  discovery_only?: boolean
+  category_group?: string
+  opt_out?: boolean | null
+  score?: number | null
+  stars?: number | null
+  place_id?: string | null
+  _pinWorked?: boolean
+}
+
+type AuthUser = { id: string; email?: string | null }
 
 function EVChargingIcon({ size = 14 }: { size?: number }) {
   return (
@@ -85,8 +122,6 @@ function EVChargingIcon({ size = 14 }: { size?: number }) {
     </svg>
   )
 }
-
-type MapPlace = { name?: string; address?: string; lat: number; lng: number; [key: string]: unknown }
 
 function matchesSearch(r: MapPlace, query: string) {
   if (!query.trim()) return true
@@ -119,34 +154,38 @@ function MapPageContent() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const { lang, setLang, t } = useLang()
-  const [restrooms, setRestrooms] = useState<any[]>([])
+  const [restrooms, setRestrooms] = useState<MapRestroom[]>([])
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<AuthUser | null>(null)
   const [userLat, setUserLat] = useState<number|null>(null)
   const [userLng, setUserLng] = useState<number|null>(null)
   const [locationName, setLocationName] = useState(MAP_DEFAULT_CENTER.label)
   /** How the current results area was chosen — never imply GPS unless mode is 'gps'. */
   const [locationMode, setLocationMode] = useState<'gps' | 'search' | 'example'>('example')
   const [locationNotice, setLocationNotice] = useState<string | null>(null)
-  const [filter, setFilter] = useState('all')
+  const initialFilter = searchParams.get('filter')
+  const [filter, setFilter] = useState(
+    initialFilter && MAP_FILTER_IDS.has(initialFilter) ? initialFilter : 'all',
+  )
   const [unit, setUnit] = useState<'mi'|'km'>('mi')
-  const [selected, setSelected] = useState<any>(null)
-  const [showPin, setShowPin] = useState(false)
+  const [selected, setSelected] = useState<MapRestroom | null>(null)
+  const [, setShowPin] = useState(false)
   const [showRating, setShowRating] = useState(false)
   const [showPromo, setShowPromo] = useState(false)
-  const [promoTarget, setPromoTarget] = useState<any>(null)
-  const [ratingTarget, setRatingTarget] = useState<any>(null)
+  const [promoTarget, setPromoTarget] = useState<MapRestroom | null>(null)
+  const [ratingTarget, setRatingTarget] = useState<MapRestroom | null>(null)
   const [emergency, setEmergency] = useState(false)
   const [locating, setLocating] = useState(false)
   const [showEditForm, setShowEditForm] = useState(false)
-  const [editTarget, setEditTarget] = useState<any>(null)
+  const [editTarget, setEditTarget] = useState<MapRestroom | null>(null)
   const [editMode, setEditMode] = useState<'update'|'correct'|'share'>('update')
   const [editEntry, setEditEntry] = useState<AccessEditState>({pin:'',accessible:false,hasBabyChanging:false,customersOnly:false,method:'no_code_needed'})
   const [savingEdit, setSavingEdit] = useState(false)
   const [editError, setEditError] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchInput, setSearchInput] = useState('')
+  const initialQ = searchParams.get('q') || ''
+  const [searchQuery, setSearchQuery] = useState(initialQ)
+  const [searchInput, setSearchInput] = useState(initialQ)
   const [anchorLat, setAnchorLat] = useState<number | null>(null)
   const [anchorLng, setAnchorLng] = useState<number | null>(null)
   const [nearbyError, setNearbyError] = useState<string | null>(null)
@@ -382,7 +421,6 @@ function MapPageContent() {
   const activeCategory: MapCategorySlug | null = isMapCategorySlug(categoryParam) ? categoryParam : null
   const categoryApplies = !!activeCategory && !searchQuery.trim()
   const filterParam = searchParams.get('filter')
-  const MAP_FILTER_IDS = new Set(['all', 'verified', 'accessible', 'pin', 'baby', 'nocode', 'ev'])
 
   const clearCategory = () => {
     const params = new URLSearchParams(searchParams.toString())
@@ -391,11 +429,14 @@ function MapPageContent() {
     router.replace(next ? `${pathname}?${next}` : pathname)
   }
 
+  // Keep filter in sync when the URL filter param changes (e.g. back/forward).
+  // Intentionally not listing MAP_FILTER_IDS (module constant).
   useEffect(() => {
-    if (filterParam && MAP_FILTER_IDS.has(filterParam)) {
+    if (filterParam && MAP_FILTER_IDS.has(filterParam) && filterParam !== filter) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- URL → UI sync; avoid loops by guarding !== filter
       setFilter(filterParam)
     }
-  }, [filterParam])
+  }, [filterParam, filter])
 
   useEffect(() => {
     const abortController = new AbortController()
@@ -407,24 +448,23 @@ function MapPageContent() {
     const near = params.get('near') || ''
     const urlLat = params.get('lat')
     const urlLng = params.get('lng')
-    const urlFilter = params.get('filter')
-    setSearchQuery(q)
-    setSearchInput(q)
-    if (urlFilter && MAP_FILTER_IDS.has(urlFilter)) setFilter(urlFilter)
-    supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null))
+    // searchQuery / searchInput / filter initialized from useSearchParams above.
+    void supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ? { id: session.user.id, email: session.user.email } : null)
+    })
     const {
       data: { subscription: authSubscription },
     } = supabase.auth.onAuthStateChange((_, session) => {
-      setUser(session?.user ?? null)
+      setUser(session?.user ? { id: session.user.id, email: session.user.email } : null)
       if (!session) {
         setShowPin(false)
         setShowPromo(false)
         setPromoTarget(null)
-        setSelected((current: Record<string, unknown> | null) =>
-          current ? stripSensitivePinFields(current) : null,
+        setSelected((current) =>
+          current ? (stripSensitivePinFields(current) as MapRestroom) : null,
         )
         setRestrooms((current) =>
-          current.map((item) => stripSensitivePinFields(item)),
+          current.map((item) => stripSensitivePinFields(item) as MapRestroom),
         )
       }
     })
@@ -457,7 +497,7 @@ function MapPageContent() {
       await loadData(mounted.lat, mounted.lng, '', false)
     }
 
-    init()
+    void init()
 
     return () => {
       abortController.abort()
@@ -465,6 +505,9 @@ function MapPageContent() {
       registerNearbyUnmountAbort(null)
       unmountAbortRef.current = null
     }
+    // Mount-only: applyAnchor/loadData are stable enough for first paint; adding them
+    // would re-fetch nearby on every identity change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleSearch = async () => {
@@ -526,8 +569,7 @@ function MapPageContent() {
   const formatDist = (d:number) => unit==='mi'?`${d.toFixed(1)} mi`:`${(d*1.609).toFixed(1)} km`
   const formatEVDistance = (meters:number) => `${Math.round((meters * 3.28084) / 10) * 10} ft`
   const statusColor = (s:string) => s==='green'?'#1D9E75':s==='amber'?'#D97706':s==='neutral'?'#CBD5E1':'#DC2626'
-  const statusLabel = (s:string) => s==='green'?'Community verified':s==='amber'?'Needs update':'Access info unknown'
-  const openDirections = (r:any) => window.open(`https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lng}&travelmode=driving`,'_blank')
+  const openDirections = (r: MapRestroom) => window.open(`https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lng}&travelmode=driving`,'_blank')
   const openEVDirections = (r: {
     nearbyEV?: { latitude: number; longitude: number }
   }) => {
@@ -570,7 +612,7 @@ function MapPageContent() {
     setEditError('')
   }
 
-  const persistAccessUpdate = async (target: any, entry: typeof editEntry, userId?: string | null) => {
+  const persistAccessUpdate = async (target: MapRestroom, entry: typeof editEntry, userId?: string | null) => {
     if (!userId) {
       throw new Error('SIGN_IN_REQUIRED')
     }
@@ -661,23 +703,19 @@ function MapPageContent() {
     try {
       const hydrated = await hydrateRestroomForAccess(r)
       setRestrooms((prev) =>
-        prev.map((item) =>
-          String(item.id) === String(r.id)
-            ? {
-                ...item,
-                access_type:
-                  (hydrated as { access_type?: string }).access_type ??
-                  (item as { access_type?: string }).access_type,
-                status: (hydrated as { status?: string }).status ?? item.status,
-                pin_updated_at:
-                  (hydrated as { pin_updated_at?: string }).pin_updated_at ??
-                  (item as { pin_updated_at?: string }).pin_updated_at,
-                has_code: (hydrated as { has_code?: boolean }).has_code ?? item.has_code,
-                verified: (hydrated as { verified?: string }).verified ?? item.verified,
-                id: (hydrated as { id?: unknown }).id ?? item.id,
-              }
-            : item,
-        ),
+        prev.map((item) => {
+          if (String(item.id) !== String(r.id)) return item
+          const h = hydrated as Partial<MapRestroom>
+          return {
+            ...item,
+            access_type: h.access_type ?? item.access_type,
+            status: h.status ?? item.status,
+            pin_updated_at: h.pin_updated_at ?? item.pin_updated_at,
+            has_code: h.has_code ?? item.has_code,
+            verified: h.verified ?? item.verified,
+            id: (typeof h.id === 'string' || typeof h.id === 'number' ? h.id : item.id),
+          } satisfies MapRestroom
+        }),
       )
 
       const canonicalId = await resolveCanonicalRestroomId(
@@ -713,11 +751,11 @@ function MapPageContent() {
     }
   }
 
-  const handleEditOpen = (r: any, e: React.MouseEvent, mode: 'update' | 'correct' | 'share' = 'update') => {
+  const handleEditOpen = (r: MapRestroom, e: React.MouseEvent, mode: 'update' | 'correct' | 'share' = 'update') => {
     void openRestroomDetail(r, mode, e)
   }
 
-  const handleAccessAction = (r: any, e: React.MouseEvent) => {
+  const handleAccessAction = (r: MapRestroom, e: React.MouseEvent) => {
     const intent: MapAccessIntent = restroomHasAccessInfo(r) ? 'view' : 'share'
     void openRestroomDetail(r, intent, e)
   }
@@ -732,7 +770,7 @@ function MapPageContent() {
     const requiresCode = safeTarget.has_code === true || parsed.method === 'keypad_code'
 
     if (!requiresCode) {
-      setSelected(safeTarget)
+      setSelected(safeTarget as MapRestroom)
       setShowPin(true)
       void recordPinView(safeTarget)
       return
@@ -762,9 +800,9 @@ function MapPageContent() {
       ...safeTarget,
       ...(result.pin ? { pin: result.pin } : {}),
     }
-    setSelected(authorizedTarget)
+    setSelected(authorizedTarget as MapRestroom)
     setShowPin(true)
-    setPromoTarget(safeTarget)
+    setPromoTarget(safeTarget as MapRestroom)
     void recordPinView(safeTarget)
   }
 
@@ -791,9 +829,9 @@ function MapPageContent() {
 
       setRestrooms(prev => {
         const idx = prev.findIndex(r => r.id === target.id || r.id === updated.id)
-        if (idx < 0) return [...prev, safeUpdated]
+        if (idx < 0) return [...prev, safeUpdated as MapRestroom]
         const next = [...prev]
-        next[idx] = { ...prev[idx], ...safeUpdated, distance: prev[idx].distance }
+        next[idx] = { ...prev[idx], ...safeUpdated, distance: prev[idx].distance } as MapRestroom
         return next
       })
 
@@ -801,7 +839,7 @@ function MapPageContent() {
       setSelected({
         ...safeUpdated,
         ...(entry.method === 'keypad_code' && entry.pin.trim() ? { pin: entry.pin.trim() } : {}),
-      })
+      } as MapRestroom)
       setShowPin(true)
       void recordPinView(safeUpdated)
       setSuccessMsg(
@@ -821,69 +859,7 @@ function MapPageContent() {
     }
   }
 
-  const renderAccessPanel = (r: any) => {
-    const parsed = parseAccessRecord(r)
-    const updatedAt = r.pin_updated_at ? formatUpdatedAt(r.pin_updated_at) : null
-    const updatedLine = updatedAt ? `${t.updated} ${updatedAt}` : (r.verified || null)
-
-    if (parsed.method === 'unknown') {
-      return (
-        <div style={{background:'#FEE2E2',borderRadius:'10px',padding:'14px',textAlign:'center',marginBottom:'10px'}}>
-          <p style={{fontSize:'15px',fontWeight:'700',color:'#DC2626',margin:0}}>{t.unknownAccess}</p>
-          <p style={{fontSize:'13px',color:'#888',margin:'4px 0 0'}}>{t.unknownDesc}</p>
-          <button onClick={e=>handleEditOpen(r,e,'share')} style={{marginTop:'12px',background:'#1D9E75',color:'white',border:'none',padding:'10px 16px',borderRadius:'8px',fontSize:'14px',fontWeight:'700',cursor:'pointer'}}>{t.shareAccess}</button>
-        </div>
-      )
-    }
-
-    if (parsed.method === 'locked') {
-      return (
-        <div style={{background:'#FEE2E2',borderRadius:'10px',padding:'14px',textAlign:'center',marginBottom:'10px'}}>
-          <p style={{fontSize:'17px',fontWeight:'700',color:'#991B1B',margin:0}}>{t.locked}</p>
-          <p style={{fontSize:'13px',color:'#DC2626',margin:'4px 0 0'}}>{t.lockedDesc}</p>
-          {updatedLine&&<p style={{fontSize:'12px',color:'#888',margin:'8px 0 0'}}>{updatedLine}</p>}
-        </div>
-      )
-    }
-
-    return (
-      <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'10px'}}>
-        {parsed.customersOnly && (
-          <div style={{background:'#EEF2FF',borderRadius:'10px',padding:'12px 14px',textAlign:'center'}}>
-            <p style={{fontSize:'16px',fontWeight:'700',color:'#4338CA',margin:0}}>{t.customersOnly}</p>
-            <p style={{fontSize:'13px',color:'#6366F1',margin:'4px 0 0'}}>{t.customersOnlyDesc}</p>
-          </div>
-        )}
-        {parsed.method === 'keypad_code' && parsed.displayPin && (
-          <div style={{background:'#E1F5EE',borderRadius:'10px',padding:'16px',textAlign:'center'}}>
-            <p style={{fontSize:'12px',color:'#0F6E56',fontWeight:'600',margin:'0 0 4px',letterSpacing:'1px'}}>{t.customerCode}</p>
-            <p style={{fontSize:'42px',fontWeight:'700',color:'#085041',letterSpacing:'10px',margin:'10px 0'}}>{parsed.displayPin}</p>
-          </div>
-        )}
-        {parsed.method === 'no_code_needed' && (
-          <div style={{background:'#D1FAE5',borderRadius:'10px',padding:'14px',textAlign:'center'}}>
-            <p style={{fontSize:'17px',fontWeight:'700',color:'#065F46',margin:0}}>🚪 {t.openAccess}</p>
-            <p style={{fontSize:'13px',color:'#047857',margin:'4px 0 0'}}>{t.openDesc}</p>
-          </div>
-        )}
-        {parsed.method === 'ask_staff' && (
-          <div style={{background:'#FEF3C7',borderRadius:'10px',padding:'14px',textAlign:'center'}}>
-            <p style={{fontSize:'17px',fontWeight:'700',color:'#92400E',margin:0}}>{t.askStaff}</p>
-            <p style={{fontSize:'13px',color:'#B45309',margin:'4px 0 0'}}>{t.askStaffDesc}</p>
-          </div>
-        )}
-        {parsed.method === 'keypad_code' && !parsed.displayPin && (
-          <div style={{background:'#FEE2E2',borderRadius:'10px',padding:'14px',textAlign:'center'}}>
-            <p style={{fontSize:'15px',fontWeight:'700',color:'#DC2626',margin:0}}>{t.unknownAccess}</p>
-            <p style={{fontSize:'13px',color:'#888',margin:'4px 0 0'}}>{t.unknownDesc}</p>
-          </div>
-        )}
-        {updatedLine&&<p style={{fontSize:'12px',color:'#888',margin:0,textAlign:'center'}}>{updatedLine}</p>}
-      </div>
-    )
-  }
-
-  const renderAccessActions = (r: any) => {
+  const renderAccessActions = (r: MapRestroom) => {
     const parsed = parseAccessRecord(r)
     const hasPin = parsed.method === 'keypad_code' && !!parsed.displayPin
     const hasInfo = restroomHasAccessInfo(r)
@@ -1154,7 +1130,7 @@ function MapPageContent() {
                   <p style={{fontSize:'13px',color:'#999',margin:'0 0 8px',paddingLeft:'17px'}}>{r.address}</p>
                   {r.opt_out&&<div style={{background:'#FEE2E2',borderRadius:'8px',padding:'6px 12px',marginLeft:'17px',marginBottom:'6px',display:'inline-flex',alignItems:'center',gap:'6px'}}><span>🚫</span><span style={{fontSize:'13px',fontWeight:'700',color:'#DC2626'}}>{lang === 'es' ? 'Baño no disponible al público' : 'Restroom not available to the public'}</span></div>}
                   <div style={{display:'flex',gap:'8px',alignItems:'center',paddingLeft:'17px',flexWrap:'wrap'}}>
-                    {r.score>0&&r.stars>0&&!r.source&&<span style={{fontSize:'13px',color:'#D97706',fontWeight:'500'}}>{'★'.repeat(r.stars||0)}{'☆'.repeat(5-(r.stars||0))} {r.score}</span>}
+                    {(r.score??0)>0&&(r.stars??0)>0&&!r.source&&<span style={{fontSize:'13px',color:'#D97706',fontWeight:'500'}}>{'★'.repeat(r.stars||0)}{'☆'.repeat(5-(r.stars||0))} {r.score}</span>}
                     {r.discovery_only || (!restroomHasAccessInfo(r) && r.category_group !== 'public_restroom' && !r.verified && !r.has_code) ? (
                       <span style={{fontSize:'12px',color:'#64748B',fontWeight:'500'}}>
                         {t.accessDetailsMissing} · {t.beFirstContribute}
@@ -1239,7 +1215,7 @@ function MapPageContent() {
                         {lang === 'es' ? 'Carga de vehículos eléctricos cerca' : 'EV charging nearby'}
                       </strong>
                       <span style={{fontSize:'12px',color:'#15803D'}}>
-                        {r.nearbyEV.operatorName || (lang === 'es' ? 'Carga EV' : 'EV charging')} · {formatEVDistance(r.nearbyEV.distanceMeters)} {lang === 'es' ? 'de distancia' : 'away'}
+                        {r.nearbyEV.operatorName || (lang === 'es' ? 'Carga EV' : 'EV charging')} · {formatEVDistance(r.nearbyEV.distanceMeters ?? 0)} {lang === 'es' ? 'de distancia' : 'away'}
                       </span>
                     </span>
                   </button>

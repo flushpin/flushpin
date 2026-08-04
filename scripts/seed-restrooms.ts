@@ -117,7 +117,7 @@ async function fetchRestroomSchema(
     else if (columns.has('google_place_id')) placeIdColumn = 'google_place_id'
 
     return { columns, meta, placeIdColumn }
-  } catch (err) {
+  } catch {
     console.warn('  ⚠ OpenAPI schema fetch failed — will infer from sample row')
     return { columns: new Set<string>(), meta: {}, placeIdColumn: null }
   }

@@ -163,7 +163,7 @@ export async function fetchNearbyPlaces(
         lastSuccess = { lat, lng, at: Date.now(), result }
       }
       return result
-    } catch (err) {
+    } catch {
       if (controller.signal.aborted) {
         return { status: 'aborted' }
       }
