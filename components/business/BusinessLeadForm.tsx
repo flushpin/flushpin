@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { CheckCircle2 } from 'lucide-react'
@@ -136,9 +136,8 @@ export default function BusinessLeadForm() {
     website: '',
   })
 
-  useEffect(() => {
-    setForm((prev) => ({ ...prev, plan: initialPlan }))
-  }, [initialPlan])
+  // plan is initialized from the URL; user edits go through update('plan', …).
+  // Avoid syncing initialPlan via an effect (cascading setState).
   const [errors, setErrors] = useState<FieldErrors>({})
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)

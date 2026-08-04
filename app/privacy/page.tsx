@@ -21,7 +21,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 style={headingStyle}>1. Who we are</h2>
-            <p>FlushPin ("we," "us," or "our") operates the website at <strong>www.flushpin.com</strong> and the FlushPin mobile app. FlushPin is a community platform that helps users find restroom access information at nearby businesses. We are based in Orange County, California, United States.</p>
+            <p>{`FlushPin ("we," "us," or "our") operates the website at `}<strong>www.flushpin.com</strong>{` and the FlushPin mobile app. FlushPin is a community platform that helps users find restroom access information at nearby businesses. We are based in Orange County, California, United States.`}</p>
             <p style={{ marginTop: "10px" }}>Contact: <a href="mailto:admin@flushpin.com" style={linkStyle}>admin@flushpin.com</a></p>
           </section>
 
@@ -152,7 +152,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 style={headingStyle}>14. Gender-Specific Access Codes</h2>
-            <p>Some businesses on FlushPin provide separate access codes for different restrooms (for example, labeled for men's or women's facilities). These categories are set and controlled entirely by the individual business, reflecting their own physical facility layout — FlushPin does not create, endorse, or enforce any gender classification. Our role is limited to accurately displaying the access information a business has provided. Where a business offers a unisex, all-gender, or single-occupancy restroom, we display that option as well. We are committed to presenting restroom access information neutrally and factually, without judgment of who should or should not use a particular facility.</p>
+            <p>{`Some businesses on FlushPin provide separate access codes for different restrooms (for example, labeled for men's or women's facilities). These categories are set and controlled entirely by the individual business, reflecting their own physical facility layout — FlushPin does not create, endorse, or enforce any gender classification. Our role is limited to accurately displaying the access information a business has provided. Where a business offers a unisex, all-gender, or single-occupancy restroom, we display that option as well. We are committed to presenting restroom access information neutrally and factually, without judgment of who should or should not use a particular facility.`}</p>
           </section>
 
           <section>

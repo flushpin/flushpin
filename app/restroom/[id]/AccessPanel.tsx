@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useLang } from '@/lib/LanguageContext'
 import ContributionThankYouModal from '@/components/ContributionThankYouModal'
 import {
@@ -121,7 +121,11 @@ export default function AccessPanel({
 }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [phase, setPhase] = useState<Phase>('idle')
+  const [phase, setPhase] = useState<Phase>(() => {
+    const intent = parseMapAccessIntent(searchParams.get('intent'))
+    if (intent === 'share' || intent === 'update' || intent === 'correct') return 'add'
+    return 'idle'
+  })
   const [code, setCode] = useState<string | null>(null)
   const [openAccess, setOpenAccess] = useState(false)
   const [err, setErr] = useState('')
@@ -137,18 +141,6 @@ export default function AccessPanel({
   const [persistedHint, setPersistedHint] = useState(false)
   const [availability, setAvailability] = useState<RestroomAvailability | ''>('')
   const [confirmAvailability, setConfirmAvailability] = useState<RestroomAvailability | null>(null)
-  const [intentApplied, setIntentApplied] = useState(false)
-
-  useEffect(() => {
-    if (intentApplied) return
-    const intent = parseMapAccessIntent(searchParams.get('intent'))
-    if (intent === 'share' || intent === 'update' || intent === 'correct') {
-      setPhase('add')
-      setIntentApplied(true)
-    } else if (intent === 'view') {
-      setIntentApplied(true)
-    }
-  }, [searchParams, intentApplied])
 
   function handleBack() {
     const from = searchParams.get('from')

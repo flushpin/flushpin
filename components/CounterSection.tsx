@@ -17,12 +17,10 @@ function useCountUp(target: number, duration: number = 2000, enabled: boolean = 
   const started = useRef(false)
 
   useEffect(() => {
+    // Remount-equivalent reset when target/enabled changes (via key on callers).
     started.current = false
-    setCount(0)
-  }, [target, enabled])
-
-  useEffect(() => {
     if (!enabled) return
+
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting && !started.current) {
         started.current = true
@@ -129,7 +127,7 @@ export default function CounterSection() {
 
         <div style={{textAlign:'center'}}>
           <p style={{fontSize:'13px',color:'#5DCAA5',margin:0,fontStyle:'italic'}}>
-            "Finally, I don't have to ask the barista anymore." — FlushPin user
+            {`"Finally, I don't have to ask the barista anymore." — FlushPin user`}
           </p>
         </div>
 

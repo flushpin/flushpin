@@ -26,7 +26,7 @@ export default function TermsPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '36px', color: '#444', lineHeight: '1.8', fontSize: '15px' }}>
           <section>
             <h2 style={headingStyle}>1. Acceptance of terms</h2>
-            <p>By accessing or using FlushPin ("the Service"), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service. These terms apply to all users, including visitors, registered users, contributors, business owners, advertisers, and businesses.</p>
+            <p>{`By accessing or using FlushPin ("the Service"), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service. These terms apply to all users, including visitors, registered users, contributors, business owners, advertisers, and businesses.`}</p>
           </section>
 
           <section>
@@ -38,7 +38,7 @@ export default function TermsPage() {
             <h2 style={{ ...headingStyle, color: '#9A3412' }}>3. Important access and safety notice</h2>
             <ul style={listStyle}>
               <li>FlushPin is an information service only. It is not an emergency service, safety service, security service, restroom operator, property manager, or public accommodation provider.</li>
-              <li>An access code, PIN, QR scan, map listing, rating, confirmation, or "community shared" label does not guarantee permission to enter, restroom availability, safety, cleanliness, privacy, accessibility, or that a code still works.</li>
+              <li>{`An access code, PIN, QR scan, map listing, rating, confirmation, or "community shared" label does not guarantee permission to enter, restroom availability, safety, cleanliness, privacy, accessibility, or that a code still works.`}</li>
               <li>Business rules, posted signs, staff instructions, purchase requirements, local laws, and property policies always control over anything shown on FlushPin.</li>
               <li>If staff says access is not allowed, if a door is locked, or if an area appears private, unsafe, closed, restricted, employee-only, occupied, suspicious, or off-limits, you must not enter.</li>
               <li>If you feel unsafe or encounter harassment, threatening behavior, assault, a medical emergency, or another urgent situation, leave the area if safe to do so and contact local emergency services, including 911 where available.</li>
@@ -54,7 +54,7 @@ export default function TermsPage() {
               <li>Restroom access policies are set solely by individual businesses or property operators and may change at any time.</li>
               <li>Some businesses may require a purchase, reservation, staff assistance, membership, ticket, or other condition even if not reflected in the Service.</li>
               <li>FlushPin is not responsible for denied access, outdated information, incorrect directions, unavailable restrooms, user inconvenience, or reliance on community-submitted data.</li>
-              <li>Information labeled "Community Shared," "Verified," "Recently confirmed," "Last updated," or similar reflects community or platform signals only and should not be treated as a business guarantee.</li>
+              <li>{`Information labeled "Community Shared," "Verified," "Recently confirmed," "Last updated," or similar reflects community or platform signals only and should not be treated as a business guarantee.`}</li>
             </ul>
           </section>
 
@@ -118,8 +118,8 @@ export default function TermsPage() {
               <li>FlushPin does not own, operate, manage, inspect, supervise, maintain, secure, monitor, staff, or control any restroom, business, property, building, staff member, customer, visitor, or third-party location listed or referenced through the Service.</li>
               <li>FlushPin does not guarantee that any restroom or location is safe, clean, private, available, unlocked, monitored, accessible, lawful to enter, sanitary, well-lit, supervised, or free from inappropriate conduct by others.</li>
               <li>Users are solely responsible for evaluating their surroundings, following business instructions, complying with posted rules, and deciding whether it is safe and appropriate to enter or use any restroom or location.</li>
-              <li>To the maximum extent permitted by law, FlushPin is not responsible for injuries, damages, losses, emotional distress, harassment, assault, theft, property damage, denial of access, unsafe conditions, unsanitary conditions, discrimination by third parties, or other incidents arising from or related to a user's decision to visit, enter, or use any third-party restroom, business, or property.</li>
-              <li>This limitation does not affect rights that cannot be waived under applicable law and does not apply to FlushPin's own fraud, willful misconduct, or violations of law.</li>
+              <li>{`To the maximum extent permitted by law, FlushPin is not responsible for injuries, damages, losses, emotional distress, harassment, assault, theft, property damage, denial of access, unsafe conditions, unsanitary conditions, discrimination by third parties, or other incidents arising from or related to a user's decision to visit, enter, or use any third-party restroom, business, or property.`}</li>
+              <li>{`This limitation does not affect rights that cannot be waived under applicable law and does not apply to FlushPin's own fraud, willful misconduct, or violations of law.`}</li>
             </ul>
           </section>
 
@@ -160,7 +160,7 @@ export default function TermsPage() {
 
           <section>
             <h2 style={headingStyle}>15. Disclaimer of warranties</h2>
-            <p>FlushPin is provided "as is" and "as available" without warranty of any kind, express or implied. We do not guarantee that the Service will be accurate, current, uninterrupted, secure, error-free, safe, available, or suitable for your needs. We do not guarantee that access codes are accurate, current, authorized, lawful to use, or functional. Use of information found on FlushPin is at your own risk.</p>
+            <p>{`FlushPin is provided "as is" and "as available" without warranty of any kind, express or implied. We do not guarantee that the Service will be accurate, current, uninterrupted, secure, error-free, safe, available, or suitable for your needs. We do not guarantee that access codes are accurate, current, authorized, lawful to use, or functional. Use of information found on FlushPin is at your own risk.`}</p>
           </section>
 
           <section>
@@ -170,7 +170,7 @@ export default function TermsPage() {
 
           <section>
             <h2 style={headingStyle}>17. Indemnification</h2>
-            <p>You agree to defend, indemnify, and hold harmless FlushPin and its owners, operators, officers, employees, contractors, affiliates, service providers, and agents from and against any claims, liabilities, damages, losses, costs, and expenses, including reasonable attorneys' fees, arising from or related to your use of the Service, your contributions, your violation of these Terms, your violation of law, your interaction with any business or third-party location, or your infringement or violation of any rights of another person or entity.</p>
+            <p>{`You agree to defend, indemnify, and hold harmless FlushPin and its owners, operators, officers, employees, contractors, affiliates, service providers, and agents from and against any claims, liabilities, damages, losses, costs, and expenses, including reasonable attorneys' fees, arising from or related to your use of the Service, your contributions, your violation of these Terms, your violation of law, your interaction with any business or third-party location, or your infringement or violation of any rights of another person or entity.`}</p>
           </section>
 
           <section>

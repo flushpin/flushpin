@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Link from 'next/link'
 
 type RequestType = 'claim' | 'update' | 'removal'
 
@@ -102,14 +103,14 @@ export default function ClaimPage() {
               Request received
             </h1>
             <p style={{fontSize:"16px",color:"#555",lineHeight:"1.7",marginBottom:"8px"}}>
-              We'll review your request and follow up at <strong>{form.email}</strong> within 1–2 business days.
+              {`We'll review your request and follow up at `}<strong>{form.email}</strong>{` within 1–2 business days.`}
             </p>
             <p style={{fontSize:"14px",color:"#999",marginBottom:"32px"}}>
               FlushPin is committed to keeping business information accurate and respecting business owner requests.
             </p>
-            <a href="/" style={{display:"inline-block",background:"#1D9E75",color:"white",padding:"12px 28px",borderRadius:"10px",fontSize:"15px",fontWeight:"700",textDecoration:"none"}}>
+            <Link href="/" style={{display:"inline-block",background:"#1D9E75",color:"white",padding:"12px 28px",borderRadius:"10px",fontSize:"15px",fontWeight:"700",textDecoration:"none"}}>
               Back to FlushPin
-            </a>
+            </Link>
           </div>
         ) : (
           <>

@@ -1,5 +1,5 @@
 'use client'
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useSyncExternalStore } from 'react'
 import { translations, Lang } from './translations'
 
 const LanguageContext = createContext<{
@@ -12,29 +12,58 @@ const LanguageContext = createContext<{
   t: translations.en,
 })
 
-export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLangState] = useState<Lang>('en')
+const LANG_KEY = 'flushpin_lang'
+const listeners = new Set<() => void>()
 
-  useEffect(() => {
-    const saved = localStorage.getItem('flushpin_lang') as Lang
-    if (saved === 'es' || saved === 'en') setLangState(saved)
-    else {
-      const browser = navigator.language.toLowerCase()
-      if (browser.startsWith('es')) setLangState('es')
-    }
-  }, [])
+function subscribe(onStoreChange: () => void) {
+  listeners.add(onStoreChange)
+  return () => {
+    listeners.delete(onStoreChange)
+  }
+}
+
+function readLang(): Lang {
+  try {
+    const saved = localStorage.getItem(LANG_KEY)
+    if (saved === 'es' || saved === 'en') return saved
+    if (navigator.language.toLowerCase().startsWith('es')) return 'es'
+  } catch {
+    /* ignore */
+  }
+  return 'en'
+}
+
+function getServerSnapshot(): Lang {
+  return 'en'
+}
+
+function emitLangChange() {
+  listeners.forEach((listener) => listener())
+}
+
+export function LanguageProvider({ children }: { children: React.ReactNode }) {
+  const lang = useSyncExternalStore(subscribe, readLang, getServerSnapshot)
 
   useEffect(() => {
     document.documentElement.lang = lang === 'es' ? 'es-MX' : 'en'
   }, [lang])
 
-  const setLang = (l: Lang) => {
-    setLangState(l)
-    localStorage.setItem('flushpin_lang', l)
-  }
+  const setLang = useCallback((l: Lang) => {
+    try {
+      localStorage.setItem(LANG_KEY, l)
+    } catch {
+      /* ignore */
+    }
+    emitLangChange()
+  }, [])
+
+  const value = useMemo(
+    () => ({ lang, setLang, t: translations[lang] }),
+    [lang, setLang],
+  )
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang, t: translations[lang] }}>
+    <LanguageContext.Provider value={value}>
       {children}
     </LanguageContext.Provider>
   )

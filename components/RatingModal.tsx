@@ -15,7 +15,10 @@ function Stars({label, value, onChange}: {label:string, value:number, onChange:(
   )
 }
 
-export default function RatingModal({restroom, user, onClose, onDone, initialPinWorked}: {restroom:any, user:any, onClose:()=>void, onDone:()=>void, initialPinWorked?:boolean}) {
+type RatingRestroom = { id?: number | string; name?: string | null }
+type RatingUser = { id: string } | null
+
+export default function RatingModal({restroom, user, onClose, onDone, initialPinWorked}: {restroom: RatingRestroom, user: RatingUser, onClose:()=>void, onDone:()=>void, initialPinWorked?:boolean}) {
   const [cleanliness, setCleanliness] = useState(0)
   const [smell, setSmell] = useState(0)
   const [appearance, setAppearance] = useState(0)
@@ -78,7 +81,7 @@ export default function RatingModal({restroom, user, onClose, onDone, initialPin
           <>
             <div style={{background:'#FEE2E2',borderRadius:'12px',padding:'16px',marginBottom:'20px'}}>
               <p style={{margin:'0 0 6px',fontSize:'15px',fontWeight:'700',color:'#DC2626'}}>PIN not working at {restroom.name}</p>
-              <p style={{margin:0,fontSize:'13px',color:'#999'}}>We'll mark this as broken so others know. Thank you for reporting!</p>
+              <p style={{margin:0,fontSize:'13px',color:'#999'}}>{`We'll mark this as broken so others know. Thank you for reporting!`}</p>
             </div>
             <div style={{marginBottom:'16px'}}>
               <p style={{fontSize:'13px',fontWeight:'600',color:'#555',margin:'0 0 6px'}}>Any details? (optional)</p>

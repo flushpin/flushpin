@@ -1,5 +1,7 @@
 'use client'
 
+import Image from 'next/image'
+import Link from 'next/link'
 import { useLang } from '../../lib/LanguageContext'
 import LanguageToggle from '../../components/LanguageToggle'
 
@@ -18,9 +20,9 @@ export default function BusinessPageContent() {
       <style>{BUSINESS_STYLES}</style>
       <nav className="fp-nav" aria-label="Main navigation">
         <div className="fp-nav-inner">
-          <a className="fp-logo" href="/" aria-label="FlushPin home">
-            <img src="/flushpin-logo-teal.png" alt="FlushPin" />
-          </a>
+          <Link className="fp-logo" href="/" aria-label="FlushPin home">
+            <Image src="/flushpin-logo-teal.png" alt="FlushPin" width={200} height={58} priority />
+          </Link>
           <div className="fp-nav-links">
             <LanguageToggle />
             <a href="/map">{b.navFind}</a>
@@ -49,7 +51,7 @@ export default function BusinessPageContent() {
           </div>
           <aside className="fp-phone" aria-label="FlushPin restroom code entry preview">
             <div className="fp-screen">
-              <img className="fp-app-shot" src="/flushpin-business-code-hero.png" alt="FlushPin restroom code entry screen" />
+              <Image className="fp-app-shot" src="/flushpin-business-code-hero.png" alt="FlushPin restroom code entry screen" width={414} height={900} />
             </div>
           </aside>
         </div>

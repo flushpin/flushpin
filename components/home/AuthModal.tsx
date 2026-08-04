@@ -37,22 +37,27 @@ export default function AuthModal({ open, mode, onClose, onModeChange }: AuthMod
   const [view, setView] = useState<'form' | 'confirm'>('form')
   const [pendingEmail, setPendingEmail] = useState('')
 
-  useEffect(() => {
-    if (!open) {
-      setView('form')
-      setMessage('')
-      setStatusKind('idle')
-      setLoading(false)
-    }
-  }, [open])
+  const resetModalState = () => {
+    setView('form')
+    setMessage('')
+    setStatusKind('idle')
+    setLoading(false)
+  }
+
+  const handleClose = () => {
+    resetModalState()
+    onClose()
+  }
 
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') handleClose()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
+    // handleClose resets local UI then calls onClose — intentional on Escape.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- avoid rebinding on every render
   }, [open, onClose])
 
   if (!open) return null
@@ -124,7 +129,7 @@ export default function AuthModal({ open, mode, onClose, onModeChange }: AuthMod
   return (
     <div
       className="fixed inset-0 z-[100] flex items-end justify-center bg-[#1b1b21]/45 p-0 backdrop-blur-[2px] sm:items-center sm:p-4"
-      onClick={onClose}
+      onClick={handleClose}
       role="presentation"
     >
       <div
@@ -135,7 +140,7 @@ export default function AuthModal({ open, mode, onClose, onModeChange }: AuthMod
         aria-labelledby="auth-modal-title"
       >
         <AuthShell
-          onClose={onClose}
+          onClose={handleClose}
           closeLabel={t.home.close}
           showLanguage={false}
           logoHref=""
@@ -296,7 +301,7 @@ export default function AuthModal({ open, mode, onClose, onModeChange }: AuthMod
                   <a
                     href="/signup?view=forgot"
                     className="text-center text-sm font-medium text-fp-gray-400 no-underline hover:text-fp-ink"
-                    onClick={onClose}
+                    onClick={handleClose}
                   >
                     {t.signup.forgotPassword}
                   </a>
