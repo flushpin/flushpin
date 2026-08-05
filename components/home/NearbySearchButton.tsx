@@ -25,14 +25,14 @@ export default function NearbySearchButton({ loading = false, disabled = false, 
             <MapPin className="h-5 w-5 shrink-0" aria-hidden="true" />
           )}
           <span className="text-[17px] tracking-tight">
-            {loading ? 'Finding restrooms near you…' : 'Find Nearby Restrooms'}
+            {loading ? 'Finding restrooms near you…' : 'Find Restrooms Near Me'}
           </span>
         </span>
         {!loading && <ChevronRight className="h-5 w-5 shrink-0 opacity-90" aria-hidden="true" />}
       </button>
       {!loading && (
-        <p className="mt-3 text-center text-[13px] text-fp-gray-600">
-          We&apos;ll ask for location access when you tap
+        <p className="mt-3 text-center text-[13px] leading-snug text-fp-gray-600">
+          We only use your location to show nearby restrooms.
         </p>
       )}
     </div>

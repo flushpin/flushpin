@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useCallback, useState } from 'react'
 import {
@@ -135,32 +134,20 @@ export default function HomeHero() {
       />
 
       <div className="relative mx-auto w-full max-w-2xl">
-        {/* Hero — brand, headline, support, CTA only */}
-        <div className="flex flex-col items-center text-center animate-[fpFadeUp_0.7s_ease-out_both]">
-          <Image
-            src="/flushpin-logo-new.png"
-            alt=""
-            width={88}
-            height={88}
-            priority
-            className="h-[88px] w-[88px] rounded-[24px] shadow-[0_18px_48px_rgba(15,110,86,0.22)]"
-          />
-          <p className="mt-5 text-[2rem] font-extrabold tracking-[-0.04em] lowercase text-fp-ink md:text-[2.35rem]">
-            flush<span className="text-fp-teal">pin</span>
-          </p>
-
-          <h1 className="mt-8 max-w-[18ch] text-[clamp(2.1rem,6vw,3.25rem)] font-bold leading-[1.05] tracking-[-0.04em] text-fp-ink">
-            Find a restroom near you.
+        {/* Hero — headline, support, CTA, privacy, then search */}
+        <div className="flex flex-col items-center px-1 pt-4 text-center animate-[fpFadeUp_0.7s_ease-out_both] md:pt-8">
+          <h1 className="max-w-[16ch] text-[clamp(2.35rem,7vw,3.75rem)] font-bold leading-[1.05] tracking-[-0.045em] text-fp-ink md:max-w-[18ch]">
+            Find a restroom. Know before you go.
           </h1>
-          <p className="mt-4 text-[1.125rem] font-medium tracking-[-0.01em] text-fp-teal-dark md:text-xl">
-            Fast. Easy. Private.
+          <p className="mt-5 max-w-[34ch] text-[1.0625rem] leading-relaxed text-fp-gray-600 md:max-w-[40ch] md:text-lg md:leading-relaxed">
+            See nearby restrooms, access details, door codes, and what to expect before you arrive.
           </p>
         </div>
 
-        <div className="mx-auto mt-10 max-w-lg animate-[fpFadeUp_0.75s_ease-out_0.08s_both]">
+        <div className="mx-auto mt-9 max-w-lg animate-[fpFadeUp_0.75s_ease-out_0.08s_both] md:mt-11">
           <NearbySearchButton loading={busy} disabled={busy} onClick={() => void handleGeoSearch()} />
 
-          <div className="my-6 flex items-center gap-3">
+          <div className="my-7 flex items-center gap-3">
             <div className="h-px flex-1 bg-fp-border" aria-hidden="true" />
             <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-fp-gray-400">or</span>
             <div className="h-px flex-1 bg-fp-border" aria-hidden="true" />
