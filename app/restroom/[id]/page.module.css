@@ -1,8 +1,8 @@
 .page {
   min-height: 100vh;
-  background: #0a0f0e;
-  color: #ffffff;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  background: linear-gradient(180deg, #ffffff 0%, #f7faf9 55%, #eef7f3 100%);
+  color: #1b1b21;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
   padding: 0 0 calc(32px + env(safe-area-inset-bottom));
 }
 
@@ -27,15 +27,15 @@
   display: grid;
   place-items: center;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: #121816;
-  color: #fff;
+  border: 1px solid #d3d1c7;
+  background: #ffffff;
+  color: #1b1b21;
   text-decoration: none;
   cursor: pointer;
   flex-shrink: 0;
 }
 
-.iconBtn:hover { border-color: rgba(0, 168, 134, 0.45); color: #00a886; }
+.iconBtn:hover { border-color: #5DCAA5; color: #0F6E56; }
 .iconBtn:disabled { opacity: 0.45; cursor: default; }
 
 .brandMark {
@@ -43,7 +43,7 @@
   align-items: center;
   gap: 8px;
   text-decoration: none;
-  color: #fff;
+  color: #1b1b21;
 }
 
 .brandMark img {
@@ -75,6 +75,7 @@
   letter-spacing: -0.03em;
   line-height: 1.15;
   margin: 0;
+  color: #1b1b21;
 }
 
 .verified {
@@ -84,33 +85,33 @@
   width: 22px;
   height: 22px;
   border-radius: 999px;
-  background: #2563eb;
+  background: #0F6E56;
   color: #fff;
   flex-shrink: 0;
 }
 
 .meta {
   margin: 8px 0 0;
-  color: rgba(255, 255, 255, 0.55);
+  color: #5F5E5A;
   font-size: 14px;
   line-height: 1.45;
 }
 
 /* —— Cards —— */
 .card {
-  background: #121816;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #ffffff;
+  border: 1px solid #ebebe8;
   border-radius: 20px;
   padding: 20px;
   margin-bottom: 14px;
 }
 
 .heroCard {
-  background: linear-gradient(180deg, #141c19 0%, #101614 100%);
-  border-color: rgba(0, 168, 134, 0.28);
-  box-shadow: 0 0 0 1px rgba(0, 168, 134, 0.08), 0 18px 40px rgba(0, 0, 0, 0.35);
+  background: #ffffff;
+  border-color: #e5e7eb;
+  box-shadow: 0 10px 32px rgba(27, 27, 33, 0.06);
   text-align: center;
-  padding: 24px 20px 22px;
+  padding: 28px 22px 24px;
 }
 
 .heroKicker {
@@ -118,7 +119,7 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
+  color: #888780;
   margin: 0 0 6px;
 }
 
@@ -127,11 +128,12 @@
   font-weight: 800;
   letter-spacing: -0.02em;
   margin: 0 0 4px;
+  color: #1b1b21;
 }
 
 .heroSupport {
   margin: 0 0 18px;
-  color: rgba(255, 255, 255, 0.5);
+  color: #5F5E5A;
   font-size: 14px;
 }
 
@@ -142,9 +144,9 @@
   border-radius: 999px;
   display: grid;
   place-items: center;
-  background: rgba(0, 168, 134, 0.12);
-  color: #00a886;
-  border: 1px solid rgba(0, 168, 134, 0.28);
+  background: #E1F5EE;
+  color: #0F6E56;
+  border: 1px solid #5DCAA5;
 }
 
 .primary {
@@ -156,17 +158,17 @@
   min-height: 54px;
   padding: 14px 20px;
   border: none;
-  border-radius: 16px;
+  border-radius: 999px;
   background: #00a886;
   color: #fff;
   font-size: 17px;
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
   text-decoration: none;
-  box-shadow: 0 10px 28px rgba(0, 168, 134, 0.32);
+  box-shadow: 0 12px 32px rgba(0, 168, 134, 0.28);
 }
 
-.primary:hover:not(:disabled) { background: #0f6e56; }
+.primary:hover:not(:disabled) { background: #0F6E56; }
 .primary:disabled { opacity: 0.55; cursor: default; box-shadow: none; }
 
 .statusLine {
@@ -176,15 +178,15 @@
   gap: 6px;
   margin-top: 14px;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.55);
+  color: #5F5E5A;
 }
 
-.statusLine strong { color: #9fe1cb; font-weight: 700; }
+.statusLine strong { color: #04342C; font-weight: 700; }
 
 .signInHint {
   margin: 12px 0 0;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.45);
+  color: #888780;
 }
 
 /* —— Code reveal —— */
@@ -196,7 +198,7 @@
 .codeLabel {
   font-size: 14px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.5);
+  color: #5F5E5A;
   margin: 0 0 8px;
 }
 
@@ -205,7 +207,7 @@
   font-weight: 800;
   letter-spacing: 0.18em;
   line-height: 1;
-  color: #fff;
+  color: #1b1b21;
   margin: 8px 0 14px;
   font-variant-numeric: tabular-nums;
 }
@@ -213,7 +215,7 @@
 .codeInstruction {
   margin: 0 0 8px;
   font-size: 15px;
-  color: rgba(255, 255, 255, 0.6);
+  color: #444441;
 }
 
 /* —— Empty / add code —— */
@@ -221,11 +223,12 @@
   font-size: 22px;
   font-weight: 800;
   margin: 0 0 6px;
+  color: #1b1b21;
 }
 
 .emptySupport {
   margin: 0 0 18px;
-  color: rgba(255, 255, 255, 0.55);
+  color: #5F5E5A;
   font-size: 15px;
 }
 
@@ -233,7 +236,7 @@
   margin: 14px 0 0;
   font-size: 12px;
   line-height: 1.5;
-  color: rgba(255, 255, 255, 0.4);
+  color: #888780;
 }
 
 .addForm {
@@ -247,16 +250,16 @@
 .addLabel {
   font-size: 12px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.5);
+  color: #5F5E5A;
 }
 
 .addInput {
   width: 100%;
   min-height: 52px;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: #0a0f0e;
-  color: #fff;
+  border: 1px solid #d3d1c7;
+  background: #ffffff;
+  color: #1b1b21;
   font-size: 22px;
   font-weight: 700;
   letter-spacing: 0.2em;
@@ -265,8 +268,8 @@
   box-sizing: border-box;
 }
 
-.addInput:focus { border-color: rgba(0, 168, 134, 0.55); }
-.addInput::placeholder { letter-spacing: normal; font-weight: 500; color: rgba(255, 255, 255, 0.25); }
+.addInput:focus { border-color: #0F6E56; }
+.addInput::placeholder { letter-spacing: normal; font-weight: 500; color: #888780; }
 
 .ghost {
   display: inline-flex;
@@ -275,23 +278,23 @@
   width: 100%;
   min-height: 48px;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid #d3d1c7;
   background: transparent;
-  color: rgba(255, 255, 255, 0.75);
+  color: #1b1b21;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
 }
 
-.ghost:hover { border-color: rgba(0, 168, 134, 0.4); color: #9fe1cb; }
+.ghost:hover { border-color: #5DCAA5; color: #0F6E56; }
 
 .error {
   margin: 10px 0 0;
   padding: 12px 14px;
   border-radius: 12px;
-  background: rgba(176, 74, 63, 0.15);
-  border: 1px solid rgba(176, 74, 63, 0.35);
-  color: #f5b5ae;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
   font-size: 13px;
 }
 
@@ -301,7 +304,7 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
+  color: #888780;
   margin: 4px 0 10px;
 }
 
@@ -319,8 +322,8 @@
   gap: 6px;
   padding: 12px 6px;
   border-radius: 16px;
-  background: #121816;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #ffffff;
+  border: 1px solid #ebebe8;
   text-align: center;
   min-height: 84px;
 }
@@ -328,14 +331,14 @@
 .attrIcon {
   width: 28px;
   height: 28px;
-  color: #00a886;
+  color: #0F6E56;
 }
 
 .attrLabel {
   font-size: 11px;
   font-weight: 700;
   line-height: 1.2;
-  color: rgba(255, 255, 255, 0.8);
+  color: #444441;
 }
 
 .amenityPanel {
@@ -349,8 +352,8 @@
 }
 
 .amenityCard {
-  background: #121816;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #ffffff;
+  border: 1px solid #ebebe8;
   border-radius: 16px;
   padding: 14px;
 }
@@ -366,13 +369,13 @@
   margin: 0;
   font-size: 15px;
   font-weight: 700;
-  color: #fff;
+  color: #1b1b21;
 }
 
 .amenityStatus {
   margin: 2px 0 0;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.55);
+  color: #5F5E5A;
 }
 
 .amenityButtons {
@@ -393,7 +396,8 @@
 .amenityBtn {
   border: none;
   background: #00a886;
-  color: #04140f;
+  color: #ffffff;
+  border-radius: 999px;
 }
 
 .amenityBtn:disabled,
@@ -403,22 +407,22 @@
 }
 
 .amenityBtnGhost {
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid #d3d1c7;
   background: transparent;
-  color: rgba(255, 255, 255, 0.85);
+  color: #1b1b21;
 }
 
 .availabilityBox {
-  background: #121816;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #ffffff;
+  border: 1px solid #ebebe8;
   border-radius: 16px;
   padding: 14px;
   margin-bottom: 8px;
 }
 
 .confirmBox {
-  background: #1a1510;
-  border: 1px solid rgba(245, 158, 11, 0.45);
+  background: #F1EFE8;
+  border: 1px solid #ebebe8;
   border-radius: 14px;
   padding: 14px;
   margin-top: 8px;
@@ -428,16 +432,16 @@
   margin: 0 0 12px;
   font-size: 14px;
   line-height: 1.45;
-  color: rgba(255, 255, 255, 0.9);
+  color: #1b1b21;
 }
 
 .explain {
   margin: 0 0 14px;
   padding: 14px 16px;
   border-radius: 16px;
-  background: #121816;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.6);
+  background: #F1EFE8;
+  border: 1px solid #ebebe8;
+  color: #444441;
   font-size: 14px;
   line-height: 1.55;
 }
@@ -445,7 +449,7 @@
 .moreBtn {
   background: none;
   border: none;
-  color: #00a886;
+  color: #0F6E56;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -462,14 +466,14 @@
   text-align: left;
   padding: 14px 16px;
   border-radius: 16px;
-  background: #121816;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #ffffff;
+  border: 1px solid #ebebe8;
   color: inherit;
   cursor: pointer;
   margin-bottom: 14px;
 }
 
-.promoCard:hover { border-color: rgba(0, 168, 134, 0.35); }
+.promoCard:hover { border-color: #5DCAA5; }
 
 .promoIcon {
   width: 40px;
@@ -477,8 +481,8 @@
   border-radius: 12px;
   display: grid;
   place-items: center;
-  background: rgba(255, 255, 255, 0.05);
-  color: #00a886;
+  background: #E1F5EE;
+  color: #0F6E56;
   flex-shrink: 0;
 }
 
@@ -488,23 +492,23 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
+  color: #888780;
   margin: 0 0 2px;
 }
 .promoLabel {
   font-size: 14px;
   font-weight: 700;
   margin: 0;
-  color: #fff;
+  color: #1b1b21;
 }
 .promoSupport {
   margin: 3px 0 0;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.45);
+  color: #5F5E5A;
   line-height: 1.35;
 }
 .promoExternal {
-  color: rgba(255, 255, 255, 0.35);
+  color: #888780;
   flex-shrink: 0;
 }
 
@@ -516,26 +520,26 @@
 .manage {
   padding: 16px;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: transparent;
+  border: 1px solid #ebebe8;
+  background: #ffffff;
 }
 
 .manageTitle {
   margin: 0;
   font-size: 14px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.75);
+  color: #1b1b21;
 }
 
 .manageSupport {
   margin: 6px 0 10px;
   font-size: 12px;
   line-height: 1.45;
-  color: rgba(255, 255, 255, 0.4);
+  color: #5F5E5A;
 }
 
 .manageLink {
-  color: #00a886;
+  color: #0F6E56;
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
@@ -549,7 +553,7 @@
 
 .loginBox p {
   margin: 0 0 14px;
-  color: rgba(255, 255, 255, 0.55);
+  color: #5F5E5A;
   font-size: 14px;
 }
 

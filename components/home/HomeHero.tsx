@@ -120,43 +120,50 @@ export default function HomeHero() {
   )
 
   return (
-    <section className="relative overflow-hidden bg-[#0a0f0e] px-4 pb-14 pt-8 text-white md:px-6 md:pb-20 md:pt-12">
+    <section className="relative overflow-hidden bg-[linear-gradient(180deg,#ffffff_0%,#f7faf9_42%,#eef7f3_100%)] px-4 pb-16 pt-10 text-fp-ink md:px-6 md:pb-24 md:pt-16">
       <div
-        className="pointer-events-none absolute -right-20 top-0 h-72 w-72 rounded-full bg-fp-teal/10 blur-3xl"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(ellipse_at_50%_0%,rgba(0,168,134,0.14)_0%,transparent_58%)]"
         aria-hidden="true"
       />
       <div
-        className="pointer-events-none absolute -bottom-24 -left-16 h-64 w-64 rounded-full bg-fp-teal/5 blur-3xl"
+        className="pointer-events-none absolute -right-24 top-24 h-80 w-80 rounded-full bg-fp-teal/10 blur-3xl"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute -left-20 bottom-10 h-72 w-72 rounded-full bg-[rgba(15,110,86,0.06)] blur-3xl"
         aria-hidden="true"
       />
 
-      <div className="relative mx-auto w-full max-w-xl">
-        <div className="flex flex-col items-center text-center">
+      <div className="relative mx-auto w-full max-w-2xl">
+        {/* Hero — brand, headline, support, CTA only */}
+        <div className="flex flex-col items-center text-center animate-[fpFadeUp_0.7s_ease-out_both]">
           <Image
             src="/flushpin-logo-new.png"
             alt=""
-            width={80}
-            height={80}
+            width={88}
+            height={88}
             priority
-            className="h-20 w-20 rounded-[22px] shadow-[0_12px_40px_rgba(0,168,134,0.25)]"
+            className="h-[88px] w-[88px] rounded-[24px] shadow-[0_18px_48px_rgba(15,110,86,0.22)]"
           />
-          <p className="mt-4 text-2xl font-extrabold tracking-tight lowercase text-white md:text-3xl">
-            flushpin
+          <p className="mt-5 text-[2rem] font-extrabold tracking-[-0.04em] lowercase text-fp-ink md:text-[2.35rem]">
+            flush<span className="text-fp-teal">pin</span>
           </p>
 
-          <h1 className="mt-8 text-[clamp(1.75rem,5.5vw,2.5rem)] font-extrabold leading-tight tracking-tight text-white">
+          <h1 className="mt-8 max-w-[18ch] text-[clamp(2.1rem,6vw,3.25rem)] font-bold leading-[1.05] tracking-[-0.04em] text-fp-ink">
             Find a restroom near you.
           </h1>
-          <p className="mt-3 text-lg font-medium text-fp-teal">Fast. Easy. Private.</p>
+          <p className="mt-4 text-[1.125rem] font-medium tracking-[-0.01em] text-fp-teal-dark md:text-xl">
+            Fast. Easy. Private.
+          </p>
         </div>
 
-        <div className="mt-8">
+        <div className="mx-auto mt-10 max-w-lg animate-[fpFadeUp_0.75s_ease-out_0.08s_both]">
           <NearbySearchButton loading={busy} disabled={busy} onClick={() => void handleGeoSearch()} />
 
-          <div className="my-5 flex items-center gap-3">
-            <div className="h-px flex-1 bg-white/10" aria-hidden="true" />
-            <span className="text-xs font-medium uppercase tracking-wider text-white/40">or</span>
-            <div className="h-px flex-1 bg-white/10" aria-hidden="true" />
+          <div className="my-6 flex items-center gap-3">
+            <div className="h-px flex-1 bg-fp-border" aria-hidden="true" />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-fp-gray-400">or</span>
+            <div className="h-px flex-1 bg-fp-border" aria-hidden="true" />
           </div>
 
           <LocationSearch
@@ -169,31 +176,35 @@ export default function HomeHero() {
           <SearchStatus status={status} message={statusMessage} />
         </div>
 
-        <CategoryShortcuts
-          activeCategory={activeCategory}
-          disabled={busy}
-          onSelect={handleCategorySelect}
-        />
+        <div className="mt-12 animate-[fpFadeUp_0.8s_ease-out_0.14s_both]">
+          <CategoryShortcuts
+            activeCategory={activeCategory}
+            disabled={busy}
+            onSelect={handleCategorySelect}
+          />
+        </div>
 
         <AddFlushPinToPhone />
 
         <BusinessStickerSection />
 
-        <div className="mt-8 rounded-2xl border border-fp-teal/30 bg-[#121816] p-4">
+        <div className="mt-10 rounded-[1.35rem] border border-fp-border/80 bg-white/80 p-5 shadow-[0_8px_30px_rgba(27,27,33,0.04)] backdrop-blur-sm">
           <div className="flex items-start gap-3">
-            <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-fp-teal" aria-hidden="true" />
+            <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-fp-teal-tint text-fp-teal-dark">
+              <ShieldCheck className="h-5 w-5" aria-hidden="true" />
+            </span>
             <div className="text-left">
-              <p className="font-semibold text-fp-teal">Private &amp; Community Driven</p>
-              <p className="mt-1 text-sm leading-relaxed text-white/60">
+              <p className="text-[15px] font-semibold tracking-tight text-fp-ink">Private &amp; community driven</p>
+              <p className="mt-1 text-sm leading-relaxed text-fp-gray-600">
                 Real restroom info from real people. No awkward moments.
               </p>
             </div>
           </div>
         </div>
 
-        <div className="mt-8 text-center">
-          <div className="mx-auto flex max-w-sm items-center justify-center gap-2 text-white/70">
-            <Users className="h-5 w-5 shrink-0 text-fp-teal" aria-hidden="true" />
+        <div className="mt-12 text-center">
+          <div className="mx-auto flex max-w-md items-start justify-center gap-2.5 text-fp-gray-600">
+            <Users className="mt-0.5 h-5 w-5 shrink-0 text-fp-teal-dark" aria-hidden="true" />
             <p className="text-sm leading-relaxed">
               Join thousands of people helping each other find restrooms wherever they go.
             </p>
@@ -202,39 +213,45 @@ export default function HomeHero() {
           <button
             type="button"
             onClick={() => openAuth('signup')}
-            className="mt-5 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-fp-teal px-6 py-3.5 text-base font-bold text-white shadow-[0_10px_30px_rgba(0,168,134,0.35)] transition-all hover:bg-fp-teal-dark active:scale-[0.99]"
+            className="mt-6 flex min-h-[56px] w-full items-center justify-center gap-2 rounded-full bg-fp-teal px-6 py-3.5 text-[17px] font-semibold text-white shadow-[0_12px_32px_rgba(0,168,134,0.28)] transition-all hover:bg-fp-teal-dark active:scale-[0.99]"
           >
             Sign Up Free
             <ArrowRight className="h-5 w-5" aria-hidden="true" />
           </button>
 
-          <p className="mt-4 text-sm text-white/50">
+          <p className="mt-4 text-sm text-fp-gray-600">
             Already have an account?{' '}
             <button
               type="button"
               onClick={() => openAuth('signin')}
-              className="font-semibold text-fp-teal hover:underline"
+              className="font-semibold text-fp-teal-dark hover:underline"
             >
               Sign In
             </button>
           </p>
         </div>
 
-        <div className="mt-12 grid gap-6 border-t border-white/10 pt-10 sm:grid-cols-3">
+        <div className="mt-16 grid gap-8 border-t border-fp-border pt-12 sm:grid-cols-3 sm:gap-6">
           <div className="text-center">
-            <ShieldCheck className="mx-auto h-6 w-6 text-fp-teal" aria-hidden="true" />
-            <h3 className="mt-2 text-sm font-semibold text-white">Verified Places</h3>
-            <p className="mt-1 text-xs leading-relaxed text-white/50">Trusted info you can rely on.</p>
+            <span className="mx-auto grid h-11 w-11 place-items-center rounded-2xl bg-fp-teal-tint text-fp-teal-dark">
+              <ShieldCheck className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <h3 className="mt-3 text-[15px] font-semibold tracking-tight text-fp-ink">Verified places</h3>
+            <p className="mt-1.5 text-sm leading-relaxed text-fp-gray-600">Trusted info you can rely on.</p>
           </div>
           <div className="text-center">
-            <RefreshCw className="mx-auto h-6 w-6 text-fp-teal" aria-hidden="true" />
-            <h3 className="mt-2 text-sm font-semibold text-white">Always Updated</h3>
-            <p className="mt-1 text-xs leading-relaxed text-white/50">Community keeps it fresh.</p>
+            <span className="mx-auto grid h-11 w-11 place-items-center rounded-2xl bg-fp-teal-tint text-fp-teal-dark">
+              <RefreshCw className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <h3 className="mt-3 text-[15px] font-semibold tracking-tight text-fp-ink">Always updated</h3>
+            <p className="mt-1.5 text-sm leading-relaxed text-fp-gray-600">Community keeps it fresh.</p>
           </div>
           <div className="text-center">
-            <Lock className="mx-auto h-6 w-6 text-fp-teal" aria-hidden="true" />
-            <h3 className="mt-2 text-sm font-semibold text-white">Private by Design</h3>
-            <p className="mt-1 text-xs leading-relaxed text-white/50">Your privacy comes first.</p>
+            <span className="mx-auto grid h-11 w-11 place-items-center rounded-2xl bg-fp-teal-tint text-fp-teal-dark">
+              <Lock className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <h3 className="mt-3 text-[15px] font-semibold tracking-tight text-fp-ink">Private by design</h3>
+            <p className="mt-1.5 text-sm leading-relaxed text-fp-gray-600">Your privacy comes first.</p>
           </div>
         </div>
       </div>

@@ -10,7 +10,7 @@ export default function HomePage() {
   const tripStopsEnabled = isTripStopsEnabled()
 
   return (
-    <main className="bg-[#0a0f0e]">
+    <main className="bg-fp-surface">
       <HomeHero />
       <div className="bg-fp-white">
         {tripStopsEnabled ? <TripStopsCard /> : null}

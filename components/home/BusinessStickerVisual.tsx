@@ -23,7 +23,7 @@ export default function BusinessStickerVisual({
 }: Props) {
   return (
     <div
-      className={`relative w-full overflow-hidden rounded-2xl border border-white/[0.08] bg-[#101614] shadow-[0_28px_70px_rgba(0,0,0,0.55)] ${BUSINESS_STICKER_VISUAL_ASPECT}`}
+      className={`relative w-full overflow-hidden rounded-2xl border border-fp-border bg-fp-surface-muted shadow-sm ${BUSINESS_STICKER_VISUAL_ASPECT}`}
     >
       {src ? (
         <Image

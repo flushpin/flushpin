@@ -42,7 +42,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: 'FlushPin',
-    statusBarStyle: 'black-translucent',
+    statusBarStyle: 'default',
   },
   icons: {
     icon: [

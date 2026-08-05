@@ -72,25 +72,25 @@ export default function SiteHeader() {
     <>
       <Link
         href="/map"
-        className={`text-sm font-medium no-underline hover:text-fp-teal ${isHome ? 'text-white/80' : 'text-fp-ink'}`}
+        className="text-sm font-medium text-fp-ink no-underline hover:text-fp-teal"
       >
         Find a Restroom
       </Link>
       <Link
         href="/business"
-        className={`text-sm font-medium no-underline hover:text-fp-teal ${isHome ? 'text-white/80' : 'text-fp-ink'}`}
+        className="text-sm font-medium text-fp-ink no-underline hover:text-fp-teal"
       >
         {t.forBusinesses}
       </Link>
       <Link
         href="/restrooms/california"
-        className={`text-sm font-medium no-underline hover:text-fp-teal ${isHome ? 'text-white/80' : 'text-fp-ink'}`}
+        className="text-sm font-medium text-fp-ink no-underline hover:text-fp-teal"
       >
         Guides
       </Link>
       <Link
         href="/events"
-        className={`text-sm font-medium no-underline hover:text-fp-teal ${isHome ? 'text-white/80' : 'text-fp-ink'}`}
+        className="text-sm font-medium text-fp-ink no-underline hover:text-fp-teal"
       >
         {t.events}
       </Link>
@@ -100,14 +100,10 @@ export default function SiteHeader() {
   return (
     <>
       {!isRestroomDetail && (
-      <header
-        className={`fp-safe-top sticky top-0 z-50 border-b ${
-          isHome ? 'border-white/10 bg-[#0a0f0e]/95 backdrop-blur-md' : 'border-fp-border bg-fp-white'
-        }`}
-      >
+      <header className="fp-safe-top sticky top-0 z-50 border-b border-fp-border bg-fp-white">
         <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 px-4 md:px-6">
           <div className="shrink-0">
-            <Logo height={isHome ? 36 : 40} variant={isHome ? 'dark' : 'light'} />
+            <Logo height={isHome ? 36 : 40} variant="light" />
           </div>
 
           <nav className="hidden items-center gap-6 lg:flex" aria-label="Main navigation">
@@ -119,14 +115,14 @@ export default function SiteHeader() {
                   style={{ background: profileColor }}
                   aria-hidden="true"
                 />
-                <span className={`text-sm font-medium ${isHome ? 'text-white' : 'text-fp-ink'}`}>
+                <span className="text-sm font-medium text-fp-ink">
                   {displayName}
                 </span>
                 <button
                   type="button"
                   onClick={() => void handleSignOut()}
                   disabled={signingOut}
-                  className={`text-sm font-medium hover:text-fp-teal disabled:opacity-60 ${isHome ? 'text-white/80' : 'text-fp-ink'}`}
+                  className="text-sm font-medium text-fp-ink hover:text-fp-teal disabled:opacity-60"
                 >
                   {signingOut ? 'Signing out…' : t.signOut}
                 </button>
@@ -136,7 +132,7 @@ export default function SiteHeader() {
                 <button
                   type="button"
                   onClick={openSignIn}
-                  className={`text-sm font-medium hover:text-fp-teal ${isHome ? 'text-white/80' : 'text-fp-ink'}`}
+                  className="text-sm font-medium text-fp-ink hover:text-fp-teal"
                 >
                   {isHome ? 'Sign In' : 'Log in'}
                 </button>
@@ -158,7 +154,7 @@ export default function SiteHeader() {
               <button
                 type="button"
                 onClick={openSignIn}
-                className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 text-sm font-semibold text-white transition-colors hover:border-fp-teal/50 hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fp-teal"
+                className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-fp-border bg-fp-white px-3 text-sm font-semibold text-fp-ink transition-colors hover:border-fp-teal/50 hover:bg-fp-teal-tint focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fp-teal"
               >
                 <User className="h-5 w-5 shrink-0" aria-hidden="true" />
                 <span className="sr-only sm:not-sr-only">Sign In</span>
@@ -171,51 +167,49 @@ export default function SiteHeader() {
               aria-expanded={menuOpen}
               aria-label="Open menu"
             >
-              <span className={`block h-0.5 w-6 ${isHome ? 'bg-white' : 'bg-fp-ink'}`} />
-              <span className={`block h-0.5 w-6 ${isHome ? 'bg-white' : 'bg-fp-ink'}`} />
-              <span className={`block h-0.5 w-6 ${isHome ? 'bg-white' : 'bg-fp-ink'}`} />
+              <span className="block h-0.5 w-6 bg-fp-ink" />
+              <span className="block h-0.5 w-6 bg-fp-ink" />
+              <span className="block h-0.5 w-6 bg-fp-ink" />
             </button>
           </div>
         </div>
 
         {menuOpen && (
           <nav
-            className={`flex flex-col gap-4 border-t px-4 py-4 lg:hidden ${
-              isHome ? 'border-white/10 bg-[#0a0f0e]' : 'border-fp-border bg-fp-white'
-            }`}
+            className="flex flex-col gap-4 border-t border-fp-border bg-fp-white px-4 py-4 lg:hidden"
             aria-label="Mobile navigation"
           >
             <Link
               href="/map"
-              className={`text-sm font-medium no-underline ${isHome ? 'text-white' : 'text-fp-ink'}`}
+              className="text-sm font-medium text-fp-ink no-underline"
               onClick={() => setMenuOpen(false)}
             >
               Find a Restroom
             </Link>
             <Link
               href="/business"
-              className={`text-sm font-medium no-underline ${isHome ? 'text-white' : 'text-fp-ink'}`}
+              className="text-sm font-medium text-fp-ink no-underline"
               onClick={() => setMenuOpen(false)}
             >
               {t.forBusinesses}
             </Link>
             <Link
               href="/restrooms/california"
-              className={`text-sm font-medium no-underline ${isHome ? 'text-white' : 'text-fp-ink'}`}
+              className="text-sm font-medium text-fp-ink no-underline"
               onClick={() => setMenuOpen(false)}
             >
               Guides
             </Link>
             <Link
               href="/events"
-              className={`text-sm font-medium no-underline ${isHome ? 'text-white' : 'text-fp-ink'}`}
+              className="text-sm font-medium text-fp-ink no-underline"
               onClick={() => setMenuOpen(false)}
             >
               {t.events}
             </Link>
             <Link
               href="/contact"
-              className={`text-sm font-medium no-underline ${isHome ? 'text-white' : 'text-fp-ink'}`}
+              className="text-sm font-medium text-fp-ink no-underline"
               onClick={() => setMenuOpen(false)}
             >
               Contact
@@ -229,7 +223,7 @@ export default function SiteHeader() {
                     if (ok) setMenuOpen(false)
                   })
                 }}
-                className={`text-left text-sm font-medium disabled:opacity-60 ${isHome ? 'text-white' : 'text-fp-ink'}`}
+                className="text-left text-sm font-medium text-fp-ink disabled:opacity-60"
               >
                 {signingOut ? 'Signing out…' : t.signOut}
               </button>
@@ -241,7 +235,7 @@ export default function SiteHeader() {
                     openSignIn()
                     setMenuOpen(false)
                   }}
-                  className={`text-left text-sm font-medium ${isHome ? 'text-white' : 'text-fp-ink'}`}
+                  className="text-left text-sm font-medium text-fp-ink"
                 >
                   Sign In
                 </button>

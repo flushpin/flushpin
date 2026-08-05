@@ -8,12 +8,12 @@ import type { MapCategorySlug } from '../../lib/mapCategories'
 const GRID_CATEGORIES = HOME_CATEGORY_SHORTCUTS.filter((c) => c.slug != null)
 
 const CATEGORY_META = {
-  gas: { icon: Fuel, iconClassName: 'text-[#2dd4bf]' },
-  coffee: { icon: Coffee, iconClassName: 'text-[#fb923c]' },
-  grocery: { icon: ShoppingBag, iconClassName: 'text-[#4ade80]' },
-  restaurant: { icon: UtensilsCrossed, iconClassName: 'text-[#f87171]' },
-  'fast-food': { icon: Sandwich, iconClassName: 'text-[#fdba74]' },
-  public: { icon: Users, iconClassName: 'text-[#5eead4]' },
+  gas: { icon: Fuel, iconClassName: 'text-fp-teal-dark' },
+  coffee: { icon: Coffee, iconClassName: 'text-fp-teal-dark' },
+  grocery: { icon: ShoppingBag, iconClassName: 'text-fp-teal-dark' },
+  restaurant: { icon: UtensilsCrossed, iconClassName: 'text-fp-teal-dark' },
+  'fast-food': { icon: Sandwich, iconClassName: 'text-fp-teal-dark' },
+  public: { icon: Users, iconClassName: 'text-fp-teal-dark' },
 } as const
 
 type Props = {
@@ -25,7 +25,9 @@ type Props = {
 export default function CategoryShortcuts({ activeCategory, disabled = false, onSelect }: Props) {
   return (
     <div className="mt-8 w-full">
-      <h2 className="mb-4 text-left text-base font-semibold text-white">Search by place type</h2>
+      <h2 className="mb-4 text-left text-[15px] font-semibold tracking-tight text-fp-ink">
+        Search by place type
+      </h2>
       <div className="grid grid-cols-2 gap-3">
         {GRID_CATEGORIES.map(({ slug, label, ariaLabel }) => {
           if (!slug || !(slug in CATEGORY_META)) return null

@@ -622,7 +622,7 @@ export default function AccessPanel({
               : 'Enter this code on the door keypad.'}
           </p>
           <p className={styles.statusLine}>
-            <Check size={14} color="#9fe1cb" aria-hidden />
+            <Check size={14} color="#0F6E56" aria-hidden />
             <span>{confirmed}</span>
             {isVerified && <strong>· Verified</strong>}
           </p>
@@ -769,7 +769,7 @@ export default function AccessPanel({
           )}
 
           <p className={styles.statusLine}>
-            <Check size={14} color="#9fe1cb" aria-hidden />
+            <Check size={14} color="#0F6E56" aria-hidden />
             <span>{confirmed}</span>
             {isVerified && <strong>· {confidenceLabel}</strong>}
           </p>
@@ -793,7 +793,7 @@ export default function AccessPanel({
           <h2 className={styles.emptyTitle}>{access.label}</h2>
           <p className={styles.emptySupport}>{access.hint}</p>
           <p className={styles.statusLine}>
-            <Check size={14} color="#9fe1cb" aria-hidden />
+            <Check size={14} color="#0F6E56" aria-hidden />
             <span>{confirmed}</span>
           </p>
           <button

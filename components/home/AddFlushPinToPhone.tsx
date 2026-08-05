@@ -73,9 +73,9 @@ export default function AddFlushPinToPhone() {
       <button
         type="button"
         onClick={() => void handleInstall()}
-        className="mt-6 flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-sm font-semibold text-white/90 transition-colors hover:border-fp-teal/40 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fp-teal md:mx-auto md:max-w-sm"
+        className="mt-6 flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border border-fp-border bg-fp-white px-4 py-3 text-sm font-semibold text-fp-ink transition-colors hover:border-fp-teal/40 hover:bg-fp-teal-tint focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fp-teal md:mx-auto md:max-w-sm"
       >
-        <Plus className="h-4 w-4 shrink-0 text-fp-teal" aria-hidden="true" />
+        <Plus className="h-4 w-4 shrink-0 text-fp-teal-dark" aria-hidden="true" />
         Add FlushPin to Phone
       </button>
 

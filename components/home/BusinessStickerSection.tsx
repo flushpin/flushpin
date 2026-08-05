@@ -20,27 +20,27 @@ export default function BusinessStickerSection() {
       className="mt-10 w-[min(100vw-2rem,64rem)] max-w-none relative left-1/2 -translate-x-1/2"
       aria-labelledby="business-acquisition-heading"
     >
-      <div className="relative overflow-hidden rounded-[1.75rem] border border-white/[0.08] bg-[#0c1210] shadow-[0_32px_80px_rgba(0,0,0,0.5)]">
+      <div className="relative overflow-hidden rounded-[1.75rem] border border-fp-border bg-fp-white shadow-sm">
         <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_0%_0%,rgba(0,168,134,0.12)_0%,transparent_50%),radial-gradient(ellipse_at_100%_100%,rgba(255,200,140,0.06)_0%,transparent_45%)]"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_0%_0%,rgba(15,110,86,0.08)_0%,transparent_50%)]"
           aria-hidden="true"
         />
 
         <div className="relative grid items-center gap-8 p-7 sm:gap-10 sm:p-9 md:grid-cols-2 md:gap-12 md:p-12 lg:gap-14 lg:p-14">
           {/* LEFT — value proposition (text + CTAs first on mobile) */}
           <div className="text-left">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-fp-teal md:text-[13px]">
+            <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-fp-teal-dark md:text-[13px]">
               Free for businesses
             </p>
 
             <h2
               id="business-acquisition-heading"
-              className="mt-3 text-[clamp(1.75rem,4vw,2.55rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-white"
+              className="mt-3 text-[clamp(1.75rem,4vw,2.55rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-fp-ink"
             >
               Turn Restroom Visitors Into Paying Customers
             </h2>
 
-            <p className="mt-5 max-w-md text-[15px] leading-relaxed text-white/60 md:text-base">
+            <p className="mt-5 max-w-md text-[15px] leading-relaxed text-fp-gray-600 md:text-base">
               People nearby are already searching for restroom access. Help them discover your
               business first with a free FlushPin window sticker and verified listing.
             </p>
@@ -49,9 +49,9 @@ export default function BusinessStickerSection() {
               {BENEFITS.map((item) => (
                 <li
                   key={item}
-                  className="flex items-start gap-3 text-[14px] leading-snug text-white/80 md:text-[15px]"
+                  className="flex items-start gap-3 text-[14px] leading-snug text-fp-ink md:text-[15px]"
                 >
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-fp-teal/15 text-fp-teal">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-fp-teal-tint text-fp-teal-dark">
                     <Check className="h-3.5 w-3.5" strokeWidth={2.75} aria-hidden="true" />
                   </span>
                   <span>{item}</span>
@@ -62,13 +62,13 @@ export default function BusinessStickerSection() {
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Link
                 href="/business/start"
-                className="inline-flex min-h-[52px] items-center justify-center rounded-full bg-fp-teal px-7 py-3.5 text-[15px] font-semibold text-white no-underline shadow-[0_12px_32px_rgba(0,168,134,0.32)] transition-colors hover:bg-fp-teal-dark"
+                className="inline-flex min-h-[52px] items-center justify-center rounded-full bg-fp-teal-dark px-7 py-3.5 text-[15px] font-semibold text-white no-underline shadow-sm transition-colors hover:bg-[#04342C]"
               >
                 Claim My FREE Sticker
               </Link>
               <Link
                 href="/business"
-                className="inline-flex min-h-[52px] items-center justify-center rounded-full border border-white/12 bg-transparent px-7 py-3.5 text-[15px] font-medium text-white/80 no-underline transition-colors hover:border-white/20 hover:bg-white/[0.04] hover:text-white"
+                className="inline-flex min-h-[52px] items-center justify-center rounded-full border border-fp-border bg-transparent px-7 py-3.5 text-[15px] font-medium text-fp-ink no-underline transition-colors hover:border-fp-teal/40 hover:bg-fp-teal-tint"
               >
                 See How It Works
               </Link>

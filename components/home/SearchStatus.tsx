@@ -14,8 +14,8 @@ export default function SearchStatus({ status, message }: Props) {
       aria-live="polite"
       className={`mt-4 rounded-xl px-4 py-3 text-sm font-medium ${
         isLoading
-          ? 'bg-fp-teal/15 text-fp-teal'
-          : 'border border-amber-500/30 bg-amber-500/10 text-amber-100'
+          ? 'bg-fp-teal-tint text-fp-teal-dark'
+          : 'border border-amber-200 bg-amber-50 text-amber-800'
       }`}
     >
       {message}
