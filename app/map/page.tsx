@@ -568,7 +568,7 @@ function MapPageContent() {
 
   const formatDist = (d:number) => unit==='mi'?`${d.toFixed(1)} mi`:`${(d*1.609).toFixed(1)} km`
   const formatEVDistance = (meters:number) => `${Math.round((meters * 3.28084) / 10) * 10} ft`
-  const statusColor = (s:string) => s==='green'?'#1D9E75':s==='amber'?'#D97706':s==='neutral'?'#CBD5E1':'#DC2626'
+  const statusColor = (s:string) => (s ? '#0F6E56' : '#0F6E56')
   const openDirections = (r: MapRestroom) => window.open(`https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lng}&travelmode=driving`,'_blank')
   const openEVDirections = (r: {
     nearbyEV?: { latitude: number; longitude: number }
@@ -863,16 +863,30 @@ function MapPageContent() {
     const parsed = parseAccessRecord(r)
     const hasPin = parsed.method === 'keypad_code' && !!parsed.displayPin
     const hasInfo = restroomHasAccessInfo(r)
+    const tertiaryLinkStyle = {
+      background: 'transparent',
+      border: 'none',
+      padding: '0',
+      fontSize: '13px',
+      fontWeight: 500 as const,
+      color: '#5F5E5A',
+      cursor: 'pointer',
+    }
 
     return (
-      <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
+      <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
         {hasPin && (
-          <button onClick={e=>{e.stopPropagation();setRatingTarget({...r,_pinWorked:true});setShowRating(true)}} style={{flex:1,minWidth:'100px',background:'#f0faf6',color:'#1D9E75',border:'1px solid #9FE1CB',padding:'10px',borderRadius:'8px',fontSize:'13px',fontWeight:'600',cursor:'pointer'}}>{t.codeWorked}</button>
+          <button onClick={e=>{e.stopPropagation();setRatingTarget({...r,_pinWorked:true});setShowRating(true)}} style={{flex:1,minWidth:'100px',background:'transparent',color:'#1b1b21',border:'1px solid #d3d1c7',padding:'10px',borderRadius:'8px',fontSize:'13px',fontWeight:'600',cursor:'pointer'}}>{t.codeWorked}</button>
         )}
-        {(hasPin || hasInfo) && (
-          <button onClick={e=>handleEditOpen(r,e,'correct')} style={{flex:1,minWidth:'100px',background:'#FEE2E2',color:'#DC2626',border:'1px solid #FCA5A5',padding:'10px',borderRadius:'8px',fontSize:'13px',fontWeight:'600',cursor:'pointer'}}>{hasPin ? t.codeChanged : t.wrongInfo}</button>
-        )}
-        <button onClick={e=>handleEditOpen(r,e,'update')} style={{flex:1,minWidth:'100px',background:'#FEF3C7',color:'#D97706',border:'1px solid #FCD34D',padding:'10px',borderRadius:'8px',fontSize:'13px',fontWeight:'600',cursor:'pointer'}}>{t.update}</button>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'flex-start',gap:'12px',flexWrap:'wrap'}}>
+          {(hasPin || hasInfo) && (
+            <button onClick={e=>handleEditOpen(r,e,'correct')} style={tertiaryLinkStyle}>{hasPin ? t.codeChanged : t.wrongInfo}</button>
+          )}
+          {(hasPin || hasInfo) && (
+            <span style={{width:'1px',height:'12px',background:'#ebebe8',flexShrink:0}} aria-hidden />
+          )}
+          <button onClick={e=>handleEditOpen(r,e,'update')} style={tertiaryLinkStyle}>{t.update}</button>
+        </div>
       </div>
     )
   }
@@ -1088,63 +1102,37 @@ function MapPageContent() {
         )}
 
         {displayed.map(r=>(
-          <div key={r.id} onClick={()=>{setSelected(r===selected?null:r);setShowPin(false)}} style={{background:'white',borderRadius:'14px',marginBottom:'10px',boxShadow:'0 1px 6px rgba(0,0,0,0.06)',overflow:'hidden',cursor:'pointer',border:selected?.id===r.id?'2px solid #1D9E75':'2px solid transparent'}}>
+          <div key={r.id} onClick={()=>{setSelected(r===selected?null:r);setShowPin(false)}} style={{background:'#ffffff',borderRadius:'12px',marginBottom:'10px',overflow:'hidden',cursor:'pointer',border:'1px solid #ebebe8'}}>
             <div style={{padding:'16px'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
                 <div style={{flex:1}}>
                   <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'4px'}}>
                     <div style={{width:'9px',height:'9px',borderRadius:'50%',background:statusColor(r.status||'red'),flexShrink:0}}/>
-                    <span style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:'16px',fontWeight:'700',color:'#0A2E1F'}}>{r.name}</span>
-                    {r.hasNearbyEVCharging && (
-                      <>
-                        <span
-                          title="EV charging nearby"
-                          aria-label="EV charging nearby"
-                          style={{
-                            width:'22px',
-                            height:'22px',
-                            borderRadius:'50%',
-                            background:'#16A34A',
-                            border:'2px solid white',
-                            boxShadow:'0 1px 4px rgba(0,0,0,0.18)',
-                            display:'inline-flex',
-                            alignItems:'center',
-                            justifyContent:'center',
-                            color:'white',
-                            flexShrink:0,
-                          }}
-                        >
-                          <EVChargingIcon size={14} />
-                        </span>
-                        <span style={{fontSize:'11px',background:'#ECFDF5',color:'#166534',border:'1px solid #86EFAC',padding:'2px 7px',borderRadius:'10px',fontWeight:'700',whiteSpace:'nowrap'}}>
-                          {r.nearbyEV?.operatorName || 'EV nearby'}
-                        </span>
-                      </>
-                    )}
+                    <span style={{fontFamily:"'Space Grotesk','Inter',sans-serif",fontSize:'16px',fontWeight:'700',color:'#1b1b21'}}>{r.name}</span>
                     {r.category_group === 'public_restroom' && (
-                      <span style={{fontSize:'11px',background:'#E0F2FE',color:'#0369A1',padding:'2px 8px',borderRadius:'10px',fontWeight:'600'}}>Public</span>
+                      <span style={{fontSize:'11px',background:'#E1F5EE',color:'#04342C',padding:'2px 8px',borderRadius:'10px',fontWeight:'600'}}>Public</span>
                     )}
                     {r.accessible&&<span style={{fontSize:'13px'}}>♿</span>}
                     {r.has_baby_changing&&<span style={{fontSize:'13px'}}>🍼</span>}
                   </div>
-                  <p style={{fontSize:'13px',color:'#999',margin:'0 0 8px',paddingLeft:'17px'}}>{r.address}</p>
-                  {r.opt_out&&<div style={{background:'#FEE2E2',borderRadius:'8px',padding:'6px 12px',marginLeft:'17px',marginBottom:'6px',display:'inline-flex',alignItems:'center',gap:'6px'}}><span>🚫</span><span style={{fontSize:'13px',fontWeight:'700',color:'#DC2626'}}>{lang === 'es' ? 'Baño no disponible al público' : 'Restroom not available to the public'}</span></div>}
+                  <p style={{fontSize:'13px',color:'#888780',margin:'0 0 8px',paddingLeft:'17px'}}>{r.address}</p>
+                  {r.opt_out&&<div style={{background:'#F1EFE8',borderRadius:'8px',padding:'6px 12px',marginLeft:'17px',marginBottom:'6px',display:'inline-flex',alignItems:'center',gap:'6px',border:'1px solid #ebebe8'}}><span>🚫</span><span style={{fontSize:'13px',fontWeight:'700',color:'#5F5E5A'}}>{lang === 'es' ? 'Baño no disponible al público' : 'Restroom not available to the public'}</span></div>}
                   <div style={{display:'flex',gap:'8px',alignItems:'center',paddingLeft:'17px',flexWrap:'wrap'}}>
-                    {(r.score??0)>0&&(r.stars??0)>0&&!r.source&&<span style={{fontSize:'13px',color:'#D97706',fontWeight:'500'}}>{'★'.repeat(r.stars||0)}{'☆'.repeat(5-(r.stars||0))} {r.score}</span>}
+                    {(r.score??0)>0&&(r.stars??0)>0&&!r.source&&<span style={{fontSize:'13px',color:'#5F5E5A',fontWeight:'500'}}>{'★'.repeat(r.stars||0)}{'☆'.repeat(5-(r.stars||0))} {r.score}</span>}
                     {r.discovery_only || (!restroomHasAccessInfo(r) && r.category_group !== 'public_restroom' && !r.verified && !r.has_code) ? (
-                      <span style={{fontSize:'12px',color:'#64748B',fontWeight:'500'}}>
+                      <span style={{fontSize:'12px',color:'#5F5E5A',fontWeight:'500'}}>
                         {t.accessDetailsMissing} · {t.beFirstContribute}
                       </span>
                     ) : r.category_group === 'public_restroom' ? (
-                      <span style={{fontSize:'12px',background:'#E0F2FE',color:'#0369A1',padding:'3px 9px',borderRadius:'10px',fontWeight:'600'}}>
+                      <span style={{fontSize:'12px',background:'#E1F5EE',color:'#04342C',padding:'3px 9px',borderRadius:'10px',fontWeight:'600'}}>
                         {lang === 'es' ? 'Baño público' : 'Public restroom'}
                       </span>
                     ) : r.verified ? (
-                      <span style={{fontSize:'12px',background:'#D1FAE5',color:'#065F46',padding:'3px 9px',borderRadius:'10px',fontWeight:'600'}}>
+                      <span style={{fontSize:'12px',background:'#E1F5EE',color:'#04342C',padding:'3px 9px',borderRadius:'10px',fontWeight:'600'}}>
                         {lang === 'es' ? 'Verificado' : 'Verified'}
                       </span>
                     ) : r.has_code ? (
-                      <span style={{fontSize:'12px',background:'#E1F5EE',color:'#085041',padding:'3px 9px',borderRadius:'10px',fontWeight:'600'}}>
+                      <span style={{fontSize:'12px',background:'#E1F5EE',color:'#04342C',padding:'3px 9px',borderRadius:'10px',fontWeight:'600'}}>
                         {lang === 'es' ? 'Código disponible' : 'Code available'}
                       </span>
                     ) : (() => {
@@ -1153,8 +1141,8 @@ function MapPageContent() {
                       if (hasInfo) {
                         return (
                           <>
-                            <span style={{fontSize:'12px',background:badge.bg,color:badge.color,padding:'3px 9px',borderRadius:'10px',fontWeight:'600'}}>{badge.label}</span>
-                            {r.pin_updated_at&&<span style={{fontSize:'11px',color:'#888'}}>{formatUpdatedAt(r.pin_updated_at)}</span>}
+                            <span style={{fontSize:'12px',background:'#E1F5EE',color:'#04342C',padding:'3px 9px',borderRadius:'10px',fontWeight:'600'}}>{badge.label}</span>
+                            {r.pin_updated_at&&<span style={{fontSize:'11px',color:'#888780'}}>{formatUpdatedAt(r.pin_updated_at)}</span>}
                           </>
                         )
                       }
@@ -1163,20 +1151,20 @@ function MapPageContent() {
                   </div>
                 </div>
                 <div style={{textAlign:'right',flexShrink:0,marginLeft:'12px',display:'flex',flexDirection:'column',alignItems:'flex-end',gap:'6px'}}>
-                  <p style={{fontSize:'15px',fontWeight:'700',color:'#0A2E1F',margin:'0 0 2px'}}>{formatDist(r.distance)}</p>
-                  <p style={{fontSize:'12px',color:'#bbb',margin:0}}>{lang === 'es' ? 'de distancia' : 'away'}</p>
+                  <p style={{fontSize:'15px',fontWeight:'700',color:'#5F5E5A',margin:'0 0 2px'}}>{formatDist(r.distance)}</p>
+                  <p style={{fontSize:'12px',color:'#888780',margin:0}}>{lang === 'es' ? 'de distancia' : 'away'}</p>
                   {(r.discovery_only || !restroomHasAccessInfo(r)) && !r.opt_out ? (
                     <button
                       type="button"
                       onClick={(e) => handleEditOpen(r, e, 'share')}
                       style={{
-                        background: '#E1F5EE',
-                        border: '1px solid #9FE1CB',
-                        borderRadius: '8px',
-                        padding: '6px 10px',
+                        background: 'transparent',
+                        border: 'none',
+                        borderRadius: '0',
+                        padding: '0',
                         fontSize: '12px',
-                        fontWeight: 700,
-                        color: '#085041',
+                        fontWeight: 500,
+                        color: '#5F5E5A',
                         cursor: 'pointer',
                       }}
                     >
@@ -1188,7 +1176,26 @@ function MapPageContent() {
             </div>
 
             {selected?.id===r.id&&(
-              <div style={{borderTop:'1px solid #f5f5f5',padding:'14px 16px',background:'#fafafa'}}>
+              <div style={{borderTop:'1px solid #ebebe8',padding:'14px 16px',background:'#ffffff'}}>
+                {r.opt_out?(
+                  <div style={{flex:1,background:'#F1EFE8',borderRadius:'9px',padding:'12px',textAlign:'center',fontSize:'14px',color:'#5F5E5A',fontWeight:'600',border:'1px solid #ebebe8'}}>🚫 This business has opted out of FlushPin</div>
+                ):(
+                  <div onClick={e=>e.stopPropagation()} style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+                    <div style={{display:'flex',gap:'8px'}}>
+                      <button
+                        type="button"
+                        disabled={openingCardId === String(r.id)}
+                        onClick={e=>handleAccessAction(r,e)}
+                        style={{flex:1,background:'#0F6E56',color:'#ffffff',border:'none',padding:'12px',borderRadius:'9px',fontSize:'15px',fontWeight:'700',cursor:openingCardId === String(r.id)?'wait':'pointer',opacity:openingCardId === String(r.id)?0.85:1}}
+                      >
+                        {openingCardId === String(r.id) ? t.openingRestroom : (restroomHasAccessInfo(r)?t.viewAccess:t.shareAccess)}
+                      </button>
+                      <button onClick={e=>{e.stopPropagation();setRatingTarget({...r,_pinWorked:undefined});setShowRating(true)}} style={{flex:1,background:'transparent',color:'#1b1b21',border:'1px solid #d3d1c7',padding:'12px',borderRadius:'9px',fontSize:'15px',fontWeight:'700',cursor:'pointer'}}>{t.rate}</button>
+                      <button onClick={e=>{e.stopPropagation();openDirections(r)}} style={{flex:1,background:'transparent',color:'#1b1b21',border:'1px solid #d3d1c7',padding:'12px',borderRadius:'9px',fontSize:'15px',fontWeight:'700',cursor:'pointer'}}>{t.go}</button>
+                    </div>
+                    {restroomHasAccessInfo(r) && renderAccessActions(r)}
+                  </div>
+                )}
                 {r.nearbyEV && (
                   <button
                     type="button"
@@ -1198,46 +1205,27 @@ function MapPageContent() {
                       display:'flex',
                       alignItems:'center',
                       gap:'10px',
-                      background:'#ECFDF5',
-                      border:'1px solid #86EFAC',
+                      background:'#F1EFE8',
+                      border:'1px solid #ebebe8',
                       borderRadius:'10px',
                       padding:'10px 12px',
-                      marginBottom:'10px',
+                      marginTop:'10px',
                       cursor:'pointer',
                       textAlign:'left',
                     }}
                   >
-                    <span style={{width:'28px',height:'28px',borderRadius:'50%',background:'#16A34A',border:'2px solid white',display:'inline-flex',alignItems:'center',justifyContent:'center',color:'white',flexShrink:0}}>
+                    <span style={{width:'28px',height:'28px',borderRadius:'50%',background:'#ffffff',border:'1px solid #ebebe8',display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#5F5E5A',flexShrink:0}}>
                       <EVChargingIcon size={17} />
                     </span>
                     <span style={{display:'flex',flexDirection:'column',gap:'2px'}}>
-                      <strong style={{fontSize:'13px',color:'#166534'}}>
+                      <strong style={{fontSize:'13px',color:'#2C2C2A'}}>
                         {lang === 'es' ? 'Carga de vehículos eléctricos cerca' : 'EV charging nearby'}
                       </strong>
-                      <span style={{fontSize:'12px',color:'#15803D'}}>
+                      <span style={{fontSize:'12px',color:'#888780'}}>
                         {r.nearbyEV.operatorName || (lang === 'es' ? 'Carga EV' : 'EV charging')} · {formatEVDistance(r.nearbyEV.distanceMeters ?? 0)} {lang === 'es' ? 'de distancia' : 'away'}
                       </span>
                     </span>
                   </button>
-                )}
-                {r.opt_out?(
-                  <div style={{flex:1,background:'#FEE2E2',borderRadius:'9px',padding:'12px',textAlign:'center',fontSize:'14px',color:'#DC2626',fontWeight:'600'}}>🚫 This business has opted out of FlushPin</div>
-                ):(
-                  <div onClick={e=>e.stopPropagation()} style={{display:'flex',flexDirection:'column',gap:'8px'}}>
-                    <div style={{display:'flex',gap:'8px'}}>
-                      <button
-                        type="button"
-                        disabled={openingCardId === String(r.id)}
-                        onClick={e=>handleAccessAction(r,e)}
-                        style={{flex:1,background:'#1D9E75',color:'white',border:'none',padding:'12px',borderRadius:'9px',fontSize:'15px',fontWeight:'700',cursor:openingCardId === String(r.id)?'wait':'pointer',opacity:openingCardId === String(r.id)?0.85:1}}
-                      >
-                        {openingCardId === String(r.id) ? t.openingRestroom : (restroomHasAccessInfo(r)?t.viewAccess:t.shareAccess)}
-                      </button>
-                      <button onClick={e=>{e.stopPropagation();setRatingTarget({...r,_pinWorked:undefined});setShowRating(true)}} style={{flex:1,background:'#F59E0B',color:'white',border:'none',padding:'12px',borderRadius:'9px',fontSize:'15px',fontWeight:'700',cursor:'pointer'}}>{t.rate}</button>
-                      <button onClick={e=>{e.stopPropagation();openDirections(r)}} style={{flex:1,background:'#0A2E1F',color:'white',border:'none',padding:'12px',borderRadius:'9px',fontSize:'15px',fontWeight:'700',cursor:'pointer'}}>{t.go}</button>
-                    </div>
-                    {restroomHasAccessInfo(r) && renderAccessActions(r)}
-                  </div>
                 )}
               </div>
             )}
