@@ -1,4 +1,4 @@
-import BusinessStickerSection from '../components/home/BusinessStickerSection'
+import BusinessCta from '../components/home/BusinessCta'
 import BuiltForTheRoad from '../components/home/BuiltForTheRoad'
 import HomeHero from '../components/home/HomeHero'
 import HowItWorks from '../components/home/HowItWorks'
@@ -17,7 +17,7 @@ export default function HomePage() {
         <BuiltForTheRoad />
         <StatsStrip />
         <HowItWorks />
-        <BusinessStickerSection />
+        <BusinessCta />
       </div>
     </main>
   )

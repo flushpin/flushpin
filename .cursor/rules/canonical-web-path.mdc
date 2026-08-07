@@ -1,0 +1,22 @@
+---
+description: FlushPin web must only be edited at the canonical Developer path
+alwaysApply: true
+---
+
+# Canonical FlushPin web path
+
+Active web repository (only):
+
+`/Users/johnertan/Developer/flushpin-web`
+
+Rules:
+
+- Do all FlushPin **web** work only in this repo.
+- Never edit, build, lint, commit, or push from archived/old copies:
+  - `/Users/johnertan/Desktop/FLUSHPIN-OLD-DO-NOT-USE-2026-08-06/`
+  - `/Users/johnertan/Desktop/FLUSHPIN FOLDER 2026/` (legacy name)
+  - `/Users/johnertan/Documents/Flushpin/web-ev-work`
+- Never create `flushpin copy`, `flushpin 2`, `flushpin-web 2`, or similar alternate actives.
+- Backups go under `/Users/johnertan/FLUSHPIN-BACKUPS/` only.
+- Mobile stays separate from this web repo.
+- See `PROJECT_LOCATION.md` for the full location policy.

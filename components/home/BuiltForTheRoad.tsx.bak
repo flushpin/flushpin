@@ -1,8 +1,8 @@
 const features = [
   {
-    title: '34,000+ places and growing',
+    title: 'Millions of places, live data',
     description:
-      '34,000+ mapped locations plus live place data, so FlushPin works in any city, any country.',
+      'Powered by real-time location data, FlushPin works in any city, any country.',
   },
   {
     title: 'Read and share door codes',
