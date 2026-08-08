@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
   const supabase = getServiceClient()
   if (!supabase) {
-    return NextResponse.json({ error: 'SUPABASE_SERVICE_ROLE_KEY is not configured.' }, { status: 503 })
+    return NextResponse.json({ error: 'admin_service_unavailable' }, { status: 503 })
   }
 
   const hoursParam = Number(request.nextUrl.searchParams.get('hours'))

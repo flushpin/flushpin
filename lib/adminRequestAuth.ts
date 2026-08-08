@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { isAdminDashboardEnabled } from './serverReleaseFlags'
 
-type AdminAuthorization =
+export type AdminAuthorization =
   | { authorized: true; email: string }
   | { authorized: false; response: NextResponse }
 
@@ -19,15 +19,21 @@ function denied(status: number, error: string): AdminAuthorization {
   }
 }
 
-function configuredAdminEmails(): Set<string> {
+export function configuredAdminEmails(
+  env: NodeJS.ProcessEnv = process.env,
+): Set<string> {
   return new Set(
-    (process.env.ADMIN_EMAILS ?? '')
+    (env.ADMIN_EMAILS ?? '')
       .split(',')
       .map((email) => email.trim().toLowerCase())
       .filter(Boolean),
   )
 }
 
+/**
+ * Server-only admin gate for every /admin* and /api/admin* route.
+ * Validates Bearer JWT with Supabase Auth, then allowlists email via ADMIN_EMAILS.
+ */
 export async function authorizeAdminRequest(
   request: NextRequest,
 ): Promise<AdminAuthorization> {

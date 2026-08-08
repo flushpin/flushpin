@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-admin-inter' })
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-admin-display' })
 
 export const metadata: Metadata = {
-  title: 'Admin',
+  title: 'Founder Dashboard',
   robots: {
     index: false,
     follow: false,

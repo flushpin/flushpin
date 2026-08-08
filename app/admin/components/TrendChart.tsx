@@ -9,7 +9,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { adminTheme, type DayCount } from '../theme'
+import { adminTheme, cardStyle, type DayCount } from '../theme'
 
 type Props = {
   title: string
@@ -17,7 +17,15 @@ type Props = {
   emptyLabel?: string
 }
 
-function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) {
+function ChartTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean
+  payload?: Array<{ value: number }>
+  label?: string
+}) {
   if (!active || !payload?.length) return null
   return (
     <div
@@ -29,6 +37,7 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
         fontFamily: adminTheme.fontBody,
         fontSize: 12,
         color: adminTheme.text,
+        boxShadow: adminTheme.shadow,
       }}
     >
       <div style={{ color: adminTheme.textMuted, marginBottom: 4 }}>{label}</div>
@@ -37,26 +46,20 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
   )
 }
 
-export default function AdminBarChart({ title, data, emptyLabel = 'No data yet' }: Props) {
+export default function TrendChart({ title, data, emptyLabel = 'No data yet' }: Props) {
   const hasData = data.some((d) => d.count > 0)
   const chartData = data.map((d) => ({ name: d.label, count: d.count }))
+  const tickInterval = data.length > 14 ? 4 : data.length > 8 ? 2 : 0
 
   return (
-    <div
-      style={{
-        background: adminTheme.card,
-        border: `1px solid ${adminTheme.cardBorder}`,
-        borderRadius: adminTheme.radius,
-        padding: 22,
-        minHeight: 300,
-      }}
-    >
+    <div style={{ ...cardStyle(), padding: 22, minHeight: 300 }}>
       <h3
         style={{
           margin: '0 0 16px',
           fontFamily: adminTheme.fontDisplay,
-          fontSize: 16,
+          fontSize: 17,
           fontWeight: 700,
+          letterSpacing: '-0.02em',
           color: adminTheme.text,
         }}
       >
@@ -66,7 +69,7 @@ export default function AdminBarChart({ title, data, emptyLabel = 'No data yet' 
       {!hasData ? (
         <div
           style={{
-            height: 240,
+            height: 220,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -78,7 +81,7 @@ export default function AdminBarChart({ title, data, emptyLabel = 'No data yet' 
           {emptyLabel}
         </div>
       ) : (
-        <div style={{ width: '100%', height: 240 }}>
+        <div style={{ width: '100%', height: 220 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
               <CartesianGrid stroke="rgba(0,122,98,0.08)" vertical={false} />
@@ -87,7 +90,7 @@ export default function AdminBarChart({ title, data, emptyLabel = 'No data yet' 
                 tick={{ fill: adminTheme.textMuted, fontSize: 11, fontFamily: adminTheme.fontBody }}
                 axisLine={false}
                 tickLine={false}
-                interval={0}
+                interval={tickInterval}
                 angle={-20}
                 textAnchor="end"
                 height={56}
@@ -99,7 +102,7 @@ export default function AdminBarChart({ title, data, emptyLabel = 'No data yet' 
                 tickLine={false}
               />
               <Tooltip content={<ChartTooltip />} cursor={{ fill: adminTheme.tealMuted }} />
-              <Bar dataKey="count" fill={adminTheme.teal} radius={[6, 6, 0, 0]} maxBarSize={42} />
+              <Bar dataKey="count" fill={adminTheme.teal} radius={[6, 6, 0, 0]} maxBarSize={36} />
             </BarChart>
           </ResponsiveContainer>
         </div>

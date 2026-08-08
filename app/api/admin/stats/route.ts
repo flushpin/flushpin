@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
   const supabase = getServiceClient()
   if (!supabase) {
     return NextResponse.json(
-      { error: 'SUPABASE_SERVICE_ROLE_KEY is not configured on the server.' },
+      { error: 'admin_service_unavailable' },
       { status: 503 },
     )
   }
