@@ -646,6 +646,29 @@ export default function FounderDashboard() {
 
             <section style={{ marginBottom: 30 }}>
               <SectionHeader
+                eyebrow="Invite friends"
+                title="Share FlushPin"
+                description="Ambassador moments today — opens, completed shares, and method mix from product share tracking."
+              />
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+                  gap: 12,
+                }}
+              >
+                <MetricCard accent label="Share opened" metric={analytics?.sharing?.opened} />
+                <MetricCard accent label="Share completed" metric={analytics?.sharing?.completed} />
+                <MetricCard label="WhatsApp" metric={analytics?.sharing?.whatsapp} />
+                <MetricCard label="SMS / iMessage" metric={analytics?.sharing?.sms} />
+                <MetricCard label="Email" metric={analytics?.sharing?.email} />
+                <MetricCard label="Copy link" metric={analytics?.sharing?.copy} />
+                <MetricCard label="Native share" metric={analytics?.sharing?.native} />
+              </div>
+            </section>
+
+            <section style={{ marginBottom: 30 }}>
+              <SectionHeader
                 eyebrow="Community"
                 title="People making FlushPin better"
                 description="Codes, access rules, accessibility notes, and verified help — last 30 days unless noted."

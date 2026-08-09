@@ -107,6 +107,25 @@ export async function GET(request: NextRequest) {
       },
       community: product.community,
       business: product.business,
+      sharing: vercel.configured
+        ? {
+            opened: metric(vercel.share.opened),
+            completed: metric(vercel.share.completed),
+            whatsapp: metric(vercel.share.byMethod.whatsapp),
+            sms: metric(vercel.share.byMethod.sms),
+            email: metric(vercel.share.byMethod.email),
+            copy: metric(vercel.share.byMethod.copy),
+            native: metric(vercel.share.byMethod.native),
+          }
+        : {
+            opened: metric(0, true, trafficUnavailableNote),
+            completed: metric(0, true, trafficUnavailableNote),
+            whatsapp: metric(0, true, trafficUnavailableNote),
+            sms: metric(0, true, trafficUnavailableNote),
+            email: metric(0, true, trafficUnavailableNote),
+            copy: metric(0, true, trafficUnavailableNote),
+            native: metric(0, true, trafficUnavailableNote),
+          },
       sources: {
         vercelConfigured: vercel.configured,
         // Never echo raw upstream errors (may include request metadata).

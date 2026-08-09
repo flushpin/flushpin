@@ -20,6 +20,20 @@ export type VercelDimensionRow = {
   visitors: number
 }
 
+export type VercelShareMethodCounts = {
+  whatsapp: number
+  sms: number
+  email: number
+  copy: number
+  native: number
+}
+
+export type VercelShareMetrics = {
+  opened: number
+  completed: number
+  byMethod: VercelShareMethodCounts
+}
+
 export type VercelAnalyticsBundle = {
   configured: boolean
   error?: string
@@ -32,6 +46,7 @@ export type VercelAnalyticsBundle = {
   topRoutes: VercelDimensionRow[]
   topReferrers: VercelDimensionRow[]
   topDevices: VercelDimensionRow[]
+  share: VercelShareMetrics
 }
 
 type CountResponse = {
@@ -59,6 +74,14 @@ function config() {
   return { token, projectId, teamId }
 }
 
+function emptyShareMetrics(): VercelShareMetrics {
+  return {
+    opened: 0,
+    completed: 0,
+    byMethod: { whatsapp: 0, sms: 0, email: 0, copy: 0, native: 0 },
+  }
+}
+
 function emptyBundle(error?: string): VercelAnalyticsBundle {
   return {
     configured: false,
@@ -72,6 +95,52 @@ function emptyBundle(error?: string): VercelAnalyticsBundle {
     topRoutes: [],
     topReferrers: [],
     topDevices: [],
+    share: emptyShareMetrics(),
+  }
+}
+
+type EventCountResponse = {
+  data?: { count?: number; visitors?: number }
+}
+
+async function eventsCount(since: string, until: string, filter: string): Promise<number> {
+  const json = await vercelGet<EventCountResponse>('/v1/query/web-analytics/events/count', {
+    since,
+    until,
+    filter,
+  })
+  return Number(json.data?.count ?? 0)
+}
+
+async function shareMethodCounts(since: string, until: string): Promise<VercelShareMethodCounts> {
+  const methods = ['whatsapp', 'sms', 'email', 'copy', 'native'] as const
+  const counts = await Promise.all(
+    methods.map((method) =>
+      eventsCount(since, until, `eventName eq 'share_completed' and eventData/method eq '${method}'`).catch(
+        () => 0,
+      ),
+    ),
+  )
+  return {
+    whatsapp: counts[0],
+    sms: counts[1],
+    email: counts[2],
+    copy: counts[3],
+    native: counts[4],
+  }
+}
+
+async function fetchShareMetrics(since: string, until: string): Promise<VercelShareMetrics> {
+  try {
+    const [opened, completed, byMethod] = await Promise.all([
+      eventsCount(since, until, "eventName eq 'share_opened'"),
+      eventsCount(since, until, "eventName eq 'share_completed'"),
+      shareMethodCounts(since, until),
+    ])
+    return { opened, completed, byMethod }
+  } catch (err) {
+    console.error('[vercelAnalytics] share metrics', err)
+    return emptyShareMetrics()
   }
 }
 
@@ -191,6 +260,7 @@ export async function fetchVercelAnalyticsBundle(): Promise<VercelAnalyticsBundl
       topRoutes,
       topReferrers,
       topDevices,
+      share,
     ] = await Promise.all([
       visitsCount(todayIso, untilIso),
       visitsCount(since7Iso, untilIso),
@@ -201,6 +271,7 @@ export async function fetchVercelAnalyticsBundle(): Promise<VercelAnalyticsBundl
       visitsByDimension(since30Iso, untilIso, 'route', 15),
       visitsByDimension(since30Iso, untilIso, 'referrerHostname', 10),
       visitsByDimension(since30Iso, untilIso, 'deviceType', 5),
+      fetchShareMetrics(todayIso, untilIso),
     ])
 
     return {
@@ -214,6 +285,7 @@ export async function fetchVercelAnalyticsBundle(): Promise<VercelAnalyticsBundl
       topRoutes,
       topReferrers,
       topDevices,
+      share,
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Vercel Analytics query failed'

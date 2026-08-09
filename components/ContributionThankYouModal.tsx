@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useId, useRef } from 'react'
+import ShareFlushPin from '@/components/share/ShareFlushPin'
 import { useLang } from '@/lib/LanguageContext'
 
 type Props = {
@@ -89,6 +90,9 @@ export default function ContributionThankYouModal({ open, onClose }: Props) {
           {copy.body}
         </p>
         <p className={styles.support}>{copy.support}</p>
+        <div className={styles.shareWrap}>
+          <ShareFlushPin surface="contribution_success" variant="embedded" />
+        </div>
         <button
           ref={closeBtnRef}
           type="button"
@@ -107,12 +111,13 @@ const styles = {
   backdrop:
     'fixed inset-0 z-[120] flex items-end justify-center bg-black/55 px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-8 sm:items-center sm:pb-8',
   dialog:
-    'w-full max-w-[360px] rounded-[28px] border border-white/10 bg-[#111816] px-6 pb-6 pt-7 text-center text-white shadow-[0_24px_80px_rgba(0,0,0,0.45)]',
+    'w-full max-w-[420px] max-h-[min(92vh,840px)] overflow-y-auto rounded-[28px] border border-white/10 bg-[#111816] px-5 pb-6 pt-7 text-center text-white shadow-[0_24px_80px_rgba(0,0,0,0.45)] sm:px-6',
   kicker:
     'm-0 mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7dceb8]',
   title: 'm-0 mb-3 text-[1.65rem] font-semibold tracking-[-0.03em] text-white',
   body: 'm-0 mb-3 text-[15px] leading-relaxed text-white/88',
-  support: 'm-0 mb-6 text-[13px] leading-relaxed text-white/55',
+  support: 'm-0 mb-4 text-[13px] leading-relaxed text-white/55',
+  shareWrap: 'mb-5 text-left',
   button:
     'w-full rounded-full bg-[#00a886] px-5 py-3.5 text-[15px] font-semibold text-[#04140f] transition hover:bg-[#12b892] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9fe1cb]',
   footer: 'm-0 mt-4 text-[12px] leading-relaxed text-white/40',

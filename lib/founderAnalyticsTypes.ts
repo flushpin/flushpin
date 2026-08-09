@@ -52,6 +52,15 @@ export type FounderAnalyticsPayload = {
     qrRedemptions: MetricValue
     conversionRate: number | null
   }
+  sharing: {
+    opened: MetricValue
+    completed: MetricValue
+    whatsapp: MetricValue
+    sms: MetricValue
+    email: MetricValue
+    copy: MetricValue
+    native: MetricValue
+  }
   sources: {
     vercelConfigured: boolean
     vercelError?: string

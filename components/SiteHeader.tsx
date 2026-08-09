@@ -110,14 +110,26 @@ export default function SiteHeader() {
             {navLinks}
             {user ? (
               <div className="flex items-center gap-3">
-                <span
-                  className="h-7 w-7 rounded-full"
-                  style={{ background: profileColor }}
-                  aria-hidden="true"
-                />
-                <span className="text-sm font-medium text-fp-ink">
-                  {displayName}
-                </span>
+                <Link
+                  href="/profile"
+                  className="flex items-center gap-2 no-underline"
+                  aria-label="Your profile"
+                >
+                  <span
+                    className="h-7 w-7 rounded-full"
+                    style={{ background: profileColor }}
+                    aria-hidden="true"
+                  />
+                  <span className="text-sm font-medium text-fp-ink hover:text-fp-teal">
+                    {displayName}
+                  </span>
+                </Link>
+                <Link
+                  href="/profile"
+                  className="text-sm font-medium text-fp-teal no-underline hover:text-fp-teal-dark"
+                >
+                  Invite friends
+                </Link>
                 <button
                   type="button"
                   onClick={() => void handleSignOut()}
@@ -215,18 +227,34 @@ export default function SiteHeader() {
               Contact
             </Link>
             {user ? (
-              <button
-                type="button"
-                disabled={signingOut}
-                onClick={() => {
-                  void handleSignOut().then((ok) => {
-                    if (ok) setMenuOpen(false)
-                  })
-                }}
-                className="text-left text-sm font-medium text-fp-ink disabled:opacity-60"
-              >
-                {signingOut ? 'Signing out…' : t.signOut}
-              </button>
+              <>
+                <Link
+                  href="/profile"
+                  className="text-sm font-medium text-fp-ink no-underline"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Your profile
+                </Link>
+                <Link
+                  href="/profile"
+                  className="text-sm font-medium text-fp-teal no-underline"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Invite friends
+                </Link>
+                <button
+                  type="button"
+                  disabled={signingOut}
+                  onClick={() => {
+                    void handleSignOut().then((ok) => {
+                      if (ok) setMenuOpen(false)
+                    })
+                  }}
+                  className="text-left text-sm font-medium text-fp-ink disabled:opacity-60"
+                >
+                  {signingOut ? 'Signing out…' : t.signOut}
+                </button>
+              </>
             ) : (
               <>
                 <button

@@ -26,6 +26,7 @@ import AuthShell, {
 import AuthStatus from '../../components/auth/AuthStatus'
 import GoogleSignInButton from '../../components/auth/GoogleSignInButton'
 import AppleSignInButton from '../../components/auth/AppleSignInButton'
+import ShareFlushPin from '../../components/share/ShareFlushPin'
 
 type Screen = 'main' | 'email' | 'signin' | 'confirm' | 'forgot' | 'update'
 
@@ -367,6 +368,9 @@ export default function SignUp() {
               kind="success"
               message={formatEmailTemplate(s.confirmEmailSent, pendingEmail)}
             />
+            <div className="mt-5 text-left">
+              <ShareFlushPin surface="signup_success" variant="compact" />
+            </div>
             <button
               type="button"
               onClick={() => {

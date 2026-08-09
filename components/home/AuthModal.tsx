@@ -17,6 +17,7 @@ import AuthShell, {
 import AuthStatus from '../auth/AuthStatus'
 import GoogleSignInButton from '../auth/GoogleSignInButton'
 import AppleSignInButton from '../auth/AppleSignInButton'
+import ShareFlushPin from '../share/ShareFlushPin'
 
 type AuthModalProps = {
   open: boolean
@@ -164,6 +165,9 @@ export default function AuthModal({ open, mode, onClose, onModeChange }: AuthMod
                 kind="success"
                 message={formatEmailTemplate(t.home.confirmEmailSent, pendingEmail)}
               />
+              <div className="mt-5 text-left">
+                <ShareFlushPin surface="signup_success" variant="compact" />
+              </div>
               <button type="button" onClick={handleBackToSignIn} className={`${authPrimaryButtonClass} mt-6`}>
                 {t.home.backToSignIn}
               </button>
