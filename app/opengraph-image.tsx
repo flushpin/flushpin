@@ -1,11 +1,20 @@
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { ImageResponse } from 'next/og'
 
 export const alt = 'FlushPin — Find restroom codes nearby'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
+/** Official wordmark aspect from public/flushpin-logo-teal.png (1396×623). */
+const LOGO_HEIGHT = 72
+const LOGO_WIDTH = Math.round(LOGO_HEIGHT * (1396 / 623))
+
 /** Default social share image for FlushPin brand search + link previews. */
-export default function OpenGraphImage() {
+export default async function OpenGraphImage() {
+  const logoBytes = await readFile(join(process.cwd(), 'public/flushpin-logo-teal.png'))
+  const logoSrc = `data:image/png;base64,${Buffer.from(logoBytes).toString('base64')}`
+
   return new ImageResponse(
     (
       <div
@@ -15,43 +24,31 @@ export default function OpenGraphImage() {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          padding: '64px 72px',
+          padding: '56px 64px',
           background: 'linear-gradient(145deg, #042F2E 0%, #0EB5AB 55%, #ECFBF9 100%)',
           color: '#fff',
           fontFamily: 'ui-sans-serif, system-ui, sans-serif',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: 16,
-              background: '#fff',
-              color: '#0EB5AB',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 34,
-              fontWeight: 800,
-            }}
-          >
-            <svg
-              width="32"
-              height="32"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
-              <circle cx="12" cy="10" r="2.5" />
-            </svg>
-          </div>
-          <div style={{ fontSize: 40, fontWeight: 800, letterSpacing: -1 }}>FlushPin</div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px 20px',
+            borderRadius: 20,
+            background: '#ffffff',
+            boxShadow: '0 10px 28px rgba(4, 47, 46, 0.18)',
+            alignSelf: 'flex-start',
+          }}
+        >
+          <img
+            src={logoSrc}
+            alt="FlushPin"
+            width={LOGO_WIDTH}
+            height={LOGO_HEIGHT}
+            style={{ width: LOGO_WIDTH, height: LOGO_HEIGHT, objectFit: 'contain' }}
+          />
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 900 }}>
