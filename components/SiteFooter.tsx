@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useLang } from '../lib/LanguageContext'
 import AppStoreLink from './AppStoreLink'
@@ -98,14 +99,20 @@ export default function SiteFooter() {
           <div className="max-w-sm">
             <Link
               href="/"
-              className="mb-5 inline-block bg-transparent no-underline"
+              className="mb-5 inline-flex flex-col items-start gap-2.5 bg-transparent no-underline"
               aria-label="FlushPin home"
             >
-              <span className="block text-2xl font-bold leading-none tracking-tight">
-                <span className="text-white">Flush</span>
-                <span className="text-fp-teal">Pin</span>
+              <span className="inline-flex items-center rounded-2xl bg-white px-3.5 py-2.5 shadow-[var(--fp-shadow-soft)]">
+                <Image
+                  src="/flushpin-logo-teal.png"
+                  alt="FlushPin"
+                  width={168}
+                  height={75}
+                  className="h-10 w-auto"
+                  priority={false}
+                />
               </span>
-              <span className="mt-1 block text-sm text-fp-gray-400">
+              <span className="text-sm text-fp-gray-400">
                 {lang === 'es' ? 'Inteligencia de acceso a baños' : 'Restroom access intelligence'}
               </span>
             </Link>
