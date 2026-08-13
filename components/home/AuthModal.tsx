@@ -17,6 +17,7 @@ import AuthShell, {
 import AuthStatus from '../auth/AuthStatus'
 import GoogleSignInButton from '../auth/GoogleSignInButton'
 import AppleSignInButton from '../auth/AppleSignInButton'
+import { signInWithAppleWeb } from '../../lib/appleSignInWeb'
 import ShareFlushPin from '../share/ShareFlushPin'
 
 type AuthModalProps = {
@@ -68,18 +69,31 @@ export default function AuthModal({ open, mode, onClose, onModeChange }: AuthMod
     setMessage(text)
   }
 
-  const handleOAuthSignIn = async (provider: 'google' | 'apple') => {
+  const handleGoogleSignIn = async () => {
     setStatusKind('loading')
-    setMessage(provider === 'apple' ? 'Connecting to Apple…' : 'Connecting to Google…')
+    setMessage('Connecting to Google…')
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.flushpin.com'
     const { error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${origin}/map`,
-        ...(provider === 'apple' ? { scopes: 'email name' } : {}),
-      },
+      provider: 'google',
+      options: { redirectTo: `${origin}/map` },
     })
     if (error) setError(error.message)
+  }
+
+  const handleAppleSignIn = async () => {
+    setLoading(true)
+    setStatusKind('loading')
+    setMessage('Connecting to Apple…')
+    const { error } = await signInWithAppleWeb()
+    if (error) {
+      setError(error)
+    } else {
+      setStatusKind('success')
+      setMessage('Signed in')
+      onClose()
+      window.location.href = '/map'
+    }
+    setLoading(false)
   }
 
   const handleSignUp = async () => {
@@ -191,12 +205,12 @@ export default function AuthModal({ open, mode, onClose, onModeChange }: AuthMod
 
               <div className="flex flex-col gap-3">
                 <GoogleSignInButton
-                  onClick={() => handleOAuthSignIn('google')}
+                  onClick={() => handleGoogleSignIn()}
                   disabled={loading}
                   label={t.continueGoogle}
                 />
                 <AppleSignInButton
-                  onClick={() => handleOAuthSignIn('apple')}
+                  onClick={() => void handleAppleSignIn()}
                   disabled={loading}
                   label={t.continueApple}
                 />

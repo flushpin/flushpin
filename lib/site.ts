@@ -7,3 +7,10 @@ export const APP_STORE_URL =
   `https://apps.apple.com/us/app/flushpin/id${APP_STORE_ID}`
 
 export const IOS_BUNDLE_ID = 'com.flushpin.app'
+
+export const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || 'https://www.flushpin.com'
+
+/** Apple Services ID for Sign in with Apple JS on web (must match Apple Developer + Supabase Client IDs). */
+export const APPLE_WEB_CLIENT_ID =
+  process.env.NEXT_PUBLIC_APPLE_CLIENT_ID || `${IOS_BUNDLE_ID}.web`
