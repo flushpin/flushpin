@@ -112,7 +112,6 @@ export default function HomeHero() {
 
       setStatus('error')
       setStatusMessage('Location access is off. Enable it or search by address.')
-      goToMap({ category: slug })
     },
     [busy, goToMap],
   )

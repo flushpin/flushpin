@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict'
 import {
-  MAP_DEFAULT_CENTER,
   requestMapGeolocationOnce,
   resolveMapMountLocation,
 } from './mapLocationInit'
@@ -20,7 +19,7 @@ function fakeGeolocation(
 }
 
 async function run() {
-  // 1. Bare map initialization does not request geolocation
+  // 1. Bare map initialization does not invent a city center; page should request GPS
   {
     let geocodeCalls = 0
     const result = await resolveMapMountLocation(
@@ -32,21 +31,22 @@ async function run() {
         },
       },
     )
-    assert.equal(result.source, 'default')
-    assert.equal(result.requestedGeolocation, false)
-    assert.equal(result.lat, MAP_DEFAULT_CENTER.lat)
-    assert.equal(result.lng, MAP_DEFAULT_CENTER.lng)
+    assert.equal(result.source, 'needs_location')
+    assert.equal(result.requestedGeolocation, true)
+    assert.equal('lat' in result, false)
+    assert.equal('lng' in result, false)
     assert.equal(geocodeCalls, 0)
   }
 
-  // 2. Category-only map initialization does not request geolocation
+  // 2. Category-only map initialization does not invent a city center
   {
     const result = await resolveMapMountLocation(
       { lat: null, lng: null, q: '', near: '', category: 'gas' },
       { resolveSearchLocation: async () => null },
     )
-    assert.equal(result.source, 'default')
-    assert.equal(result.requestedGeolocation, false)
+    assert.equal(result.source, 'needs_location')
+    assert.equal(result.requestedGeolocation, true)
+    assert.equal('lat' in result, false)
   }
 
   // 3. Valid URL coordinates do not request geolocation
@@ -105,9 +105,9 @@ async function run() {
       },
     )
     assert.equal(geocodeCalls, 1)
-    assert.equal(result.source, 'default')
-    assert.equal(result.requestedGeolocation, false)
-    assert.equal(result.lat, MAP_DEFAULT_CENTER.lat)
+    assert.equal(result.source, 'needs_location')
+    assert.equal(result.requestedGeolocation, true)
+    assert.equal('lat' in result, false)
   }
 
   // 6. Explicit “Use My Location” action requests geolocation exactly once

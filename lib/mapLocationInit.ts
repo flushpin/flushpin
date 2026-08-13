@@ -1,16 +1,9 @@
-/** Default map center when no URL coords / geocode / user location. */
-export const MAP_DEFAULT_CENTER = {
-  lat: 33.6846,
-  lng: -117.7892,
-  label: 'Irvine, CA',
-} as const
-
 export type MapMountSearch = {
   lat: string | null
   lng: string | null
   q: string
   near: string
-  /** Present on category-only URLs; never triggers geolocation by itself. */
+  /** Present on category-only URLs; never supplies a location by itself. */
   category?: string | null
 }
 
@@ -30,16 +23,14 @@ export type MapMountLocation =
       requestedGeolocation: false
     }
   | {
-      source: 'default'
-      lat: number
-      lng: number
-      label: string
-      requestedGeolocation: false
+      source: 'needs_location'
+      requestedGeolocation: true
     }
 
 /**
  * Resolve where `/map` should load on mount.
- * Never requests browser geolocation — that stays user-gesture only.
+ * Does not call the browser geolocation API.
+ * Never returns a hardcoded city center for nearby queries.
  */
 export async function resolveMapMountLocation(
   search: MapMountSearch,
@@ -78,11 +69,8 @@ export async function resolveMapMountLocation(
   }
 
   return {
-    source: 'default',
-    lat: MAP_DEFAULT_CENTER.lat,
-    lng: MAP_DEFAULT_CENTER.lng,
-    label: MAP_DEFAULT_CENTER.label,
-    requestedGeolocation: false,
+    source: 'needs_location',
+    requestedGeolocation: true,
   }
 }
 
@@ -93,7 +81,7 @@ export type MapGeolocationHandlers = {
 }
 
 /**
- * Explicit user-gesture geolocation. At most one getCurrentPosition call per invocation.
+ * Explicit geolocation. At most one getCurrentPosition call per invocation.
  * Permission denial invokes onError once and does not retry.
  */
 export function requestMapGeolocationOnce(

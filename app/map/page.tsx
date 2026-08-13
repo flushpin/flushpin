@@ -45,7 +45,6 @@ import {
   type AccessRpcClient,
 } from '../../lib/restroomAccessSecurity'
 import {
-  MAP_DEFAULT_CENTER,
   requestMapGeolocationOnce,
   resolveMapMountLocation,
 } from '../../lib/mapLocationInit'
@@ -159,9 +158,9 @@ function MapPageContent() {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [userLat, setUserLat] = useState<number|null>(null)
   const [userLng, setUserLng] = useState<number|null>(null)
-  const [locationName, setLocationName] = useState(MAP_DEFAULT_CENTER.label)
+  const [locationName, setLocationName] = useState('')
   /** How the current results area was chosen — never imply GPS unless mode is 'gps'. */
-  const [locationMode, setLocationMode] = useState<'gps' | 'search' | 'example'>('example')
+  const [locationMode, setLocationMode] = useState<'gps' | 'search' | 'none'>('none')
   const [locationNotice, setLocationNotice] = useState<string | null>(null)
   const initialFilter = searchParams.get('filter')
   const [filter, setFilter] = useState(
@@ -367,7 +366,7 @@ function MapPageContent() {
   }
 
   const getLocation = (onSuccess: (lat: number, lng: number) => void) => {
-    // User-gesture only. One in-flight request max. Never pretend denial = Irvine.
+    // One in-flight request max. Denial/timeout never falls back to a city center.
     if (locatingInFlightRef.current) return
     locatingInFlightRef.current = true
     setLocationNotice(null)
@@ -377,7 +376,8 @@ function MapPageContent() {
     if (!supported) {
       setLocating(false)
       locatingInFlightRef.current = false
-      setLocationMode('example')
+      setLoading(false)
+      setLocationMode((prev) => (prev === 'search' ? prev : 'none'))
       setLocationNotice(
         lang === 'es'
           ? 'La ubicación no está disponible en este dispositivo. Busca una dirección o un lugar.'
@@ -402,7 +402,8 @@ function MapPageContent() {
       onError: () => {
         setLocating(false)
         locatingInFlightRef.current = false
-        setLocationMode((prev) => (prev === 'gps' ? 'example' : prev))
+        setLoading(false)
+        setLocationMode((prev) => (prev === 'search' ? prev : 'none'))
         setLocationNotice(
           lang === 'es'
             ? 'Acceso a la ubicación denegado. Busca una dirección o un lugar, o activa la ubicación e inténtalo de nuevo.'
@@ -412,10 +413,15 @@ function MapPageContent() {
     })
   }
 
-  const queryLat = anchorLat ?? userLat ?? MAP_DEFAULT_CENTER.lat
-  const queryLng = anchorLng ?? userLng ?? MAP_DEFAULT_CENTER.lng
-  const sortLat = userLat ?? anchorLat ?? MAP_DEFAULT_CENTER.lat
-  const sortLng = userLng ?? anchorLng ?? MAP_DEFAULT_CENTER.lng
+  const queryLat = anchorLat ?? userLat
+  const queryLng = anchorLng ?? userLng
+  const sortLat = userLat ?? anchorLat
+  const sortLng = userLng ?? anchorLng
+  const hasLocation =
+    queryLat != null &&
+    queryLng != null &&
+    Number.isFinite(queryLat) &&
+    Number.isFinite(queryLng)
 
   const categoryParam = searchParams.get('category')
   const activeCategory: MapCategorySlug | null = isMapCategorySlug(categoryParam) ? categoryParam : null
@@ -480,11 +486,16 @@ function MapPageContent() {
         },
         { resolveSearchLocation },
       )
-      // Mount never requests geolocation — only URL, geocode, or example center.
-      if (mounted.source === 'default') {
-        setLocationMode('example')
+      if (mounted.source === 'needs_location') {
+        setLocationMode('none')
+        setLocationName('')
         setLocationNotice(null)
-      } else if (near === 'Your location') {
+        getLocation((lat, lng) => {
+          void loadData(lat, lng, '', false)
+        })
+        return
+      }
+      if (near === 'Your location') {
         setLocationMode('gps')
         setUserLat(mounted.lat)
         setUserLng(mounted.lng)
@@ -544,11 +555,23 @@ function MapPageContent() {
 
     url.searchParams.set('q', q)
     window.history.replaceState({}, '', url.toString())
-    await loadData(queryLat, queryLng, q, true)
+    if (queryLat != null && queryLng != null) {
+      await loadData(queryLat, queryLng, q, true)
+      return
+    }
+    setLoading(false)
+    setLocationNotice(
+      lang === 'es'
+        ? 'Elige tu ubicación para buscar cerca.'
+        : 'Choose your location to search nearby.',
+    )
   }
-  const withDistance = restrooms
-    .map(r => ({ ...r, distance: getDistance(sortLat, sortLng, r.lat, r.lng) }))
-    .sort((a, b) => a.distance - b.distance)
+  const withDistance =
+    hasLocation && sortLat != null && sortLng != null
+      ? restrooms
+          .map((r) => ({ ...r, distance: getDistance(sortLat, sortLng, r.lat, r.lng) }))
+          .sort((a, b) => a.distance - b.distance)
+      : []
   const statusFiltered = withDistance.filter(r => {
     if (emergency) return r.status==='green'
     if (filter==='verified') return r.status==='green'
@@ -727,6 +750,12 @@ function MapPageContent() {
       )
       if (canonicalId == null) {
         setNearbyError(t.openRestroomFailed)
+        openingInFlightRef.current = false
+        setOpeningCardId(null)
+        return
+      }
+
+      if (queryLat == null || queryLng == null) {
         openingInFlightRef.current = false
         setOpeningCardId(null)
         return
@@ -978,7 +1007,9 @@ function MapPageContent() {
                 ? `${lang === 'es' ? 'Cerca de ti' : 'Near you'} · ${locationName}`
                 : locationMode === 'search'
                   ? `${lang === 'es' ? 'Cerca de' : 'Near'} ${locationName}`
-                  : `${lang === 'es' ? 'Resultados de ejemplo cerca de' : 'Showing example results near'} ${locationName}`}
+                  : lang === 'es'
+                    ? 'Elige tu ubicación para encontrar baños cercanos'
+                    : 'Choose your location to find nearby restrooms'}
           </span>
           <button
             type="button"
@@ -1027,7 +1058,7 @@ function MapPageContent() {
       {successMsg&&<div style={{background:'#E1F5EE',borderBottom:'1px solid #9FE1CB',padding:'10px 20px'}}><p style={{fontSize:'14px',fontWeight:'700',color:'#1D9E75',margin:0}}>{successMsg}</p></div>}
       {nearbyError&&<div style={{background:'#FEF3C7',borderBottom:'1px solid #FCD34D',padding:'10px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px',flexWrap:'wrap'}}>
         <p style={{fontSize:'14px',fontWeight:'600',color:'#92400E',margin:0}}>{nearbyError}</p>
-        {showRetry&&(
+        {showRetry && queryLat != null && queryLng != null && (
           <button type="button" onClick={()=>loadData(queryLat,queryLng,searchQuery,false,{force:true})} style={{background:'#92400E',color:'white',border:'none',padding:'8px 14px',borderRadius:'8px',fontSize:'13px',fontWeight:'600',cursor:'pointer'}}>Retry</button>
         )}
       </div>}
@@ -1036,17 +1067,16 @@ function MapPageContent() {
         <p style={{fontSize:'14px',color:'#999',fontWeight:'500',margin:'0 0 12px'}}>
           {loading
             ? t.loading
-            : (() => {
+            : !hasLocation
+              ? lang === 'es'
+                ? 'Elige tu ubicación para ver resultados cercanos'
+                : 'Choose your location to see nearby results'
+              : (() => {
                 const radiusLabel = unit === 'km' ? `${Math.round(RADIUS_MILES * 1.60934)} km` : `${RADIUS_MILES} mi`
                 const placeWord =
                   lang === 'es'
                     ? `${displayed.length} lugar${displayed.length !== 1 ? 'es' : ''} dentro de ${radiusLabel}`
                     : `${displayed.length} location${displayed.length !== 1 ? 's' : ''} within ${radiusLabel}`
-                if (locationMode === 'example') {
-                  return lang === 'es'
-                    ? `${placeWord} (ejemplo · ${locationName})`
-                    : `${placeWord} (example · ${locationName})`
-                }
                 return lang === 'es' ? `${placeWord} de ${locationName}` : `${placeWord} of ${locationName}`
               })()}
         </p>
@@ -1058,7 +1088,32 @@ function MapPageContent() {
           </p>
         </div>}
 
-        {!loading && !nearbyError && nearbyEmpty && displayed.length === 0 && !searchQuery && !categoryApplies && (
+        {!loading && !locating && !hasLocation && (
+          <div style={{textAlign:'center',padding:'60px 20px'}}>
+            <div style={{fontSize:'40px',marginBottom:'12px'}}>📍</div>
+            <p style={{color:'#555',fontSize:'17px',fontWeight:'700',marginBottom:'8px'}}>
+              {lang === 'es'
+                ? 'Elige tu ubicación para encontrar baños cercanos'
+                : 'Choose your location to find nearby restrooms'}
+            </p>
+            <p style={{color:'#999',fontSize:'15px',marginBottom:'20px'}}>
+              {lang === 'es'
+                ? 'Usa tu ubicación o busca una dirección.'
+                : 'Use my location, or search by address.'}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                getLocation((lat, lng) => loadData(lat, lng, searchQuery, false, { force: true }))
+              }}
+              style={{background:'#1D9E75',color:'white',border:'none',padding:'12px 20px',borderRadius:'10px',fontSize:'15px',fontWeight:'700',cursor:'pointer'}}
+            >
+              {lang === 'es' ? 'Usar mi ubicación' : 'Use my location'}
+            </button>
+          </div>
+        )}
+
+        {!loading && hasLocation && !nearbyError && nearbyEmpty && displayed.length === 0 && !searchQuery && !categoryApplies && (
           <div style={{textAlign:'center',padding:'60px 20px'}}>
             <div style={{fontSize:'40px',marginBottom:'12px'}}>📍</div>
             <p style={{color:'#555',fontSize:'17px',fontWeight:'700',marginBottom:'8px'}}>No nearby restroom locations found.</p>
@@ -1073,7 +1128,7 @@ function MapPageContent() {
           </div>
         )}
 
-        {!loading && displayed.length === 0 && !searchQuery && categoryApplies && activeCategory && (
+        {!loading && hasLocation && displayed.length === 0 && !searchQuery && categoryApplies && activeCategory && (
           <div style={{textAlign:'center',padding:'60px 20px'}}>
             <div style={{fontSize:'40px',marginBottom:'12px'}}>📍</div>
             <p style={{color:'#555',fontSize:'17px',fontWeight:'700',marginBottom:'8px'}}>
@@ -1236,7 +1291,7 @@ function MapPageContent() {
       {showPromo&&promoTarget&&(
         <PromoModal restroom={promoTarget} onComplete={()=>{ void completePromoAccess() }}/>
       )}
-      {showRating&&ratingTarget&&(<RatingModal restroom={ratingTarget} user={user} onClose={()=>setShowRating(false)} onDone={()=>{setShowRating(false);setSuccessMsg('✅ Thank you!');setTimeout(()=>setSuccessMsg(''),3000);loadData(queryLat,queryLng,searchQuery,false)}} initialPinWorked={ratingTarget?._pinWorked}/>)}
+      {showRating&&ratingTarget&&(<RatingModal restroom={ratingTarget} user={user} onClose={()=>setShowRating(false)} onDone={()=>{setShowRating(false);setSuccessMsg('✅ Thank you!');setTimeout(()=>setSuccessMsg(''),3000);if(queryLat!=null&&queryLng!=null)loadData(queryLat,queryLng,searchQuery,false)}} initialPinWorked={ratingTarget?._pinWorked}/>)}
 
       {showEditForm&&editTarget&&(
         <div onClick={()=>{if(!savingEdit)closeEditForm()}} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:50,display:'flex',alignItems:'flex-end'}}>
