@@ -7,6 +7,7 @@ export const translations = {
     signUp: 'Sign up',
     signOut: 'Sign out',
     findRestroom: 'Find a Restroom',
+    inviteFriends: 'Invite friends',
 
     // Banner
     bannerText: 'Help keep access info accurate — join FlushPin for free.',
@@ -213,6 +214,7 @@ export const translations = {
     passwordPlaceholder: 'Min. 6 characters',
     createAccount: 'Create account',
     continueGoogle: 'Continue with Google',
+    continueApple: 'Continue with Apple',
     forgotAccount: 'Forgot your account? Create a new one →',
     disclaimer: 'By signing up you agree to help keep FlushPin accurate. Your name will appear on contributions.',
 
@@ -435,6 +437,7 @@ export const translations = {
     signUp: 'Registrarse',
     signOut: 'Cerrar sesión',
     findRestroom: 'Encontrar Baño',
+    inviteFriends: 'Invitar amigos',
 
     // Banner
     bannerText: 'Ayuda a mantener la información actualizada — únete a FlushPin gratis.',
@@ -641,6 +644,7 @@ export const translations = {
     passwordPlaceholder: 'Mínimo 6 caracteres',
     createAccount: 'Crear cuenta',
     continueGoogle: 'Continuar con Google',
+    continueApple: 'Continuar con Apple',
     forgotAccount: '¿Olvidaste tu cuenta? Crea una nueva →',
     disclaimer: 'Al registrarte aceptas ayudar a mantener FlushPin preciso. Tu nombre aparecerá en tus contribuciones.',
 

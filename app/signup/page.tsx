@@ -164,13 +164,16 @@ export default function SignUp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- bootstrap once on mount
   }, [])
 
-  const handleOAuthSignIn = async (provider: 'google') => {
+  const handleOAuthSignIn = async (provider: 'google' | 'apple') => {
     setStatusKind('loading')
-    setMessage('Connecting to Google…')
+    setMessage(provider === 'apple' ? 'Connecting to Apple…' : 'Connecting to Google…')
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.flushpin.com'
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: `${origin}/map` },
+      options: {
+        redirectTo: `${origin}/map`,
+        ...(provider === 'apple' ? { scopes: 'email name' } : {}),
+      },
     })
     if (error) setError(error.message)
   }
@@ -447,7 +450,11 @@ export default function SignUp() {
               disabled={loading}
               label={t.continueGoogle}
             />
-            <AppleSignInButton available={false} />
+            <AppleSignInButton
+              onClick={() => handleOAuthSignIn('apple')}
+              disabled={loading}
+              label={t.continueApple}
+            />
           </div>
           <Divider label={s.or} />
 
@@ -633,7 +640,11 @@ export default function SignUp() {
             disabled={loading}
             label={t.continueGoogle}
           />
-          <AppleSignInButton available={false} />
+          <AppleSignInButton
+            onClick={() => handleOAuthSignIn('apple')}
+            disabled={loading}
+            label={t.continueApple}
+          />
         </div>
 
         <AuthStatus kind={statusDisplay} message={statusMessage} />

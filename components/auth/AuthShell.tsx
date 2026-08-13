@@ -31,7 +31,7 @@ export default function AuthShell({
       />
 
       <div className="relative flex items-center justify-between gap-3 px-6 pb-2 pt-6 sm:px-8">
-        <Logo height={40} href={logoHref} variant="light" />
+        <Logo height={40} href={logoHref} />
         <div className="flex items-center gap-2">
           {showLanguage ? <LanguageToggle /> : null}
           {onClose ? (

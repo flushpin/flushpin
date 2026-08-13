@@ -1,8 +1,7 @@
 type Props = {
-  /** When false, button is disabled and labeled as unavailable — never implies Apple Sign In works. */
-  available?: boolean
-  label?: string
-  unavailableLabel?: string
+  onClick: () => void
+  disabled?: boolean
+  label: string
 }
 
 function AppleMark() {
@@ -13,25 +12,16 @@ function AppleMark() {
   )
 }
 
-/**
- * Apple-styled control. Default is unavailable until Apple Sign In is wired —
- * avoids false claims of provider readiness.
- */
-export default function AppleSignInButton({
-  available = false,
-  label = 'Continue with Apple',
-  unavailableLabel = 'Apple Sign In — coming soon',
-}: Props) {
+export default function AppleSignInButton({ onClick, disabled = false, label }: Props) {
   return (
     <button
       type="button"
-      disabled={!available}
-      aria-disabled={!available}
-      title={available ? label : unavailableLabel}
-      className="flex min-h-[52px] w-full items-center justify-center gap-3 rounded-2xl bg-[#111111] px-4 text-[15px] font-semibold text-white transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fp-teal disabled:cursor-not-allowed disabled:opacity-45"
+      onClick={onClick}
+      disabled={disabled}
+      className="flex min-h-[52px] w-full items-center justify-center gap-3 rounded-2xl bg-[#111111] px-4 text-[15px] font-semibold text-white transition-opacity hover:bg-[#222222] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fp-teal disabled:cursor-not-allowed disabled:opacity-60"
     >
       <AppleMark />
-      <span>{available ? label : unavailableLabel}</span>
+      <span>{label}</span>
     </button>
   )
 }
