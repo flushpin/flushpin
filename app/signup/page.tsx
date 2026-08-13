@@ -26,7 +26,7 @@ import AuthShell, {
 import AuthStatus from '../../components/auth/AuthStatus'
 import GoogleSignInButton from '../../components/auth/GoogleSignInButton'
 import AppleSignInButton from '../../components/auth/AppleSignInButton'
-import { signInWithAppleWeb } from '../../lib/appleSignInWeb'
+import { signInWithAppleOAuth } from '../../lib/appleAuth'
 import ShareFlushPin from '../../components/share/ShareFlushPin'
 
 type Screen = 'main' | 'email' | 'signin' | 'confirm' | 'forgot' | 'update'
@@ -180,13 +180,11 @@ export default function SignUp() {
     setLoading(true)
     setStatusKind('loading')
     setMessage('Connecting to Apple…')
-    const { error } = await signInWithAppleWeb()
+    const { error } = await signInWithAppleOAuth()
     if (error) {
       setError(error)
-    } else {
-      window.location.href = '/map'
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const handleSignUp = async () => {

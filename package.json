@@ -10,7 +10,8 @@
     "test:auth": "tsx lib/authPassword.test.ts && tsx lib/authRecovery.test.ts && tsx lib/authSignOut.test.ts",
     "seed:restrooms": "tsx scripts/seed-restrooms.ts",
     "enrich:restrooms": "tsx scripts/enrich-restrooms.ts",
-    "dedupe:restrooms": "tsx scripts/dedupe-restrooms.ts"
+    "dedupe:restrooms": "tsx scripts/dedupe-restrooms.ts",
+    "generate:apple-secret": "tsx scripts/generate-apple-oauth-secret.ts"
   },
   "dependencies": {
     "@supabase/auth-helpers-nextjs": "^0.15.0",
@@ -35,6 +36,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "jose": "^6.2.8",
     "tailwindcss": "^4",
     "tsx": "^4.20.3",
     "typescript": "^5"
