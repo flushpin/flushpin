@@ -25,8 +25,6 @@ import AuthShell, {
 } from '../../components/auth/AuthShell'
 import AuthStatus from '../../components/auth/AuthStatus'
 import GoogleSignInButton from '../../components/auth/GoogleSignInButton'
-import AppleSignInButton from '../../components/auth/AppleSignInButton'
-import { signInWithAppleOAuth } from '../../lib/appleAuth'
 import ShareFlushPin from '../../components/share/ShareFlushPin'
 
 type Screen = 'main' | 'email' | 'signin' | 'confirm' | 'forgot' | 'update'
@@ -174,17 +172,6 @@ export default function SignUp() {
       options: { redirectTo: `${origin}/map` },
     })
     if (error) setError(error.message)
-  }
-
-  const handleAppleSignIn = async () => {
-    setLoading(true)
-    setStatusKind('loading')
-    setMessage('Connecting to Apple…')
-    const { error } = await signInWithAppleOAuth()
-    if (error) {
-      setError(error)
-      setLoading(false)
-    }
   }
 
   const handleSignUp = async () => {
@@ -459,11 +446,6 @@ export default function SignUp() {
               disabled={loading}
               label={t.continueGoogle}
             />
-            <AppleSignInButton
-              onClick={() => void handleAppleSignIn()}
-              disabled={loading}
-              label={t.continueApple}
-            />
           </div>
           <Divider label={s.or} />
 
@@ -648,11 +630,6 @@ export default function SignUp() {
             onClick={() => handleGoogleSignIn()}
             disabled={loading}
             label={t.continueGoogle}
-          />
-          <AppleSignInButton
-            onClick={() => void handleAppleSignIn()}
-            disabled={loading}
-            label={t.continueApple}
           />
         </div>
 

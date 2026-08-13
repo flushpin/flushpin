@@ -16,8 +16,6 @@ import AuthShell, {
 } from '../auth/AuthShell'
 import AuthStatus from '../auth/AuthStatus'
 import GoogleSignInButton from '../auth/GoogleSignInButton'
-import AppleSignInButton from '../auth/AppleSignInButton'
-import { signInWithAppleOAuth } from '../../lib/appleAuth'
 import ShareFlushPin from '../share/ShareFlushPin'
 
 type AuthModalProps = {
@@ -78,17 +76,6 @@ export default function AuthModal({ open, mode, onClose, onModeChange }: AuthMod
       options: { redirectTo: `${origin}/map` },
     })
     if (error) setError(error.message)
-  }
-
-  const handleAppleSignIn = async () => {
-    setLoading(true)
-    setStatusKind('loading')
-    setMessage('Connecting to Apple…')
-    const { error } = await signInWithAppleOAuth()
-    if (error) {
-      setError(error)
-      setLoading(false)
-    }
   }
 
   const handleSignUp = async () => {
@@ -203,11 +190,6 @@ export default function AuthModal({ open, mode, onClose, onModeChange }: AuthMod
                   onClick={() => handleGoogleSignIn()}
                   disabled={loading}
                   label={t.continueGoogle}
-                />
-                <AppleSignInButton
-                  onClick={() => void handleAppleSignIn()}
-                  disabled={loading}
-                  label={t.continueApple}
                 />
               </div>
 
