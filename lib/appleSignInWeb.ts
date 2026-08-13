@@ -74,12 +74,21 @@ function getAppleClientId(): string {
   return APPLE_WEB_CLIENT_ID
 }
 
-function isUserCancelled(error: unknown): boolean {
-  const message = (error as { error?: string; message?: string })?.error
-    ?? (error as { message?: string })?.message
-    ?? ''
-  return /popup_closed_by_user|user_cancelled|canceled|cancelled/i.test(message)
+function errorMessage(error: unknown): string {
+  const record = error as { error?: string; message?: string }
+  return record?.error ?? record?.message ?? String(error ?? '')
 }
+
+function isUserCancelled(error: unknown): boolean {
+  return /popup_closed_by_user|user_cancelled|canceled|cancelled/i.test(errorMessage(error))
+}
+
+function isInvalidClient(error: unknown): boolean {
+  return /invalid_client|invalid request|invalid redirect/i.test(errorMessage(error))
+}
+
+const APPLE_SETUP_MESSAGE =
+  'Apple Sign In is not set up for web yet. In Apple Developer, create Services ID com.flushpin.app.web with domain flushpin.com and return URL https://www.flushpin.com/auth/apple/callback, then add it to Supabase Apple Client IDs.'
 
 /** Web Apple Sign In via Apple JS + Supabase id_token (same pattern as iOS app). */
 export async function signInWithAppleWeb(): Promise<{ error?: string }> {
@@ -132,6 +141,7 @@ export async function signInWithAppleWeb(): Promise<{ error?: string }> {
     return {}
   } catch (error) {
     if (isUserCancelled(error)) return { error: 'Sign in cancelled.' }
+    if (isInvalidClient(error)) return { error: APPLE_SETUP_MESSAGE }
     if (error instanceof Error) return { error: error.message }
     return { error: 'Apple Sign In failed. Try Google or email instead.' }
   }
