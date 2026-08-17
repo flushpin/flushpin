@@ -17,7 +17,7 @@ const BENEFITS = [
 export default function BusinessStickerSection() {
   return (
     <section
-      className="mt-10 w-[min(100vw-2rem,64rem)] max-w-none relative left-1/2 -translate-x-1/2"
+      className="relative mx-auto mt-10 w-[calc(100%-2rem)] max-w-5xl"
       aria-labelledby="business-acquisition-heading"
     >
       <div className="relative overflow-hidden rounded-[1.75rem] border border-fp-border bg-fp-white shadow-sm">

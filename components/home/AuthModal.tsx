@@ -128,7 +128,7 @@ export default function AuthModal({ open, mode, onClose, onModeChange }: AuthMod
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-end justify-center bg-[#1b1b21]/45 p-0 backdrop-blur-[2px] sm:items-center sm:p-4"
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-[#1b1b21]/45 px-0 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] backdrop-blur-[2px] sm:items-center sm:p-4"
       onClick={handleClose}
       role="presentation"
     >
