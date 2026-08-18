@@ -21,9 +21,6 @@ export default function BusinessHero() {
           >
             List my business free
           </Link>
-          <p className="mt-4 text-sm text-fp-gray-400">
-            Free Listing is always free. Paid QR plans start at $9/mo. No long contract.
-          </p>
         </div>
       </div>
     </section>

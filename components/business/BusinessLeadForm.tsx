@@ -28,14 +28,6 @@ type FormState = {
 
 type FieldErrors = Partial<Record<keyof FormState | 'submit', string>>
 
-const PLAN_OPTIONS: { id: PlanId; label: string }[] = [
-  { id: 'free', label: 'Free Listing' },
-  { id: 'starter', label: 'Starter QR ($9/mo)' },
-  { id: 'business', label: 'Business ($29/mo)' },
-  { id: 'multi', label: 'Multi-Location ($49/mo)' },
-  { id: 'not_sure', label: 'Not sure yet' },
-]
-
 const BUSINESS_TYPE_OPTIONS: { id: BusinessType; label: string }[] = [
   { id: 'cafe', label: 'Cafe' },
   { id: 'restaurant', label: 'Restaurant' },
@@ -229,7 +221,7 @@ export default function BusinessLeadForm() {
           <CheckCircle2 className="mx-auto h-14 w-14 text-fp-teal" aria-hidden="true" />
           <h1 className="mt-5 text-2xl font-bold text-fp-ink md:text-3xl">Got it — we&apos;ll reach out shortly!</h1>
           <p className="mt-4 text-base leading-relaxed text-fp-gray-600">
-            Your QR sticker ships as soon as we confirm your details. Questions meanwhile?{' '}
+            We&apos;ll be in touch shortly to confirm your details. Questions meanwhile?{' '}
             <Link href="/contact" className="font-semibold text-fp-teal no-underline hover:text-fp-teal-dark">
               Visit our contact page
             </Link>
@@ -250,7 +242,7 @@ export default function BusinessLeadForm() {
           Let&apos;s get your shop set up
         </h1>
         <p className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-fp-gray-600">
-          Answer a few quick questions and we&apos;ll reach out shortly — and ship your QR sticker.
+          Answer a few quick questions and we&apos;ll reach out shortly to help you claim and verify your location.
         </p>
       </div>
 
@@ -317,7 +309,7 @@ export default function BusinessLeadForm() {
             {errors.city && <p className="mt-2 text-sm text-red-600">{errors.city}</p>}
           </div>
         </div>
-        <p className="-mt-3 text-sm text-fp-gray-600">So we can mail your QR sticker</p>
+        <p className="-mt-3 text-sm text-fp-gray-600">So we can verify your location</p>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
@@ -379,15 +371,6 @@ export default function BusinessLeadForm() {
           value={form.restroomCodeFrequency}
           onChange={(value) => update('restroomCodeFrequency', value)}
           error={errors.restroomCodeFrequency}
-        />
-
-        <PillGroup
-          name="plan"
-          label="Plan"
-          options={PLAN_OPTIONS}
-          value={form.plan}
-          onChange={(value) => update('plan', value)}
-          error={errors.plan}
         />
 
         {form.plan === 'multi' && (

@@ -11,7 +11,7 @@ export default function BusinessFinalCta() {
           href="/business/start"
           className="mt-8 inline-flex items-center justify-center rounded-full bg-fp-teal px-8 py-3.5 text-base font-semibold text-white no-underline transition-colors hover:bg-fp-teal-dark"
         >
-          Start with Free Listing
+          Claim your location
         </Link>
         <p className="mt-6 text-sm text-fp-gray-400">
           Set up takes 10 minutes. We&apos;ll help.{' '}

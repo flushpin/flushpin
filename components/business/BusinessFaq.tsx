@@ -38,7 +38,7 @@ const faqs = [
   {
     question: 'How much does it cost?',
     answer:
-      'Free Listing is $0. Starter QR is $9/mo per location. Business is $29/mo per location. Multi-Location is $49/mo for up to 10 locations. Growth / Local Ads is a future custom package. There is no long contract, and shops can start small.',
+      "Nothing right now. Claiming your location and keeping your restroom information accurate is free. If we introduce paid features later, you'll hear it from us first \u2014 not from a price list.",
   },
 ]
 
